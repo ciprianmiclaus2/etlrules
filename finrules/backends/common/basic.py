@@ -30,19 +30,14 @@ class BaseStartRule(BaseRule):
 
 
 class BaseProjectRule(BaseRule):
-    def __init__(self, column_names, named_input=None, exclude=False, strict=True):
-        super().__init__(strict=strict)
+    def __init__(self, column_names, exclude=False, named_input=None, strict=True):
+        super().__init__(named_input=named_input, strict=strict)
         self.columns = [col for col in column_names]
         assert all(
             isinstance(col, str) for col in self.columns
         ), "ProjectRule: column_names must be strings"
         self.named_input = named_input
         self.exclude = exclude
-
-    def _get_df(self, data):
-        if self.named_input is None:
-            return data.get_main_output()
-        return data.get_named_output(self.named_input)
 
     def _get_remaining_columns(self, df_column_names):
         columns_set = set(self.columns)
