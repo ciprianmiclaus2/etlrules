@@ -2,7 +2,7 @@ from pandas import DataFrame
 from pandas.testing import assert_frame_equal
 import pytest
 from finrules.data import RuleData
-from finrules.backends.pandas import StartRule, ProjectRule
+from finrules.backends.pandas import StartRule, ProjectRule, RenameRule
 
 
 def test_start_rule_main_input():
@@ -101,4 +101,38 @@ def test_project_rule_named_putput():
     rule = ProjectRule(["A", "C", "E"], named_input="second_df")
     rule.apply(data)
     expected = DataFrame(data=[{"A": 12, "C": 32, "E": "e2"}])
+    assert_frame_equal(data.get_main_output(), expected)
+
+
+def test_rename_rule():
+    df = DataFrame(data=[{"A": 1, "B": "b", "C": 3, "D": 4, "E": "e", "F": "f"}])
+    data = RuleData(df)
+    rule = RenameRule({'A': 'AA', 'C': 'CC', 'E': 'EE'})
+    rule.apply(data)
+    expected = DataFrame(data=[{"AA": 1, "B": "b", "CC": 3, "D": 4, "EE": "e", "F": "f"}])
+    assert_frame_equal(data.get_main_output(), expected)
+
+def test_rename_rule_named_input():
+    df = DataFrame(data=[{"A": 1, "B": "b", "C": 3, "D": 4, "E": "e", "F": "f"}])
+    data = RuleData(df, named_inputs={'other_data': df})
+    rule = RenameRule({'A': 'AA', 'C': 'CC', 'E': 'EE'}, named_input='other_data')
+    rule.apply(data)
+    expected = DataFrame(data=[{"AA": 1, "B": "b", "CC": 3, "D": 4, "EE": "e", "F": "f"}])
+    assert_frame_equal(data.get_main_output(), expected)
+
+
+def test_rename_rule_strict_unknown_column():
+    df = DataFrame(data=[{"A": 1, "B": "b", "C": 3, "D": 4, "E": "e", "F": "f"}])
+    data = RuleData(df)
+    rule = RenameRule({'A': 'AA', 'C': 'CC', 'E': 'EE', 'UNKNOWN': 'NEW'})
+    with pytest.raises(AssertionError):
+        rule.apply(data)
+
+
+def test_rename_rule_non_strict_unknown_column():
+    df = DataFrame(data=[{"A": 1, "B": "b", "C": 3, "D": 4, "E": "e", "F": "f"}])
+    data = RuleData(df)
+    rule = RenameRule({'A': 'AA', 'C': 'CC', 'E': 'EE', 'UNKNOWN': 'NEW'}, strict=False)
+    rule.apply(data)
+    expected = DataFrame(data=[{"AA": 1, "B": "b", "CC": 3, "D": 4, "EE": "e", "F": "f"}])
     assert_frame_equal(data.get_main_output(), expected)
