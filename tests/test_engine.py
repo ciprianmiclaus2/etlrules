@@ -4,7 +4,7 @@ from pandas.testing import assert_frame_equal
 from finrules.data import RuleData
 from finrules.engine import RuleEngine
 from finrules.plan import Plan
-from finrules.backends.pandas import ProjectRule, SortRule
+from finrules.backends.pandas import ProjectRule, RenameRule, SortRule
 
 
 def test_run_simple_plan():
@@ -17,12 +17,15 @@ def test_run_simple_plan():
     plan = Plan()
     plan.add_rule(SortRule(['A']))
     plan.add_rule(ProjectRule(['A', 'B']))
+    plan.add_rule(RenameRule({'A': 'AA', 'B': 'BB'}))
+    errors = plan.validate()
+    assert not errors
     rule_engine = RuleEngine(plan)
     rule_engine.run(data)
     result = data.get_main_output()
     expected = DataFrame(data=[
-        {'A': 1, 'B': 'm'},
-        {'A': 2, 'B': 'n'},
-        {'A': 3, 'B': 'p'},
+        {'AA': 1, 'BB': 'm'},
+        {'AA': 2, 'BB': 'n'},
+        {'AA': 3, 'BB': 'p'},
     ])
     assert_frame_equal(result, expected)

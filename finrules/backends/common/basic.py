@@ -30,8 +30,8 @@ class BaseStartRule(BaseRule):
 
 
 class BaseProjectRule(BaseRule):
-    def __init__(self, column_names, exclude=False, named_input=None, strict=True):
-        super().__init__(named_input=named_input, strict=strict)
+    def __init__(self, column_names, exclude=False, named_input=None, named_output=None, strict=True):
+        super().__init__(named_input=named_input, named_output=named_output, strict=strict)
         self.columns = [col for col in column_names]
         assert all(
             isinstance(col, str) for col in self.columns
