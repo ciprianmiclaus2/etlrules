@@ -1,2 +1,1 @@
-from .basic import ProjectRule, RenameRule, StartRule
-from .sort import SortRule
+from .basic import ProjectRule, RenameRule, SortRule, StartRule

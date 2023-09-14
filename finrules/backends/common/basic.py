@@ -2,8 +2,8 @@ from finrules.rule import BaseRule
 
 
 class BaseStartRule(BaseRule):
-    def __init__(self, main_input, named_inputs=None, strict=True):
-        super().__init__(strict=strict)
+    def __init__(self, main_input, named_inputs=None, name=None, description=None, strict=True):
+        super().__init__(name=name, description=description, strict=strict)
         self.assert_is_dataframe(
             main_input, f"main_input needs to be a DataFrame not {type(main_input)}"
         )
@@ -30,8 +30,8 @@ class BaseStartRule(BaseRule):
 
 
 class BaseProjectRule(BaseRule):
-    def __init__(self, column_names, exclude=False, named_input=None, named_output=None, strict=True):
-        super().__init__(named_input=named_input, named_output=named_output, strict=strict)
+    def __init__(self, column_names, exclude=False, named_input=None, named_output=None, name=None, description=None, strict=True):
+        super().__init__(named_input=named_input, named_output=named_output, name=name, description=description, strict=strict)
         self.columns = [col for col in column_names]
         assert all(
             isinstance(col, str) for col in self.columns

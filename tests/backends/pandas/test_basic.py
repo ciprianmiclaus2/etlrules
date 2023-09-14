@@ -13,6 +13,13 @@ def test_start_rule_main_input():
     assert_frame_equal(data.get_main_output(), main_input)
 
 
+def test_startrule_name_description():
+    main_input = DataFrame(data=[{"A": 1, "B": "b"}])
+    rule = StartRule(main_input, name="Rule 1", description="This is the documentation for the rule")
+    assert rule.rule_name() == "Rule 1"
+    assert rule.rule_description() == "This is the documentation for the rule"
+
+
 def test_start_rule_main_input_and_named_inputs():
     main_input = DataFrame(data=[{"A": 1, "B": "b"}])
     named1 = DataFrame(data=[{"C": 2, "D": "d"}])
@@ -104,6 +111,12 @@ def test_project_rule_named_putput():
     assert_frame_equal(data.get_main_output(), expected)
 
 
+def test_project_rule_name_description():
+    rule = ProjectRule(["A", "C", "E"], name="Rule 1", description="This is the documentation for the rule")
+    assert rule.rule_name() == "Rule 1"
+    assert rule.rule_description() == "This is the documentation for the rule"
+
+
 def test_rename_rule():
     df = DataFrame(data=[{"A": 1, "B": "b", "C": 3, "D": 4, "E": "e", "F": "f"}])
     data = RuleData(df)
@@ -136,3 +149,9 @@ def test_rename_rule_non_strict_unknown_column():
     rule.apply(data)
     expected = DataFrame(data=[{"AA": 1, "B": "b", "CC": 3, "D": 4, "EE": "e", "F": "f"}])
     assert_frame_equal(data.get_main_output(), expected)
+
+
+def test_rename_rule_name_description():
+    rule = RenameRule({'A': 'AA', 'C': 'CC', 'E': 'EE', 'UNKNOWN': 'NEW'}, name="Rule 1", description="This is the documentation for the rule")
+    assert rule.rule_name() == "Rule 1"
+    assert rule.rule_description() == "This is the documentation for the rule"

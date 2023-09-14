@@ -38,3 +38,9 @@ def test_sort_rule_multi_columns_ascending_mixed():
     rule.apply(data)
     expected = DataFrame(data=[{"A": 3, "B": "b", "C": 8}, {"A": 5, "B": "b", "C": 3}, {"A": 5, "B": "a", "C": 2}])
     assert_frame_equal(data.get_main_output(), expected)
+
+
+def test_name_description():
+    rule = SortRule(["A", "B", "C"], name="Rule 1", description="This is the documentation for the rule")
+    assert rule.rule_name() == "Rule 1"
+    assert rule.rule_description() == "This is the documentation for the rule"
