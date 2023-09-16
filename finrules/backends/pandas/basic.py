@@ -23,6 +23,17 @@ class RenameRule(BaseRule):
         super().__init__(named_input=named_input, named_output=named_output, name=name, description=description, strict=strict)
         self.mapper = mapper
 
+        """ Applies the rule to the input data.
+
+        Params:
+            data: An instance of RuleData which stores inputs and outputs, including the main outputs and any named inputs/outputs.
+
+        Returns:
+            None
+
+        Note:
+            apply doesn't return any data but it sets the results on the input data parameter (either main output or a named output depending on the rule set up).
+        """
     def apply(self, data):
         df = self._get_input_df(data)
         if self.strict:
@@ -55,6 +66,7 @@ class SortRule(BaseRule):
         When multiple columns are specified, the first column decides the sort order.
         For any rows that have the same value in the first column, the second column is used to decide the sort order within that group and so on.
     """
+
     def __init__(self, sort_by, ascending=True, named_input=None, named_output=None, name=None, description=None, strict=True):
         super().__init__(named_input=named_input, named_output=named_output, name=name, description=description, strict=strict)
         assert sort_by and (isinstance(sort_by, str) or (isinstance(sort_by, (list, tuple)) and all(isinstance(val, str) for val in sort_by))), "sort_by must be a str (single column) or a list of str (multiple columns)"
@@ -65,6 +77,17 @@ class SortRule(BaseRule):
         self.ascending = ascending
 
     def apply(self, data):
+        """ Applies the rule to the input data.
+
+        Params:
+            data: An instance of RuleData which stores inputs and outputs, including the main outputs and any named inputs/outputs.
+
+        Returns:
+            None
+
+        Note:
+            apply doesn't return any data but it sets the results on the input data parameter (either main output or a named output depending on the rule set up).
+        """
         df = self._get_input_df(data)
         df = df.sort_values(by=self.sort_by, ascending=self.ascending, ignore_index=True)
         self._set_output_df(data, df)
