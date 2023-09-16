@@ -32,9 +32,32 @@ class RenameRule(BaseRule):
 
 
 class SortRule(BaseRule):
+    """ Sort the input dataframe by the given columns, either ascending or descending.
+
+    Params:
+        sort_by: Either a single column speified as a string or a list or tuple of columns to sort by
+        ascending: Whether to sort ascending or descending. Boolean. Default: True
+
+    Common params:
+        named_input: Which dataframe to use as the input. Optional.
+            When not set, the input is taken from the main output.
+            Set it to a string value, the name of an output dataframe of a previous rule.
+        named_output: Give the output of this rule a name so it can be used by another rule as a named input. Optional.
+            When not set, the result of this rule will be available as the main output.
+            When set to a name (string), the result will be available as that named output.
+        name: Give the rule a name. Optional.
+            Named rules are more descriptive as to what they're trying to do/the intent.
+        description: Describe in detail what the rules does, how it does it. Optional.
+            Together with the name, the description acts as the documentation of the rule.
+        strict: When set to True, the rule does a stricter valiation. Default: True
+
+    Note:
+        When multiple columns are specified, the first column decides the sort order.
+        For any rows that have the same value in the first column, the second column is used to decide the sort order within that group and so on.
+    """
     def __init__(self, sort_by, ascending=True, named_input=None, named_output=None, name=None, description=None, strict=True):
         super().__init__(named_input=named_input, named_output=named_output, name=name, description=description, strict=strict)
-        assert isinstance(sort_by, str) or (isinstance(sort_by, (list, tuple)) and all(isinstance(val, str) for val in sort_by)), "sort_by must be a str (single column) or a list of str (multiple columns)"
+        assert sort_by and (isinstance(sort_by, str) or (isinstance(sort_by, (list, tuple)) and all(isinstance(val, str) for val in sort_by))), "sort_by must be a str (single column) or a list of str (multiple columns)"
         self.sort_by = sort_by
         if isinstance(self.sort_by, str):
             self.sort_by = [self.sort_by]
