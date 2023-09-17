@@ -1,4 +1,5 @@
 from finrules.backends.common.basic import BaseProjectRule, BaseStartRule
+from finrules.exceptions import MissingColumn
 from finrules.rule import BaseRule
 
 from .validation import PandasRuleValidationMixin
@@ -9,20 +10,33 @@ class StartRule(BaseStartRule, PandasRuleValidationMixin):
 
 
 class ProjectRule(BaseProjectRule, PandasRuleValidationMixin):
+    """ Reshapes the data frame to keep, eliminate or re-order the set of columns.
+
+    Params:
+        column_names: The list of columns to keep or eliminate from the data frame.
+            The order of column names will be reflected in the result data frame, so this rule can be used to re-order columns.
+        exclude: When set to True, the columns in the column_names will be excluded from the data frame. Boolean. Default: False
+            In strict mode, if any column specified in the column_names doesn't exist in the input data frame, a MissingColumn exception is raised.
+            In non strict mode, the missing columns are ignored.
+
+    Common params:
+        named_input: Which dataframe to use as the input. Optional.
+            When not set, the input is taken from the main output.
+            Set it to a string value, the name of an output dataframe of a previous rule.
+        named_output: Give the output of this rule a name so it can be used by another rule as a named input. Optional.
+            When not set, the result of this rule will be available as the main output.
+            When set to a name (string), the result will be available as that named output.
+        name: Give the rule a name. Optional.
+            Named rules are more descriptive as to what they're trying to do/the intent.
+        description: Describe in detail what the rules does, how it does it. Optional.
+            Together with the name, the description acts as the documentation of the rule.
+        strict: When set to True, the rule does a stricter valiation. Default: True
+
+    Raises:
+        MissingColumn is raised in strict mode only, if any columns are missing from the input data frame.
+    """
+
     def apply(self, data):
-        df = self._get_input_df(data)
-        remaining_columns = self._get_remaining_columns(df.columns)
-        df = df[remaining_columns]
-        self._set_output_df(data, df)
-
-
-class RenameRule(BaseRule):
-    def __init__(self, mapper, named_input=None, named_output=None, name=None, description=None, strict=True):
-        assert isinstance(mapper, dict), "mapper needs to be a dict {old_name:new_name}"
-        assert all(isinstance(key, str) and isinstance(val, str) for key, val in mapper.items()), "mapper needs to be a dict {old_name:new_name} where the names are str"
-        super().__init__(named_input=named_input, named_output=named_output, name=name, description=description, strict=strict)
-        self.mapper = mapper
-
         """ Applies the rule to the input data.
 
         Params:
@@ -34,10 +48,58 @@ class RenameRule(BaseRule):
         Note:
             apply doesn't return any data but it sets the results on the input data parameter (either main output or a named output depending on the rule set up).
         """
+        df = self._get_input_df(data)
+        remaining_columns = self._get_remaining_columns(df.columns)
+        df = df[remaining_columns]
+        self._set_output_df(data, df)
+
+
+class RenameRule(BaseRule):
+    """ Renames a set of columns in the data frame.
+
+    Params:
+        mapper: A dictionary of old names (keys) and new names (values) to be used for the rename operation
+            The order of column names will be reflected in the result data frame, so this rule can be used to re-order columns.
+
+    Common params:
+        named_input: Which dataframe to use as the input. Optional.
+            When not set, the input is taken from the main output.
+            Set it to a string value, the name of an output dataframe of a previous rule.
+        named_output: Give the output of this rule a name so it can be used by another rule as a named input. Optional.
+            When not set, the result of this rule will be available as the main output.
+            When set to a name (string), the result will be available as that named output.
+        name: Give the rule a name. Optional.
+            Named rules are more descriptive as to what they're trying to do/the intent.
+        description: Describe in detail what the rules does, how it does it. Optional.
+            Together with the name, the description acts as the documentation of the rule.
+        strict: When set to True, the rule does a stricter valiation. Default: True
+
+    Raises:
+        MissingColumn is raised in strict mode only, if any columns (keys) are missing from the input data frame.
+    """
+
+    def __init__(self, mapper, named_input=None, named_output=None, name=None, description=None, strict=True):
+        assert isinstance(mapper, dict), "mapper needs to be a dict {old_name:new_name}"
+        assert all(isinstance(key, str) and isinstance(val, str) for key, val in mapper.items()), "mapper needs to be a dict {old_name:new_name} where the names are str"
+        super().__init__(named_input=named_input, named_output=named_output, name=name, description=description, strict=strict)
+        self.mapper = mapper
+
     def apply(self, data):
+        """ Applies the rule to the input data.
+
+        Params:
+            data: An instance of RuleData which stores inputs and outputs, including the main outputs and any named inputs/outputs.
+
+        Returns:
+            None
+
+        Note:
+            apply doesn't return any data but it sets the results on the input data parameter (either main output or a named output depending on the rule set up).
+        """
         df = self._get_input_df(data)
         if self.strict:
-            assert set(self.mapper.keys()) <= set(df.columns), f"Missing columns to rename: {set(self.mapper.keys()) - set(df.columns)}"
+            if not set(self.mapper.keys()) <= set(df.columns):
+                raise MissingColumn(f"Missing columns to rename: {set(self.mapper.keys()) - set(df.columns)}")
         df = df.rename(columns=self.mapper)
         self._set_output_df(data, df)
 

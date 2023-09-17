@@ -1,4 +1,5 @@
 from finrules.rule import BaseRule
+from finrules.exceptions import MissingColumn
 
 
 class BaseStartRule(BaseRule):
@@ -43,9 +44,8 @@ class BaseProjectRule(BaseRule):
         columns_set = set(self.columns)
         df_column_names_set = set(df_column_names)
         if self.strict:
-            assert (
-                columns_set <= df_column_names_set
-            ), f"No such columns: {columns_set - df_column_names_set}. Available columns: {df_column_names_set}"
+            if not columns_set <= df_column_names_set:
+                raise MissingColumn(f"No such columns: {columns_set - df_column_names_set}. Available columns: {df_column_names_set}.")
         if self.exclude:
             remaining_columns = [
                 col for col in df_column_names if col not in columns_set

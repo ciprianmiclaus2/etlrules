@@ -3,6 +3,7 @@ from pandas.testing import assert_frame_equal
 import pytest
 from finrules.data import RuleData
 from finrules.backends.pandas import StartRule, ProjectRule, RenameRule
+from finrules.exceptions import MissingColumn
 
 
 def test_start_rule_main_input():
@@ -67,7 +68,7 @@ def test_project_rule_unknown_column_strict():
     assert list(df.columns) == ["A", "B", "C", "D", "E", "F"]
     data = RuleData(df)
     rule = ProjectRule(["A", "C", "UNKNOWN", "E"])
-    with pytest.raises(AssertionError):
+    with pytest.raises(MissingColumn):
         rule.apply(data)
 
 
@@ -86,7 +87,7 @@ def test_project_rule_unknown_column_exclude_strict():
     assert list(df.columns) == ["A", "B", "C", "D", "E", "F"]
     data = RuleData(df)
     rule = ProjectRule(["A", "C", "UNKNOWN", "E"], exclude=True)
-    with pytest.raises(AssertionError):
+    with pytest.raises(MissingColumn):
         rule.apply(data)
 
 
@@ -138,7 +139,7 @@ def test_rename_rule_strict_unknown_column():
     df = DataFrame(data=[{"A": 1, "B": "b", "C": 3, "D": 4, "E": "e", "F": "f"}])
     data = RuleData(df)
     rule = RenameRule({'A': 'AA', 'C': 'CC', 'E': 'EE', 'UNKNOWN': 'NEW'})
-    with pytest.raises(AssertionError):
+    with pytest.raises(MissingColumn):
         rule.apply(data)
 
 
