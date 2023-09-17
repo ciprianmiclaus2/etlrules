@@ -193,12 +193,12 @@ class DedupeRule(BaseRule):
 
     ALL_KEEPS = (KEEP_FIRST, KEEP_LAST, KEEP_NONE)
  
-    def __init__(self, column_names, keep=KEEP_FIRST, named_input=None, named_output=None, name=None, description=None, strict=True):
+    def __init__(self, columns, keep=KEEP_FIRST, named_input=None, named_output=None, name=None, description=None, strict=True):
         super().__init__(named_input=named_input, named_output=named_output, name=name, description=description, strict=strict)
-        self.columns = [col for col in column_names]
+        self.columns = [col for col in columns]
         assert all(
             isinstance(col, str) for col in self.columns
-        ), "DedupeRule: column_names must be strings"
+        ), "DedupeRule: columns must be strings"
         assert keep in self.ALL_KEEPS, f"DedupeRule: keep must be one of: {self.ALL_KEEPS}"
         self.keep = False if keep == DedupeRule.KEEP_NONE else keep
 

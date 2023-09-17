@@ -31,13 +31,12 @@ class BaseStartRule(BaseRule):
 
 
 class BaseProjectRule(BaseRule):
-    def __init__(self, column_names, exclude=False, named_input=None, named_output=None, name=None, description=None, strict=True):
+    def __init__(self, columns, exclude=False, named_input=None, named_output=None, name=None, description=None, strict=True):
         super().__init__(named_input=named_input, named_output=named_output, name=name, description=description, strict=strict)
-        self.columns = [col for col in column_names]
+        self.columns = [col for col in columns]
         assert all(
             isinstance(col, str) for col in self.columns
-        ), "ProjectRule: column_names must be strings"
-        self.named_input = named_input
+        ), "ProjectRule: columns must be strings"
         self.exclude = exclude
 
     def _get_remaining_columns(self, df_column_names):

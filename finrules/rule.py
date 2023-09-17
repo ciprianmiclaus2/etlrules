@@ -1,3 +1,6 @@
+import importlib
+import yaml
+
 from .data import RuleData
 
 
@@ -33,3 +36,30 @@ class BaseRule:
 
     def apply(self, data):
         assert isinstance(data, RuleData)
+
+    def to_dict(self):
+        return {
+            self.__class__.__name__: {
+                attr: value for attr, value in self.__dict__.items() if not attr.startswith("_")
+            }
+        }
+
+    @classmethod
+    def from_dict(cls, dct, backend):
+        assert backend and isinstance(backend, str)
+        keys = tuple(dct.keys())
+        assert len(keys) == 1
+        rule_name = keys[0]
+        backend_pkg = f'finrules.backends.{backend}'
+        mod = importlib.import_module(backend_pkg, '')
+        clss = getattr(mod, rule_name, None)
+        assert clss, f"Cannot find class {rule_name} in package {backend_pkg}"
+        return clss(**dct[rule_name])
+
+    def to_yaml(self):
+        return yaml.safe_dump(self.to_dict())
+
+    @classmethod
+    def from_yaml(cls, yml, backend):
+        dct = yaml.safe_load(yml)
+        return cls.from_dict(dct, backend)
