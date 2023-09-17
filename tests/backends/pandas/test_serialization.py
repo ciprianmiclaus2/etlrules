@@ -2,7 +2,7 @@ import pytest
 from pandas import DataFrame
 
 from finrules.backends.pandas import (
-    DedupeRule, ProjectRule, RenameRule, TypeConversionRule
+    DedupeRule, ProjectRule, RenameRule, SortRule, TypeConversionRule
 )
 from finrules.rule import BaseRule
 
@@ -13,6 +13,7 @@ from finrules.rule import BaseRule
         DedupeRule(["A", "B"], named_input="Dedupe1", named_output="Dedupe2", name="Deduplicate", description="Some text", strict=True),
         ProjectRule(["A", "B"], named_input="PR1", named_output="PR2", name="Project", description="Remove some cols", strict=False),
         RenameRule({"A": "B"}, named_input="RN1", named_output="RN2", name="Rename", description="Some desc", strict=True),
+        SortRule(["A", "B"], named_input="SR1", named_output="SR2", name="Sort", description="Some desc2", strict=True),
         TypeConversionRule({"A": "int64"}, named_input="TC1", named_output="TC2", name="Convert", description=None, strict=False),
     ]
 )
