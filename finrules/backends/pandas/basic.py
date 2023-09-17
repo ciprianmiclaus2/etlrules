@@ -153,3 +153,69 @@ class SortRule(BaseRule):
         df = self._get_input_df(data)
         df = df.sort_values(by=self.sort_by, ascending=self.ascending, ignore_index=True)
         self._set_output_df(data, df)
+
+
+class DedupeRule(BaseRule):
+    """ De-duplicates by dropping duplicates using a set of columns to determine the duplicates.
+    It has logic to keep the first, last or none of the duplicate in a set of duplicates.
+
+    Params:
+        column_names: A subset of columns in the data frame which are used to determine the set of duplicates.
+            Any rows that have the same values in these columns are considered to be duplicates.
+        keep: What to keep in the de-duplication process. One of:
+            first: keeps the first row in the duplicate set
+            last: keeps the last row in the duplicate set
+            none: drops all the duplicates
+
+    Common params:
+        named_input: Which dataframe to use as the input. Optional.
+            When not set, the input is taken from the main output.
+            Set it to a string value, the name of an output dataframe of a previous rule.
+        named_output: Give the output of this rule a name so it can be used by another rule as a named input. Optional.
+            When not set, the result of this rule will be available as the main output.
+            When set to a name (string), the result will be available as that named output.
+        name: Give the rule a name. Optional.
+            Named rules are more descriptive as to what they're trying to do/the intent.
+        description: Describe in detail what the rules does, how it does it. Optional.
+            Together with the name, the description acts as the documentation of the rule.
+        strict: When set to True, the rule does a stricter valiation. Default: True
+
+    Raises:
+        MissingColumn is raised when a column specified to deduplicate on doesn't exist in the input data frame.
+
+    Note:
+        MissingColumn is raised in both strict and non-strict modes. This is because the rule cannot operate reliably without a correct set of columns.
+    """
+
+    KEEP_FIRST = 'first'
+    KEEP_LAST = 'last'
+    KEEP_NONE = 'none'
+
+    ALL_KEEPS = (KEEP_FIRST, KEEP_LAST, KEEP_NONE)
+ 
+    def __init__(self, column_names, keep=KEEP_FIRST, named_input=None, named_output=None, name=None, description=None, strict=True):
+        super().__init__(named_input=named_input, named_output=named_output, name=name, description=description, strict=strict)
+        self.columns = [col for col in column_names]
+        assert all(
+            isinstance(col, str) for col in self.columns
+        ), "DedupeRule: column_names must be strings"
+        assert keep in self.ALL_KEEPS, f"DedupeRule: keep must be one of: {self.ALL_KEEPS}"
+        self.keep = False if keep == DedupeRule.KEEP_NONE else keep
+
+    def apply(self, data):
+        """ Applies the rule to the input data.
+
+        Params:
+            data: An instance of RuleData which stores inputs and outputs, including the main outputs and any named inputs/outputs.
+
+        Returns:
+            None
+
+        Note:
+            apply doesn't return any data but it sets the results on the input data parameter (either main output or a named output depending on the rule set up).
+        """
+        df = self._get_input_df(data)
+        if not set(self.columns) <= set(df.columns):
+            raise MissingColumn(f"Missing column(s) to dedupe on: {set(self.columns) - set(df.columns)}")
+        df = df.drop_duplicates(subset=self.columns, keep=self.keep, ignore_index=True)
+        self._set_output_df(data, df)

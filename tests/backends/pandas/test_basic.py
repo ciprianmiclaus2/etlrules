@@ -2,7 +2,7 @@ from pandas import DataFrame
 from pandas.testing import assert_frame_equal
 import pytest
 from finrules.data import RuleData
-from finrules.backends.pandas import StartRule, ProjectRule, RenameRule
+from finrules.backends.pandas import DedupeRule, StartRule, ProjectRule, RenameRule
 from finrules.exceptions import MissingColumn
 
 
@@ -156,3 +156,66 @@ def test_rename_rule_name_description():
     rule = RenameRule({'A': 'AA', 'C': 'CC', 'E': 'EE', 'UNKNOWN': 'NEW'}, name="Rule 1", description="This is the documentation for the rule")
     assert rule.rule_name() == "Rule 1"
     assert rule.rule_description() == "This is the documentation for the rule"
+
+
+def test_dedupe_rule_first():
+    df = DataFrame(data=[
+        {"A": 1, "B": 1, "C": 1},
+        {"A": 1, "B": 1, "C": 2},
+        {"A": 2, "B": 3, "C": 4},
+        {"A": 1, "B": 1, "C": 3},
+    ])
+    data = RuleData(df)
+    rule = DedupeRule(["A", "B"], keep='first', strict=False)
+    rule.apply(data)
+    expected = DataFrame(data=[
+        {"A": 1, "B": 1, "C": 1},
+        {"A": 2, "B": 3, "C": 4},
+    ])
+    assert_frame_equal(data.get_main_output(), expected)
+
+
+def test_dedupe_rule_last():
+    df = DataFrame(data=[
+        {"A": 1, "B": 1, "C": 1},
+        {"A": 1, "B": 1, "C": 2},
+        {"A": 2, "B": 3, "C": 4},
+        {"A": 1, "B": 1, "C": 3},
+    ])
+    data = RuleData(df)
+    rule = DedupeRule(["A", "B"], keep='last', strict=False)
+    rule.apply(data)
+    expected = DataFrame(data=[
+        {"A": 2, "B": 3, "C": 4},
+        {"A": 1, "B": 1, "C": 3},
+    ])
+    assert_frame_equal(data.get_main_output(), expected)
+
+
+def test_dedupe_rule_none():
+    df = DataFrame(data=[
+        {"A": 1, "B": 1, "C": 1},
+        {"A": 1, "B": 1, "C": 2},
+        {"A": 2, "B": 3, "C": 4},
+        {"A": 1, "B": 1, "C": 3},
+    ])
+    data = RuleData(df)
+    rule = DedupeRule(["A", "B"], keep='none', strict=False)
+    rule.apply(data)
+    expected = DataFrame(data=[
+        {"A": 2, "B": 3, "C": 4},
+    ])
+    assert_frame_equal(data.get_main_output(), expected)
+
+
+def test_dedupe_rule_raises_missing_column():
+    df = DataFrame(data=[
+        {"A": 1, "B": 1, "C": 1},
+        {"A": 1, "B": 1, "C": 2},
+        {"A": 2, "B": 3, "C": 4},
+        {"A": 1, "B": 1, "C": 3},
+    ])
+    data = RuleData(df)
+    rule = DedupeRule(["A", "B", "D"], keep='first', strict=False)
+    with pytest.raises(MissingColumn):
+        rule.apply(data)
