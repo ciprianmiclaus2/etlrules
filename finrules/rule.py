@@ -54,6 +54,8 @@ class BaseRule:
         mod = importlib.import_module(backend_pkg, '')
         clss = getattr(mod, rule_name, None)
         assert clss, f"Cannot find class {rule_name} in package {backend_pkg}"
+        if clss is not cls:
+            return clss.from_dict(dct, backend)
         return clss(**dct[rule_name])
 
     def to_yaml(self):
@@ -63,3 +65,6 @@ class BaseRule:
     def from_yaml(cls, yml, backend):
         dct = yaml.safe_load(yml)
         return cls.from_dict(dct, backend)
+
+    def __eq__(self, other):
+        return type(self) == type(other) and self.__dict__ == other.__dict__

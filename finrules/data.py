@@ -24,5 +24,5 @@ class RuleData:
             ), f"{name} already exists as a named output. It will be overwritten."
         self.named_outputs[name] = df
 
-    def named_outputs(self):
+    def get_named_outputs(self):
         yield from self.named_outputs.items()
