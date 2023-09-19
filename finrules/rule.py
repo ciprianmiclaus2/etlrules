@@ -5,10 +5,8 @@ from .data import RuleData
 
 
 class BaseRule:
-    def __init__(self, named_input=None, named_output=None, name=None, description=None, strict=True):
-        assert named_input is None or isinstance(named_input, str) and named_input
+    def __init__(self, named_output=None, name=None, description=None, strict=True):
         assert named_output is None or isinstance(named_output, str) and named_output
-        self.named_input = named_input
         self.named_output = named_output
         self.name = name
         self.description = description
@@ -19,11 +17,6 @@ class BaseRule:
 
     def rule_description(self):
         return self.description
-
-    def _get_input_df(self, data):
-        if self.named_input is None:
-            return data.get_main_output()
-        return data.get_named_output(self.named_input)
 
     def _set_output_df(self, data, df):
         if self.named_output is None:
@@ -68,3 +61,39 @@ class BaseRule:
 
     def __eq__(self, other):
         return type(self) == type(other) and self.__dict__ == other.__dict__
+
+
+class UnaryOpBaseRule(BaseRule):
+    """ Base class for unary operation rules (ie operations taking a single data frame as input). """
+
+    def __init__(self, named_input=None, named_output=None, name=None, description=None, strict=True):
+        super().__init__(named_output=named_output, name=name, description=description, strict=strict)
+        assert named_input is None or isinstance(named_input, str) and named_input
+        self.named_input = named_input
+
+    def _get_input_df(self, data):
+        if self.named_input is None:
+            return data.get_main_output()
+        return data.get_named_output(self.named_input)
+
+
+class BinaryOpBaseRule(BaseRule):
+    """ Base class for binary operation rules (ie operations taking two data frames as input). """
+
+    def __init__(self, named_input_left, named_input_right, named_output=None, name=None, description=None, strict=True):
+        super().__init__(named_output=named_output, name=name, description=description, strict=strict)
+        assert named_input_left is None or isinstance(named_input_left, str) and named_input_left
+        assert named_input_right is None or isinstance(named_input_right, str) and named_input_right
+        assert named_input_left != named_input_right
+        self.named_input_left = named_input_left
+        self.named_input_right = named_input_right
+
+    def _get_input_df_left(self, data):
+        if self.named_input_left is None:
+            return data.get_main_output()
+        return data.get_named_output(self.named_input_left)
+
+    def _get_input_df_right(self, data):
+        if self.named_input_right is None:
+            return data.get_main_output()
+        return data.get_named_output(self.named_input_right)

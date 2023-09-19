@@ -1,9 +1,9 @@
 from finrules.data import RuleData
-from finrules.rule import BaseRule
+from finrules.rule import BaseRule, UnaryOpBaseRule
 from finrules.exceptions import MissingColumn
 
 
-class BaseProjectRule(BaseRule):
+class BaseProjectRule(UnaryOpBaseRule):
     def __init__(self, columns, exclude=False, named_input=None, named_output=None, name=None, description=None, strict=True):
         super().__init__(named_input=named_input, named_output=named_output, name=name, description=description, strict=strict)
         self.columns = [col for col in columns]
@@ -29,7 +29,7 @@ class BaseProjectRule(BaseRule):
         return remaining_columns
 
 
-class RulesBlock(BaseRule):
+class RulesBlock(UnaryOpBaseRule):
     """ Groups rules into encapsulated blocks or units of rules that achieve one thing.
     Blocks are reusable and encapsulated to reduce complexity.
 

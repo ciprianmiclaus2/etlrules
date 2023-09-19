@@ -1,8 +1,8 @@
 from finrules.exceptions import MissingColumn, UnsupportedType
-from finrules.rule import BaseRule
+from finrules.rule import UnaryOpBaseRule
 
 
-class TypeConversionRule(BaseRule):
+class TypeConversionRule(UnaryOpBaseRule):
 
     SUPPORTED_TYPES = {
         'int32',

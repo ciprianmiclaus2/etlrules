@@ -1,6 +1,6 @@
 from finrules.backends.common.basic import BaseProjectRule
 from finrules.exceptions import MissingColumn
-from finrules.rule import BaseRule
+from finrules.rule import UnaryOpBaseRule
 
 from .validation import PandasRuleValidationMixin
 
@@ -50,7 +50,7 @@ class ProjectRule(BaseProjectRule, PandasRuleValidationMixin):
         self._set_output_df(data, df)
 
 
-class RenameRule(BaseRule):
+class RenameRule(UnaryOpBaseRule):
     """ Renames a set of columns in the data frame.
 
     Params:
@@ -100,7 +100,7 @@ class RenameRule(BaseRule):
         self._set_output_df(data, df)
 
 
-class SortRule(BaseRule):
+class SortRule(UnaryOpBaseRule):
     """ Sort the input dataframe by the given columns, either ascending or descending.
 
     Params:
@@ -151,7 +151,7 @@ class SortRule(BaseRule):
         self._set_output_df(data, df)
 
 
-class DedupeRule(BaseRule):
+class DedupeRule(UnaryOpBaseRule):
     """ De-duplicates by dropping duplicates using a set of columns to determine the duplicates.
     It has logic to keep the first, last or none of the duplicate in a set of duplicates.
 
