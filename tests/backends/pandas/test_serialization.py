@@ -3,7 +3,7 @@ from pandas import DataFrame
 
 from finrules.backends.pandas import (
     DedupeRule, ProjectRule, RenameRule, SortRule, TypeConversionRule,
-    RulesBlock,
+    RulesBlock, LeftJoinRule, InnerJoinRule, OuterJoinRule, RightJoinRule,
 )
 from finrules.rule import BaseRule
 
@@ -20,15 +20,27 @@ from finrules.rule import BaseRule
             rules=[DedupeRule(["A", "B"]), ProjectRule(["A", "B"]), RenameRule({"A": "B"}), SortRule(["A", "B"]), TypeConversionRule({"A": "int64"})],
             named_input="BC1", named_output="BC2", name="Block", description="Test", strict=False
         ),
+        LeftJoinRule(named_input_left="left1", named_input_right="right1",
+                    key_columns_left=["A", "C"], key_columns_right=["A", "B"], suffixes=["_x", "_y"],
+                    named_output="LJ2", name="LeftJoinRule", description="Some desc1", strict=True),
+        InnerJoinRule(named_input_left="left2", named_input_right="right2",
+                    key_columns_left=["A", "D"], key_columns_right=["A", "B"], suffixes=["_x", None],
+                    named_output="IJ2", name="InnerJoinRule", description="Some desc2", strict=True),
+        OuterJoinRule(named_input_left="left3", named_input_right="right3",
+                    key_columns_left=["A", "E"], key_columns_right=["A", "B"], suffixes=[None, "_y"],
+                    named_output="OJ2", name="OuterJoinRule", description="Some desc3", strict=True),
+        RightJoinRule(named_input_left="left4", named_input_right="right4",
+                    key_columns_left=["A", "F"], suffixes=["_x", "_y"],
+                    named_output="RJ2", name="RightJoinRule", description="Some desc4", strict=True),
     ]
 )
 def test_serialize(rule_instance):
     d = rule_instance.to_dict()
     instance = BaseRule.from_dict(d, backend='pandas')
     assert type(rule_instance) == type(instance)
-    assert rule_instance == instance
+    assert rule_instance == instance, "%s != %s" % (rule_instance.__dict__, instance2.__dict__)
     y = rule_instance.to_yaml()
     instance2 = BaseRule.from_yaml(y, backend='pandas')
     assert type(rule_instance) == type(instance2)
-    assert rule_instance == instance2
+    assert rule_instance == instance2, "%s != %s" % (rule_instance.__dict__, instance2.__dict__)
 
