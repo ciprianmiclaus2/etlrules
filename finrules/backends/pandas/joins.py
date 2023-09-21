@@ -16,6 +16,7 @@ class BaseJoinRule(BinaryOpBaseRule):
 
     def apply(self, data):
         assert self.JOIN_TYPE in {"left", "right", "outer", "inner"}
+        super().apply(data)
         left_df = self._get_input_df_left(data)
         right_df = self._get_input_df_right(data)
         if not set(self.key_columns_left) <= set(left_df.columns):

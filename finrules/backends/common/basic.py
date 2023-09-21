@@ -73,6 +73,7 @@ class RulesBlock(UnaryOpBaseRule):
         Note:
             apply doesn't return any data but it sets the results on the input data parameter (either main output or a named output depending on the rule set up).
         """
+        super().apply(data)
         data2 = RuleData(
             main_input=self._get_input_df(data),
             named_inputs={k: v for k, v in data.get_named_outputs()},

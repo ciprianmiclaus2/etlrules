@@ -18,6 +18,7 @@ class TypeConversionRule(UnaryOpBaseRule):
         self.mapper = mapper
 
     def apply(self, data):
+        super().apply(data)
         df = self._get_input_df(data)
         columns_set = set(df.columns)
         for column_name, type_str in self.mapper.items():

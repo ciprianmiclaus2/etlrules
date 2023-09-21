@@ -44,6 +44,7 @@ class ProjectRule(BaseProjectRule, PandasRuleValidationMixin):
         Note:
             apply doesn't return any data but it sets the results on the input data parameter (either main output or a named output depending on the rule set up).
         """
+        super().apply(data)
         df = self._get_input_df(data)
         remaining_columns = self._get_remaining_columns(df.columns)
         df = df[remaining_columns]
@@ -92,6 +93,7 @@ class RenameRule(UnaryOpBaseRule):
         Note:
             apply doesn't return any data but it sets the results on the input data parameter (either main output or a named output depending on the rule set up).
         """
+        super().apply(data)
         df = self._get_input_df(data)
         if self.strict:
             if not set(self.mapper.keys()) <= set(df.columns):
@@ -146,6 +148,7 @@ class SortRule(UnaryOpBaseRule):
         Note:
             apply doesn't return any data but it sets the results on the input data parameter (either main output or a named output depending on the rule set up).
         """
+        super().apply(data)
         df = self._get_input_df(data)
         df = df.sort_values(by=self.sort_by, ascending=self.ascending, ignore_index=True)
         self._set_output_df(data, df)
@@ -210,6 +213,7 @@ class DedupeRule(UnaryOpBaseRule):
         Note:
             apply doesn't return any data but it sets the results on the input data parameter (either main output or a named output depending on the rule set up).
         """
+        super().apply(data)
         df = self._get_input_df(data)
         if not set(self.columns) <= set(df.columns):
             raise MissingColumn(f"Missing column(s) to dedupe on: {set(self.columns) - set(df.columns)}")
