@@ -4,6 +4,7 @@ from pandas import DataFrame
 from finrules.backends.pandas import (
     DedupeRule, ProjectRule, RenameRule, SortRule, TypeConversionRule,
     RulesBlock, LeftJoinRule, InnerJoinRule, OuterJoinRule, RightJoinRule,
+    ForwardFillRule, BackFillRule,
 )
 from finrules.rule import BaseRule
 
@@ -32,6 +33,10 @@ from finrules.rule import BaseRule
         RightJoinRule(named_input_left="left4", named_input_right="right4",
                     key_columns_left=["A", "F"], suffixes=["_x", "_y"],
                     named_output="RJ2", name="RightJoinRule", description="Some desc4", strict=True),
+        ForwardFillRule(["A", "B"], sort_by=["C", "D"], sort_ascending=False, group_by=["Z", "X"],
+                        named_input="FF1", named_output="FF2", name="FF", description="Some desc2 FF", strict=True),
+        BackFillRule(["A", "C"], sort_by=["E", "F"], sort_ascending=True, group_by=["Y", "X"], 
+                     named_input="BF1", named_output="BF2", name="BF", description="Some desc2 BF", strict=True),
     ]
 )
 def test_serialize(rule_instance):
