@@ -43,7 +43,7 @@ def test_serialize(rule_instance):
     d = rule_instance.to_dict()
     instance = BaseRule.from_dict(d, backend='pandas')
     assert type(rule_instance) == type(instance)
-    assert rule_instance == instance, "%s != %s" % (rule_instance.__dict__, instance2.__dict__)
+    assert rule_instance == instance, "%s != %s" % (rule_instance.__dict__, instance.__dict__)
     y = rule_instance.to_yaml()
     instance2 = BaseRule.from_yaml(y, backend='pandas')
     assert type(rule_instance) == type(instance2)
