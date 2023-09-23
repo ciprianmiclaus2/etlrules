@@ -74,7 +74,7 @@ ERROR_SCENARIOS = [
 
 @pytest.mark.parametrize("column_name,expression,expected,expected_info",
     DF_OPS_SCENARIOS +
-    # NON_DF_OPS_SCENARIOS +
+    NON_DF_OPS_SCENARIOS +
     ERROR_SCENARIOS
 )
 def test_add_new_column(column_name, expression, expected, expected_info):

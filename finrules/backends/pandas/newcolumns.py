@@ -69,6 +69,11 @@ class AddNewColumnRule(UnaryOpBaseRule):
         df = self._get_input_df(data)
         if self.strict and self.column_name in df.columns:
             raise ColumnAlreadyExistsError(f"Column {self.column_name} already exists in the input dataframe.")
-        result = eval(self._compiled_expr, {}, {'df': df})
+        try:
+            result = eval(self._compiled_expr, {}, {'df': df})
+        except TypeError:
+            # attempt to run a slower apply
+            expr = self._compiled_expr
+            result = df.apply(lambda df: eval(expr, {}, {'df': df}), axis=1)
         df = df.assign(**{self.column_name: result})
         self._set_output_df(data, df)
