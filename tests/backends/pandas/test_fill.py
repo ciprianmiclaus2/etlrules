@@ -4,6 +4,7 @@ import pytest
 from finrules.data import RuleData
 from finrules.exceptions import MissingColumn
 from finrules.backends.pandas import ForwardFillRule, BackFillRule
+from tests.backends.pandas.utils.data import get_test_data
 
 
 SAMPLE_DF = DataFrame(data=[
@@ -126,36 +127,30 @@ SAMPLE_GROUPING_DF = DataFrame(data=[
 ])
 def test_forward_fill_rule_simple(rule_cls, input_sample, columns, sort_by, sort_ascending, group_by, expected):
     sample_df = input_sample.copy()
-    sample_main_df = input_sample.copy()
     before_column_order = [col for col in sample_df.columns]
-    data = RuleData(sample_main_df, named_inputs={"payload": sample_df})
-    assert_frame_equal(data.get_main_output(), input_sample)
-    assert_frame_equal(data.get_named_output("payload"), input_sample)
-    rule = rule_cls(columns, sort_by, sort_ascending, group_by, named_input="payload", named_output="result")
-    rule.apply(data)
-    expected = expected[before_column_order]
-    result = data.get_named_output("result")
-    after_column_order = [col for col in result.columns]
-    assert before_column_order == after_column_order
-    assert_frame_equal(result, expected)
-    # assert main output has not changed
-    assert_frame_equal(data.get_main_output(), input_sample)
-    assert_frame_equal(data.get_named_output("payload"), input_sample)
+    with get_test_data(input_sample.copy(), named_inputs={"payload": sample_df}, named_output="result") as data:
+        rule = rule_cls(columns, sort_by, sort_ascending, group_by, named_input="payload", named_output="result")
+        rule.apply(data)
+        expected = expected[before_column_order]
+        result = data.get_named_output("result")
+        after_column_order = [col for col in result.columns]
+        assert before_column_order == after_column_order
+        assert_frame_equal(result, expected)
 
 
 @pytest.mark.parametrize("rule_cls", [ForwardFillRule, BackFillRule])
 def test_missing_sort_by_column(rule_cls):
-    data = RuleData(SAMPLE_DF, named_inputs={"payload": SAMPLE_DF})
-    rule = rule_cls(["C", "D"], sort_by=["E", "A"], named_input="payload", named_output="result")
-    with pytest.raises(MissingColumn) as exc:
-        rule.apply(data)
-    assert str(exc.value) == "Missing sort_by column(s) in fill operation: {'E'}"
+    with get_test_data(SAMPLE_DF, named_inputs={"payload": SAMPLE_DF}, named_output="result") as data:
+        rule = rule_cls(["C", "D"], sort_by=["E", "A"], named_input="payload", named_output="result")
+        with pytest.raises(MissingColumn) as exc:
+            rule.apply(data)
+        assert str(exc.value) == "Missing sort_by column(s) in fill operation: {'E'}"
 
 
 @pytest.mark.parametrize("rule_cls", [ForwardFillRule, BackFillRule])
 def test_missing_group_by_column(rule_cls):
-    data = RuleData(SAMPLE_DF, named_inputs={"payload": SAMPLE_DF})
-    rule = rule_cls(["C", "D"], group_by=["E", "A"], named_input="payload", named_output="result")
-    with pytest.raises(MissingColumn) as exc:
-        rule.apply(data)
-    assert str(exc.value) == "Missing group_by column(s) in fill operation: {'E'}"
+    with get_test_data(SAMPLE_DF, named_inputs={"payload": SAMPLE_DF}, named_output="result") as data:
+        rule = rule_cls(["C", "D"], group_by=["E", "A"], named_input="payload", named_output="result")
+        with pytest.raises(MissingColumn) as exc:
+            rule.apply(data)
+        assert str(exc.value) == "Missing group_by column(s) in fill operation: {'E'}"

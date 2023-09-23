@@ -47,5 +47,5 @@ class TypeConversionRule(UnaryOpBaseRule):
                 raise MissingColumn(f"Column '{column_name}' is missing in the data frame. Available columns: {sorted(columns_set)}")
             if type_str not in self.SUPPORTED_TYPES:
                 raise UnsupportedType(f"Type '{type_str}' for column '{column_name}' is not currently supported.")
-            df[column_name] = df[column_name].astype(type_str)
+        df = df.assign(**{column_name: df[column_name].astype(type_str) for column_name, type_str in self.mapper.items()})
         self._set_output_df(data, df)
