@@ -76,6 +76,7 @@ doc = [
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.2"
+mkdocs = "^1.5.3"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

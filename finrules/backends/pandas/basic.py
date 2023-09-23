@@ -32,17 +32,6 @@ class ProjectRule(BaseProjectRule, PandasRuleValidationMixin):
     """
 
     def apply(self, data):
-        """ Applies the rule to the input data.
-
-        Args:
-            data: An instance of RuleData which stores inputs and outputs, including the main outputs and any named inputs/outputs.
-
-        Returns:
-            None
-
-        Note:
-            apply doesn't return any data but it sets the results on the input data parameter (either main output or a named output depending on the rule set up).
-        """
         super().apply(data)
         df = self._get_input_df(data)
         remaining_columns = self._get_remaining_columns(df.columns)
@@ -80,17 +69,6 @@ class RenameRule(UnaryOpBaseRule):
         self.mapper = mapper
 
     def apply(self, data):
-        """ Applies the rule to the input data.
-
-        Args:
-            data: An instance of RuleData which stores inputs and outputs, including the main outputs and any named inputs/outputs.
-
-        Returns:
-            None
-
-        Note:
-            apply doesn't return any data but it sets the results on the input data parameter (either main output or a named output depending on the rule set up).
-        """
         super().apply(data)
         df = self._get_input_df(data)
         if self.strict:
@@ -134,17 +112,6 @@ class SortRule(UnaryOpBaseRule):
         self.ascending = ascending
 
     def apply(self, data):
-        """ Applies the rule to the input data.
-
-        Args:
-            data: An instance of RuleData which stores inputs and outputs, including the main outputs and any named inputs/outputs.
-
-        Returns:
-            None
-
-        Note:
-            apply doesn't return any data but it sets the results on the input data parameter (either main output or a named output depending on the rule set up).
-        """
         super().apply(data)
         df = self._get_input_df(data)
         df = df.sort_values(by=self.sort_by, ascending=self.ascending, ignore_index=True)
@@ -199,17 +166,6 @@ class DedupeRule(UnaryOpBaseRule):
         self.keep = False if keep == DedupeRule.KEEP_NONE else keep
 
     def apply(self, data):
-        """ Applies the rule to the input data.
-
-        Args:
-            data: An instance of RuleData which stores inputs and outputs, including the main outputs and any named inputs/outputs.
-
-        Returns:
-            None
-
-        Note:
-            apply doesn't return any data but it sets the results on the input data parameter (either main output or a named output depending on the rule set up).
-        """
         super().apply(data)
         df = self._get_input_df(data)
         if not set(self.columns) <= set(df.columns):

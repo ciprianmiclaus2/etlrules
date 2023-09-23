@@ -2,7 +2,7 @@
 
 ## Development Lead
 
-* Ciprian Miclaus <ciprianm@gmail.com>
+* Ciprian Miclaus <https://github.com/ciprianmiclaus>
 
 ## Contributors
 

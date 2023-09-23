@@ -62,17 +62,6 @@ class RulesBlock(UnaryOpBaseRule):
         super().__init__(named_input=named_input, named_output=named_output, name=name, description=description, strict=strict)
 
     def apply(self, data):
-        """ Applies the rule to the input data.
-
-        Params:
-            data: An instance of RuleData which stores inputs and outputs, including the main outputs and any named inputs/outputs.
-
-        Returns:
-            None
-
-        Note:
-            apply doesn't return any data but it sets the results on the input data parameter (either main output or a named output depending on the rule set up).
-        """
         super().apply(data)
         data2 = RuleData(
             main_input=self._get_input_df(data),

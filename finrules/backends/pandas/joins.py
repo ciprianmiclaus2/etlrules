@@ -49,19 +49,22 @@ class LeftJoinRule(BaseJoinRule):
     the right dataframe. The right columns will be populated with NaNs/None when there is no
     corresponding row on the right.
 
-    E.g.
+    Example:
 
-    left:
+    left dataframe::
+
         | A  | B  |
         | 1  | a  |
         | 2  | b  |
 
-    right:
+    right dataframe::
+
         | A  | C  |
         | 1  | c  |
         | 3  | d  |
 
-    result (key columns=["A"])
+    result (key columns=["A"])::
+
         | A  | B  | C  |
         | 1  | a  | c  |
         | 2  | b  | NA |
@@ -110,19 +113,22 @@ class InnerJoinRule(BaseJoinRule):
     will be copied over and merged into the result data frame. Any rows without corresponding
     values on the other side (be it left or right) will be dropped from the result.
 
-    E.g.
+    Example:
 
-    left:
+    left dataframe::
+
         | A  | B  |
         | 1  | a  |
         | 2  | b  |
 
-    right:
+    right dataframe::
+
         | A  | C  |
         | 1  | c  |
         | 3  | d  |
 
-    result (key columns=["A"])
+    result (key columns=["A"])::
+
         | A  | B  | C  |
         | 1  | a  | c  |
 
@@ -171,19 +177,22 @@ class OuterJoinRule(BaseJoinRule):
     key columns in the other dataframe. The missing side will have its columns populated with NA
     when the rows are missing.
 
-    E.g.
+    Example:
 
-    left:
+    left dataframe::
+
         | A  | B  |
         | 1  | a  |
         | 2  | b  |
 
-    right:
+    right dataframe::
+
         | A  | C  |
         | 1  | c  |
         | 3  | d  |
 
-    result (key columns=["A"])
+    result (key columns=["A"])::
+
         | A  | B  | C  |
         | 1  | a  | c  |
         | 2  | b  | NA |
@@ -234,19 +243,22 @@ class RightJoinRule(BaseJoinRule):
     the left dataframe. The left columns will be populated with NA when there is no
     corresponding row on the left.
 
-    E.g.
+    Example:
 
-    left:
+    left dataframe::
+
         | A  | B  |
         | 1  | a  |
         | 2  | b  |
 
-    right:
+    right dataframe::
+
         | A  | C  |
         | 1  | c  |
         | 3  | d  |
 
-    result (key columns=["A"])
+    result (key columns=["A"])::
+
         | A  | B  | C  |
         | 1  | a  | c  |
         | 3  | NA | d  |

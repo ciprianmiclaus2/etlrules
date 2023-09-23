@@ -4,13 +4,13 @@ repo_url: https://github.com/ciprianmiclaus/finrules
 repo_name: finrules
 #strict: true
 nav:
-  - home: index.md
-  - installation: installation.md
-  - usage: usage.md
-  - modules: api.md
-  - contributing: contributing.md
-  - authors: authors.md
-  - history: history.md
+  - Home: index.md
+  - Installation: installation.md
+  - Usage: usage.md
+  - API Reference: api.md
+  - Contributing: contributing.md
+  - Authors: authors.md
+  - History: history.md
 theme:
   name: material
   language: en
