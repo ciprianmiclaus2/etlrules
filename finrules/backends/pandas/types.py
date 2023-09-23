@@ -3,6 +3,27 @@ from finrules.rule import UnaryOpBaseRule
 
 
 class TypeConversionRule(UnaryOpBaseRule):
+    """ Converts the type of a given set of columns to other types.
+
+    Args:
+        mapper: A dict with columns names as keys and the new types as values.
+
+        named_input: Which dataframe to use as the input. Optional.
+            When not set, the input is taken from the main output.
+            Set it to a string value, the name of an output dataframe of a previous rule.
+        named_output: Give the output of this rule a name so it can be used by another rule as a named input. Optional.
+            When not set, the result of this rule will be available as the main output.
+            When set to a name (string), the result will be available as that named output.
+        name: Give the rule a name. Optional.
+            Named rules are more descriptive as to what they're trying to do/the intent.
+        description: Describe in detail what the rules does, how it does it. Optional.
+            Together with the name, the description acts as the documentation of the rule.
+        strict: When set to True, the rule does a stricter valiation. Default: True
+
+    Raises:
+        MissingColumn is raised when a column specified in the mapper doesn't exist in the input data frame.
+        UnsupportedType is raised when an unknown type is speified in the values of the mapper.
+    """
 
     SUPPORTED_TYPES = {
         'int32',

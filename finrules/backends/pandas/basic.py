@@ -8,14 +8,13 @@ from .validation import PandasRuleValidationMixin
 class ProjectRule(BaseProjectRule, PandasRuleValidationMixin):
     """ Reshapes the data frame to keep, eliminate or re-order the set of columns.
 
-    Params:
-        column_names: The list of columns to keep or eliminate from the data frame.
+    Args:
+        columns: The list of columns to keep or eliminate from the data frame.
             The order of column names will be reflected in the result data frame, so this rule can be used to re-order columns.
-        exclude: When set to True, the columns in the column_names will be excluded from the data frame. Boolean. Default: False
-            In strict mode, if any column specified in the column_names doesn't exist in the input data frame, a MissingColumn exception is raised.
+        exclude: When set to True, the columns in the columns arg will be excluded from the data frame. Boolean. Default: False
+            In strict mode, if any column specified in the columns arg doesn't exist in the input data frame, a MissingColumn exception is raised.
             In non strict mode, the missing columns are ignored.
 
-    Common params:
         named_input: Which dataframe to use as the input. Optional.
             When not set, the input is taken from the main output.
             Set it to a string value, the name of an output dataframe of a previous rule.
@@ -35,7 +34,7 @@ class ProjectRule(BaseProjectRule, PandasRuleValidationMixin):
     def apply(self, data):
         """ Applies the rule to the input data.
 
-        Params:
+        Args:
             data: An instance of RuleData which stores inputs and outputs, including the main outputs and any named inputs/outputs.
 
         Returns:
@@ -54,11 +53,10 @@ class ProjectRule(BaseProjectRule, PandasRuleValidationMixin):
 class RenameRule(UnaryOpBaseRule):
     """ Renames a set of columns in the data frame.
 
-    Params:
+    Args:
         mapper: A dictionary of old names (keys) and new names (values) to be used for the rename operation
             The order of column names will be reflected in the result data frame, so this rule can be used to re-order columns.
 
-    Common params:
         named_input: Which dataframe to use as the input. Optional.
             When not set, the input is taken from the main output.
             Set it to a string value, the name of an output dataframe of a previous rule.
@@ -84,7 +82,7 @@ class RenameRule(UnaryOpBaseRule):
     def apply(self, data):
         """ Applies the rule to the input data.
 
-        Params:
+        Args:
             data: An instance of RuleData which stores inputs and outputs, including the main outputs and any named inputs/outputs.
 
         Returns:
@@ -105,11 +103,10 @@ class RenameRule(UnaryOpBaseRule):
 class SortRule(UnaryOpBaseRule):
     """ Sort the input dataframe by the given columns, either ascending or descending.
 
-    Params:
+    Args:
         sort_by: Either a single column speified as a string or a list or tuple of columns to sort by
         ascending: Whether to sort ascending or descending. Boolean. Default: True
 
-    Common params:
         named_input: Which dataframe to use as the input. Optional.
             When not set, the input is taken from the main output.
             Set it to a string value, the name of an output dataframe of a previous rule.
@@ -139,7 +136,7 @@ class SortRule(UnaryOpBaseRule):
     def apply(self, data):
         """ Applies the rule to the input data.
 
-        Params:
+        Args:
             data: An instance of RuleData which stores inputs and outputs, including the main outputs and any named inputs/outputs.
 
         Returns:
@@ -156,17 +153,17 @@ class SortRule(UnaryOpBaseRule):
 
 class DedupeRule(UnaryOpBaseRule):
     """ De-duplicates by dropping duplicates using a set of columns to determine the duplicates.
+
     It has logic to keep the first, last or none of the duplicate in a set of duplicates.
 
-    Params:
-        column_names: A subset of columns in the data frame which are used to determine the set of duplicates.
+    Args:
+        columns: A subset of columns in the data frame which are used to determine the set of duplicates.
             Any rows that have the same values in these columns are considered to be duplicates.
         keep: What to keep in the de-duplication process. One of:
             first: keeps the first row in the duplicate set
             last: keeps the last row in the duplicate set
             none: drops all the duplicates
 
-    Common params:
         named_input: Which dataframe to use as the input. Optional.
             When not set, the input is taken from the main output.
             Set it to a string value, the name of an output dataframe of a previous rule.
@@ -204,7 +201,7 @@ class DedupeRule(UnaryOpBaseRule):
     def apply(self, data):
         """ Applies the rule to the input data.
 
-        Params:
+        Args:
             data: An instance of RuleData which stores inputs and outputs, including the main outputs and any named inputs/outputs.
 
         Returns:

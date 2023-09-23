@@ -66,7 +66,7 @@ class LeftJoinRule(BaseJoinRule):
         | 1  | a  | c  |
         | 2  | b  | NA |
 
-    Params:
+    Args:
         named_input_left: Which dataframe to use as the input on the left side of the join.
             When set to None, the input is taken from the main output of the previous rule.
             Set it to a string value, the name of an output dataframe of a previous rule.
@@ -79,7 +79,6 @@ class LeftJoinRule(BaseJoinRule):
         suffixes: A list or tuple of two values which will be set as suffixes for the columns in the
             result data frame for those columns that have the same name (and are not key columns).
 
-    Common params:
         named_output: Give the output of this rule a name so it can be used by another rule as a named input. Optional.
             When not set, the result of this rule will be available as the main output.
             When set to a name (string), the result will be available as that named output.
@@ -127,7 +126,7 @@ class InnerJoinRule(BaseJoinRule):
         | A  | B  | C  |
         | 1  | a  | c  |
 
-    Params:
+    Args:
         named_input_left: Which dataframe to use as the input on the left side of the join.
             When set to None, the input is taken from the main output of the previous rule.
             Set it to a string value, the name of an output dataframe of a previous rule.
@@ -140,7 +139,6 @@ class InnerJoinRule(BaseJoinRule):
         suffixes: A list or tuple of two values which will be set as suffixes for the columns in the
             result data frame for those columns that have the same name (and are not key columns).
 
-    Common params:
         named_output: Give the output of this rule a name so it can be used by another rule as a named input. Optional.
             When not set, the result of this rule will be available as the main output.
             When set to a name (string), the result will be available as that named output.
@@ -191,7 +189,7 @@ class OuterJoinRule(BaseJoinRule):
         | 2  | b  | NA |
         | 3  | NA | d  |
 
-    Params:
+    Args:
         named_input_left: Which dataframe to use as the input on the left side of the join.
             When set to None, the input is taken from the main output of the previous rule.
             Set it to a string value, the name of an output dataframe of a previous rule.
@@ -204,7 +202,6 @@ class OuterJoinRule(BaseJoinRule):
         suffixes: A list or tuple of two values which will be set as suffixes for the columns in the
             result data frame for those columns that have the same name (and are not key columns).
 
-    Common params:
         named_output: Give the output of this rule a name so it can be used by another rule as a named input. Optional.
             When not set, the result of this rule will be available as the main output.
             When set to a name (string), the result will be available as that named output.
@@ -261,7 +258,7 @@ class RightJoinRule(BaseJoinRule):
         right_df <right_join> left_df
         although the order of the rows will be different.
 
-    Params:
+    Args:
         named_input_left: Which dataframe to use as the input on the left side of the join.
             When set to None, the input is taken from the main output of the previous rule.
             Set it to a string value, the name of an output dataframe of a previous rule.
@@ -274,7 +271,6 @@ class RightJoinRule(BaseJoinRule):
         suffixes: A list or tuple of two values which will be set as suffixes for the columns in the
             result data frame for those columns that have the same name (and are not key columns).
 
-    Common params:
         named_output: Give the output of this rule a name so it can be used by another rule as a named input. Optional.
             When not set, the result of this rule will be available as the main output.
             When set to a name (string), the result will be available as that named output.
