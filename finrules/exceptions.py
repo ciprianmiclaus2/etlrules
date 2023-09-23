@@ -9,4 +9,8 @@ class UnsupportedTypeError(Exception):
 
 
 class ColumnAlreadyExistsError(Exception):
-    """ Raised when trying to create a column that already exists in the dataframe. """
+    """ An attempt to create a column that already exists in the dataframe. """
+
+
+class AddNewColumnSyntaxError(SyntaxError):
+    """ A column is created but there is a syntax error in the column expression. """

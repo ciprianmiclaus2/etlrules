@@ -5,6 +5,9 @@ from .data import RuleData
 
 
 class BaseRule:
+
+    EXCLUDE_FROM_COMPARE = ()
+
     def __init__(self, named_output=None, name=None, description=None, strict=True):
         assert named_output is None or isinstance(named_output, str) and named_output
         self.named_output = named_output
@@ -60,7 +63,11 @@ class BaseRule:
         return cls.from_dict(dct, backend)
 
     def __eq__(self, other):
-        return type(self) == type(other) and self.__dict__ == other.__dict__
+        return (
+            type(self) == type(other) and 
+            {k: v for k, v in self.__dict__.items() if k not in self.EXCLUDE_FROM_COMPARE} == 
+            {k: v for k, v in other.__dict__.items() if k not in self.EXCLUDE_FROM_COMPARE}
+        )
 
 
 class UnaryOpBaseRule(BaseRule):

@@ -4,7 +4,7 @@ from pandas import DataFrame
 from finrules.backends.pandas import (
     DedupeRule, ProjectRule, RenameRule, SortRule, TypeConversionRule,
     RulesBlock, LeftJoinRule, InnerJoinRule, OuterJoinRule, RightJoinRule,
-    ForwardFillRule, BackFillRule,
+    ForwardFillRule, BackFillRule, AddNewColumnRule,
 )
 from finrules.rule import BaseRule
 
@@ -37,6 +37,8 @@ from finrules.rule import BaseRule
                         named_input="FF1", named_output="FF2", name="FF", description="Some desc2 FF", strict=True),
         BackFillRule(["A", "C"], sort_by=["E", "F"], sort_ascending=True, group_by=["Y", "X"], 
                      named_input="BF1", named_output="BF2", name="BF", description="Some desc2 BF", strict=True),
+        AddNewColumnRule("NEW_COL", "df['A'] + df['B']",
+                         named_input="BF1", named_output="BF2", name="BF", description="Some desc2 BF", strict=True),
     ]
 )
 def test_serialize(rule_instance):

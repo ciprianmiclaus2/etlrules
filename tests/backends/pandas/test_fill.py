@@ -1,7 +1,7 @@
 from pandas import DataFrame
 from pandas.testing import assert_frame_equal
 import pytest
-from finrules.data import RuleData
+
 from finrules.exceptions import MissingColumnError
 from finrules.backends.pandas import ForwardFillRule, BackFillRule
 from tests.backends.pandas.utils.data import get_test_data
