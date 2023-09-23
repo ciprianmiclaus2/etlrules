@@ -2,7 +2,7 @@ from pandas import DataFrame
 from pandas.testing import assert_frame_equal
 import pytest
 from finrules.data import RuleData
-from finrules.exceptions import MissingColumn
+from finrules.exceptions import MissingColumnError
 from finrules.backends.pandas import ForwardFillRule, BackFillRule
 from tests.backends.pandas.utils.data import get_test_data
 
@@ -142,7 +142,7 @@ def test_forward_fill_rule_simple(rule_cls, input_sample, columns, sort_by, sort
 def test_missing_sort_by_column(rule_cls):
     with get_test_data(SAMPLE_DF, named_inputs={"payload": SAMPLE_DF}, named_output="result") as data:
         rule = rule_cls(["C", "D"], sort_by=["E", "A"], named_input="payload", named_output="result")
-        with pytest.raises(MissingColumn) as exc:
+        with pytest.raises(MissingColumnError) as exc:
             rule.apply(data)
         assert str(exc.value) == "Missing sort_by column(s) in fill operation: {'E'}"
 
@@ -151,6 +151,6 @@ def test_missing_sort_by_column(rule_cls):
 def test_missing_group_by_column(rule_cls):
     with get_test_data(SAMPLE_DF, named_inputs={"payload": SAMPLE_DF}, named_output="result") as data:
         rule = rule_cls(["C", "D"], group_by=["E", "A"], named_input="payload", named_output="result")
-        with pytest.raises(MissingColumn) as exc:
+        with pytest.raises(MissingColumnError) as exc:
             rule.apply(data)
         assert str(exc.value) == "Missing group_by column(s) in fill operation: {'E'}"

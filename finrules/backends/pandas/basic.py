@@ -1,5 +1,5 @@
 from finrules.backends.common.basic import BaseProjectRule
-from finrules.exceptions import MissingColumn
+from finrules.exceptions import MissingColumnError
 from finrules.rule import UnaryOpBaseRule
 
 from .validation import PandasRuleValidationMixin
@@ -12,7 +12,7 @@ class ProjectRule(BaseProjectRule, PandasRuleValidationMixin):
         columns: The list of columns to keep or eliminate from the data frame.
             The order of column names will be reflected in the result data frame, so this rule can be used to re-order columns.
         exclude: When set to True, the columns in the columns arg will be excluded from the data frame. Boolean. Default: False
-            In strict mode, if any column specified in the columns arg doesn't exist in the input data frame, a MissingColumn exception is raised.
+            In strict mode, if any column specified in the columns arg doesn't exist in the input data frame, a MissingColumnError exception is raised.
             In non strict mode, the missing columns are ignored.
 
         named_input: Which dataframe to use as the input. Optional.
@@ -28,7 +28,7 @@ class ProjectRule(BaseProjectRule, PandasRuleValidationMixin):
         strict: When set to True, the rule does a stricter valiation. Default: True
 
     Raises:
-        MissingColumn is raised in strict mode only, if any columns are missing from the input data frame.
+        MissingColumnError is raised in strict mode only, if any columns are missing from the input data frame.
     """
 
     def apply(self, data):
@@ -59,7 +59,7 @@ class RenameRule(UnaryOpBaseRule):
         strict: When set to True, the rule does a stricter valiation. Default: True
 
     Raises:
-        MissingColumn is raised in strict mode only, if any columns (keys) are missing from the input data frame.
+        MissingColumnError is raised in strict mode only, if any columns (keys) are missing from the input data frame.
     """
 
     def __init__(self, mapper, named_input=None, named_output=None, name=None, description=None, strict=True):
@@ -73,7 +73,7 @@ class RenameRule(UnaryOpBaseRule):
         df = self._get_input_df(data)
         if self.strict:
             if not set(self.mapper.keys()) <= set(df.columns):
-                raise MissingColumn(f"Missing columns to rename: {set(self.mapper.keys()) - set(df.columns)}")
+                raise MissingColumnError(f"Missing columns to rename: {set(self.mapper.keys()) - set(df.columns)}")
         df = df.rename(columns=self.mapper)
         self._set_output_df(data, df)
 
@@ -144,10 +144,10 @@ class DedupeRule(UnaryOpBaseRule):
         strict: When set to True, the rule does a stricter valiation. Default: True
 
     Raises:
-        MissingColumn is raised when a column specified to deduplicate on doesn't exist in the input data frame.
+        MissingColumnError is raised when a column specified to deduplicate on doesn't exist in the input data frame.
 
     Note:
-        MissingColumn is raised in both strict and non-strict modes. This is because the rule cannot operate reliably without a correct set of columns.
+        MissingColumnError is raised in both strict and non-strict modes. This is because the rule cannot operate reliably without a correct set of columns.
     """
 
     KEEP_FIRST = 'first'
@@ -169,6 +169,6 @@ class DedupeRule(UnaryOpBaseRule):
         super().apply(data)
         df = self._get_input_df(data)
         if not set(self.columns) <= set(df.columns):
-            raise MissingColumn(f"Missing column(s) to dedupe on: {set(self.columns) - set(df.columns)}")
+            raise MissingColumnError(f"Missing column(s) to dedupe on: {set(self.columns) - set(df.columns)}")
         df = df.drop_duplicates(subset=self.columns, keep=self.keep, ignore_index=True)
         self._set_output_df(data, df)

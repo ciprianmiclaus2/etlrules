@@ -2,7 +2,7 @@ from pandas import DataFrame
 from pandas.testing import assert_frame_equal
 import pytest
 from finrules.backends.pandas import DedupeRule, ProjectRule, RenameRule
-from finrules.exceptions import MissingColumn
+from finrules.exceptions import MissingColumnError
 from tests.backends.pandas.utils.data import get_test_data
 
 
@@ -28,7 +28,7 @@ def test_project_rule_unknown_column_strict():
     assert list(df.columns) == ["A", "B", "C", "D", "E", "F"]
     with get_test_data(df) as data:
         rule = ProjectRule(["A", "C", "UNKNOWN", "E"])
-        with pytest.raises(MissingColumn):
+        with pytest.raises(MissingColumnError):
             rule.apply(data)
 
 
@@ -47,7 +47,7 @@ def test_project_rule_unknown_column_exclude_strict():
     assert list(df.columns) == ["A", "B", "C", "D", "E", "F"]
     with get_test_data(df) as data:
         rule = ProjectRule(["A", "C", "UNKNOWN", "E"], exclude=True)
-        with pytest.raises(MissingColumn):
+        with pytest.raises(MissingColumnError):
             rule.apply(data)
 
 
@@ -88,7 +88,7 @@ def test_rename_rule_strict_unknown_column():
     df = DataFrame(data=[{"A": 1, "B": "b", "C": 3, "D": 4, "E": "e", "F": "f"}])
     with get_test_data(df) as data:
         rule = RenameRule({'A': 'AA', 'C': 'CC', 'E': 'EE', 'UNKNOWN': 'NEW'})
-        with pytest.raises(MissingColumn):
+        with pytest.raises(MissingColumnError):
             rule.apply(data)
 
 
@@ -165,5 +165,5 @@ def test_dedupe_rule_raises_missing_column():
     ])
     with get_test_data(df) as data:
         rule = DedupeRule(["A", "B", "D"], keep='first', strict=False)
-        with pytest.raises(MissingColumn):
+        with pytest.raises(MissingColumnError):
             rule.apply(data)

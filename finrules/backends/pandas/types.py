@@ -1,4 +1,4 @@
-from finrules.exceptions import MissingColumn, UnsupportedType
+from finrules.exceptions import MissingColumnError, UnsupportedTypeError
 from finrules.rule import UnaryOpBaseRule
 
 
@@ -21,8 +21,8 @@ class TypeConversionRule(UnaryOpBaseRule):
         strict: When set to True, the rule does a stricter valiation. Default: True
 
     Raises:
-        MissingColumn is raised when a column specified in the mapper doesn't exist in the input data frame.
-        UnsupportedType is raised when an unknown type is speified in the values of the mapper.
+        MissingColumnError is raised when a column specified in the mapper doesn't exist in the input data frame.
+        UnsupportedTypeError is raised when an unknown type is speified in the values of the mapper.
     """
 
     SUPPORTED_TYPES = {
@@ -44,8 +44,8 @@ class TypeConversionRule(UnaryOpBaseRule):
         columns_set = set(df.columns)
         for column_name, type_str in self.mapper.items():
             if column_name not in columns_set:
-                raise MissingColumn(f"Column '{column_name}' is missing in the data frame. Available columns: {sorted(columns_set)}")
+                raise MissingColumnError(f"Column '{column_name}' is missing in the data frame. Available columns: {sorted(columns_set)}")
             if type_str not in self.SUPPORTED_TYPES:
-                raise UnsupportedType(f"Type '{type_str}' for column '{column_name}' is not currently supported.")
+                raise UnsupportedTypeError(f"Type '{type_str}' for column '{column_name}' is not currently supported.")
         df = df.assign(**{column_name: df[column_name].astype(type_str) for column_name, type_str in self.mapper.items()})
         self._set_output_df(data, df)

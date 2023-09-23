@@ -1,4 +1,4 @@
-from finrules.exceptions import MissingColumn
+from finrules.exceptions import MissingColumnError
 from finrules.rule import UnaryOpBaseRule
 
 
@@ -28,11 +28,11 @@ class BaseFillRule(UnaryOpBaseRule):
         df_columns = [col for col in df.columns]
         if self.sort_by:
             if not set(self.sort_by) <= set(df_columns):
-                raise MissingColumn(f"Missing sort_by column(s) in fill operation: {set(self.sort_by) - set(df_columns)}")
+                raise MissingColumnError(f"Missing sort_by column(s) in fill operation: {set(self.sort_by) - set(df_columns)}")
             df = df.sort_values(by=self.sort_by, ascending=self.sort_ascending, ignore_index=True)
         if self.group_by:
             if not set(self.group_by) <= set(df_columns):
-                raise MissingColumn(f"Missing group_by column(s) in fill operation: {set(self.group_by) - set(df_columns)}")
+                raise MissingColumnError(f"Missing group_by column(s) in fill operation: {set(self.group_by) - set(df_columns)}")
             res = df.groupby(self.group_by)
             res = getattr(res, self.FILL_METHOD)()
             res = res[self.columns]
@@ -94,7 +94,7 @@ class ForwardFillRule(BaseFillRule):
         strict: When set to True, the rule does a stricter valiation. Default: True
 
     Raises:
-        MissingColumn is raised if any columns specified in either columns, sort_by or group_by are missing from the dataframe.
+        MissingColumnError is raised if any columns specified in either columns, sort_by or group_by are missing from the dataframe.
     """
     FILL_METHOD = "ffill"
 
@@ -149,6 +149,6 @@ class BackFillRule(BaseFillRule):
         strict: When set to True, the rule does a stricter valiation. Default: True
 
     Raises:
-        MissingColumn is raised if any columns specified in either columns, sort_by or group_by are missing from the dataframe.
+        MissingColumnError is raised if any columns specified in either columns, sort_by or group_by are missing from the dataframe.
     """
     FILL_METHOD = "bfill"

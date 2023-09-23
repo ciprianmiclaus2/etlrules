@@ -1,6 +1,6 @@
 from finrules.data import RuleData
 from finrules.rule import BaseRule, UnaryOpBaseRule
-from finrules.exceptions import MissingColumn
+from finrules.exceptions import MissingColumnError
 
 
 class BaseProjectRule(UnaryOpBaseRule):
@@ -17,7 +17,7 @@ class BaseProjectRule(UnaryOpBaseRule):
         df_column_names_set = set(df_column_names)
         if self.strict:
             if not columns_set <= df_column_names_set:
-                raise MissingColumn(f"No such columns: {columns_set - df_column_names_set}. Available columns: {df_column_names_set}.")
+                raise MissingColumnError(f"No such columns: {columns_set - df_column_names_set}. Available columns: {df_column_names_set}.")
         if self.exclude:
             remaining_columns = [
                 col for col in df_column_names if col not in columns_set

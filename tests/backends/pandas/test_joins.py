@@ -2,7 +2,7 @@ from pandas import DataFrame
 from pandas.testing import assert_frame_equal
 import pytest
 
-from finrules.exceptions import MissingColumn
+from finrules.exceptions import MissingColumnError
 from finrules.backends.pandas import LeftJoinRule, InnerJoinRule, OuterJoinRule, RightJoinRule
 from tests.backends.pandas.utils.data import get_test_data
 
@@ -72,7 +72,7 @@ def test_raises_missing_column_left():
     with get_test_data(named_inputs={"left": LEFT_DF, "right": RIGHT_DF}) as data:
         rule = LeftJoinRule(named_input_left="left", named_input_right="right",
                         key_columns_left=["A", "Z"], key_columns_right=["A", "B"])
-        with pytest.raises(MissingColumn) as exc:
+        with pytest.raises(MissingColumnError) as exc:
             rule.apply(data)
         assert str(exc.value) == "Missing columns in join in the left dataframe: {'Z'}"
 
@@ -81,6 +81,6 @@ def test_raises_missing_column_right():
     with get_test_data(named_inputs={"left": LEFT_DF, "right": RIGHT_DF}) as data:
         rule = LeftJoinRule(named_input_left="left", named_input_right="right",
                         key_columns_left=["A", "B"], key_columns_right=["A", "Z"])
-        with pytest.raises(MissingColumn) as exc:
+        with pytest.raises(MissingColumnError) as exc:
             rule.apply(data)
         assert str(exc.value) == "Missing columns in join in the right dataframe: {'Z'}"

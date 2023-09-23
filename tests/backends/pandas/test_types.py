@@ -3,7 +3,7 @@ from pandas.testing import assert_frame_equal
 import pytest
 
 from finrules.backends.pandas import TypeConversionRule
-from finrules.exceptions import MissingColumn, UnsupportedType
+from finrules.exceptions import MissingColumnError, UnsupportedTypeError
 from tests.backends.pandas.utils.data import get_test_data
 
 
@@ -38,7 +38,7 @@ def test_type_conversion_rule_missing_column():
             'A': 'int64',
             'C': 'str',
         }, named_output="result")
-        with pytest.raises(MissingColumn):
+        with pytest.raises(MissingColumnError):
             rule.apply(data)
 
 
@@ -53,5 +53,5 @@ def test_type_conversion_rule_unsupported_type():
             'A': 'int64',
             'B': 'unknown_type',
         }, named_output="result")
-        with pytest.raises(UnsupportedType):
+        with pytest.raises(UnsupportedTypeError):
             rule.apply(data)

@@ -1,4 +1,4 @@
-from finrules.exceptions import MissingColumn
+from finrules.exceptions import MissingColumnError
 from finrules.rule import BinaryOpBaseRule
 
 
@@ -20,9 +20,9 @@ class BaseJoinRule(BinaryOpBaseRule):
         left_df = self._get_input_df_left(data)
         right_df = self._get_input_df_right(data)
         if not set(self.key_columns_left) <= set(left_df.columns):
-            raise MissingColumn(f"Missing columns in join in the left dataframe: {set(self.key_columns_left) - set(left_df.columns)}")
+            raise MissingColumnError(f"Missing columns in join in the left dataframe: {set(self.key_columns_left) - set(left_df.columns)}")
         if not set(self.key_columns_right) <= set(right_df.columns):
-            raise MissingColumn(f"Missing columns in join in the right dataframe: {set(self.key_columns_right) - set(right_df.columns)}")
+            raise MissingColumnError(f"Missing columns in join in the right dataframe: {set(self.key_columns_right) - set(right_df.columns)}")
         df = left_df.merge(
             right_df,
             how=self.JOIN_TYPE,
@@ -92,7 +92,7 @@ class LeftJoinRule(BaseJoinRule):
         strict: When set to True, the rule does a stricter valiation. Default: True
 
     Raises:
-        MissingColumn is raised if any columns (keys) are missing from any of the two input data frames.
+        MissingColumnError is raised if any columns (keys) are missing from any of the two input data frames.
     """
 
     JOIN_TYPE = "left"
@@ -155,7 +155,7 @@ class InnerJoinRule(BaseJoinRule):
         strict: When set to True, the rule does a stricter valiation. Default: True
 
     Raises:
-        MissingColumn is raised if any columns (keys) are missing from any of the two input data frames.
+        MissingColumnError is raised if any columns (keys) are missing from any of the two input data frames.
     """
 
     JOIN_TYPE = "inner"
@@ -221,7 +221,7 @@ class OuterJoinRule(BaseJoinRule):
         strict: When set to True, the rule does a stricter valiation. Default: True
 
     Raises:
-        MissingColumn is raised if any columns (keys) are missing from any of the two input data frames.
+        MissingColumnError is raised if any columns (keys) are missing from any of the two input data frames.
     """
 
     JOIN_TYPE = "outer"
@@ -293,7 +293,7 @@ class RightJoinRule(BaseJoinRule):
         strict: When set to True, the rule does a stricter valiation. Default: True
 
     Raises:
-        MissingColumn is raised if any columns (keys) are missing from any of the two input data frames.
+        MissingColumnError is raised if any columns (keys) are missing from any of the two input data frames.
     """
 
     JOIN_TYPE = "right"
