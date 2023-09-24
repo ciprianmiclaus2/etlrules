@@ -49,6 +49,16 @@ class AddNewColumnRule(UnaryOpBaseRule):
             - TypeError is raised if an operation is not supported between the types involved
             - NameError is raised if an unknown variable is used
             - KeyError is raised if you try to use an unknown column (i.e. df['ANY_UNKNOWN_COLUMN'])
+
+    Note:
+        The implementation will try to use dataframe operations for performance, but when those are not supported it
+        will fallback to row level operations.
+    
+    Note:
+        NA are treated slightly differently between dataframe level operations and row level.
+        At dataframe level operations, NAs in operations will make the result be NA.
+        In row level operations, NAs will generally raise a TypeError.
+        To avoid such behavior, fill the NAs before performing operations.
     """
 
     EXCLUDE_FROM_COMPARE = ('_ast_expr', '_compiled_expr')
