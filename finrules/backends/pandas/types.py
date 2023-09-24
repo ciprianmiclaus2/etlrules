@@ -1,3 +1,5 @@
+from typing import Mapping, Optional
+
 from finrules.exceptions import MissingColumnError, UnsupportedTypeError
 from finrules.rule import UnaryOpBaseRule
 
@@ -32,7 +34,7 @@ class TypeConversionRule(UnaryOpBaseRule):
         'str',
     }
 
-    def __init__(self, mapper, named_input=None, named_output=None, name=None, description=None, strict=True):
+    def __init__(self, mapper: Mapping[str, str], named_input: Optional[str]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
         assert isinstance(mapper, dict), "mapper needs to be a dict {column_name:type}"
         assert all(isinstance(key, str) and isinstance(val, str) for key, val in mapper.items()), "mapper needs to be a dict {column_name:type} where the names are str"
         super().__init__(named_input=named_input, named_output=named_output, name=name, description=description, strict=strict)

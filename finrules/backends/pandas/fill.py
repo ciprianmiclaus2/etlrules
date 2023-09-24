@@ -1,3 +1,5 @@
+from typing import Iterable, Optional
+
 from finrules.exceptions import MissingColumnError
 from finrules.rule import UnaryOpBaseRule
 
@@ -6,7 +8,7 @@ class BaseFillRule(UnaryOpBaseRule):
 
     FILL_METHOD = None
 
-    def __init__(self, columns, sort_by=None, sort_ascending=True, group_by=None, named_input=None, named_output=None, name=None, description=None, strict=True):
+    def __init__(self, columns: Iterable[str], sort_by: Optional[Iterable[str]]=None, sort_ascending: bool=True, group_by: Optional[Iterable[str]]=None, named_input: Optional[str]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
         assert self.FILL_METHOD in ('ffill', 'bfill')
         assert columns, "Columns need to be specified for fill rules."
         super().__init__(named_input=named_input, named_output=named_output, name=name, description=description, strict=strict)

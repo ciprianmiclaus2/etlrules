@@ -1,3 +1,6 @@
+from typing import Iterable, Optional
+from pandas import DataFrame
+
 from finrules.exceptions import MissingColumnError
 from finrules.rule import BinaryOpBaseRule
 
@@ -6,11 +9,11 @@ class BaseJoinRule(BinaryOpBaseRule):
 
     JOIN_TYPE = None
 
-    def __init__(self, named_input_left, named_input_right, key_columns_left, key_columns_right=None, suffixes=(None, "_r"), named_output=None, name=None, description=None, strict=True):
+    def __init__(self, named_input_left: DataFrame, named_input_right: DataFrame, key_columns_left: Iterable[str], key_columns_right: Optional[Iterable[str]]=None, suffixes: Iterable[Optional[str]]=(None, "_r"), named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
         super().__init__(named_input_left=named_input_left, named_input_right=named_input_right, named_output=named_output, name=name, description=description, strict=strict)
         assert isinstance(key_columns_left, (list, tuple)) and key_columns_left and all(isinstance(col, str) for col in key_columns_left), "JoinRule: key_columns_left must a non-empty list of tuple with str column names"
-        self.key_columns_left = key_columns_left
-        self.key_columns_right = key_columns_right or key_columns_left
+        self.key_columns_left = [col for col in key_columns_left]
+        self.key_columns_right = [col for col in key_columns_right] if key_columns_right is not None else self.key_columns_left
         assert isinstance(suffixes, (list, tuple)) and len(suffixes) == 2 and all(s is None or isinstance(s, str) for s in suffixes), "The suffixes must be a list or tuple of 2 elements"
         self.suffixes = suffixes
 

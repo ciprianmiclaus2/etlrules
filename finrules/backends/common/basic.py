@@ -1,10 +1,12 @@
+from typing import Iterable, Optional
+
 from finrules.data import RuleData
 from finrules.rule import BaseRule, UnaryOpBaseRule
 from finrules.exceptions import MissingColumnError
 
 
 class BaseProjectRule(UnaryOpBaseRule):
-    def __init__(self, columns, exclude=False, named_input=None, named_output=None, name=None, description=None, strict=True):
+    def __init__(self, columns: Iterable[str], exclude=False, named_input: Optional[str]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
         super().__init__(named_input=named_input, named_output=named_output, name=name, description=description, strict=strict)
         self.columns = [col for col in columns]
         assert all(
@@ -53,7 +55,7 @@ class RulesBlock(UnaryOpBaseRule):
         strict: When set to True, the rule does a stricter valiation. Default: True
     """
 
-    def __init__(self, rules, named_input=None, named_output=None, name=None, description=None, strict=True):
+    def __init__(self, rules: Iterable[BaseRule], named_input: Optional[str]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
         self._rules = [rule for rule in rules]
         assert self._rules, "RulesBlock: Empty rules set provided."
         assert all(isinstance(rule, BaseRule) for rule in self._rules), [rule for rule in self._rules if not isinstance(rule, BaseRule)]

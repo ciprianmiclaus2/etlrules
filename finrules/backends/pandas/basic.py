@@ -1,3 +1,5 @@
+from typing import Literal, Iterable, Mapping, Optional
+
 from finrules.backends.common.basic import BaseProjectRule
 from finrules.exceptions import MissingColumnError
 from finrules.rule import UnaryOpBaseRule
@@ -62,7 +64,7 @@ class RenameRule(UnaryOpBaseRule):
         MissingColumnError is raised in strict mode only, if any columns (keys) are missing from the input data frame.
     """
 
-    def __init__(self, mapper, named_input=None, named_output=None, name=None, description=None, strict=True):
+    def __init__(self, mapper: Mapping[str, str], named_input: Optional[str]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
         assert isinstance(mapper, dict), "mapper needs to be a dict {old_name:new_name}"
         assert all(isinstance(key, str) and isinstance(val, str) for key, val in mapper.items()), "mapper needs to be a dict {old_name:new_name} where the names are str"
         super().__init__(named_input=named_input, named_output=named_output, name=name, description=description, strict=strict)
@@ -102,10 +104,9 @@ class SortRule(UnaryOpBaseRule):
         For any rows that have the same value in the first column, the second column is used to decide the sort order within that group and so on.
     """
 
-    def __init__(self, sort_by, ascending=True, named_input=None, named_output=None, name=None, description=None, strict=True):
+    def __init__(self, sort_by: Iterable[str], ascending: bool=True, named_input: Optional[str]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
         super().__init__(named_input=named_input, named_output=named_output, name=name, description=description, strict=strict)
-        assert sort_by and (isinstance(sort_by, str) or (isinstance(sort_by, (list, tuple)) and all(isinstance(val, str) for val in sort_by))), "sort_by must be a str (single column) or a list of str (multiple columns)"
-        self.sort_by = sort_by
+        self.sort_by = [col for col in sort_by]
         if isinstance(self.sort_by, str):
             self.sort_by = [self.sort_by]
         assert isinstance(ascending, bool) or (isinstance(ascending, (list, tuple)) and all(isinstance(val, bool) for val in ascending) and len(ascending) == len(self.sort_by)), "ascending must be a bool or a list of bool of the same len as sort_by"
@@ -156,7 +157,7 @@ class DedupeRule(UnaryOpBaseRule):
 
     ALL_KEEPS = (KEEP_FIRST, KEEP_LAST, KEEP_NONE)
  
-    def __init__(self, columns, keep=KEEP_FIRST, named_input=None, named_output=None, name=None, description=None, strict=True):
+    def __init__(self, columns: Iterable[str], keep: Literal[KEEP_FIRST, KEEP_LAST, KEEP_NONE]=KEEP_FIRST, named_input: Optional[str]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
         super().__init__(named_input=named_input, named_output=named_output, name=name, description=description, strict=strict)
         self.columns = [col for col in columns]
         assert all(
