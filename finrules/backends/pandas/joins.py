@@ -72,29 +72,29 @@ class LeftJoinRule(BaseJoinRule):
         | 2  | b  | NA |
 
     Args:
-        named_input_left: Which dataframe to use as the input on the left side of the join.
+        named_input_left (Optional[str]): Which dataframe to use as the input on the left side of the join.
             When set to None, the input is taken from the main output of the previous rule.
             Set it to a string value, the name of an output dataframe of a previous rule.
-        named_input_right: Which dataframe to use as the input on the right side of the join.
+        named_input_right (Optional[str]): Which dataframe to use as the input on the right side of the join.
             When set to None, the input is taken from the main output of the previous rule.
             Set it to a string value, the name of an output dataframe of a previous rule.
-        key_columns_left: A list or tuple of column names to join on (columns in the left data frame)
-        key_columns_right: A list or tuple of column names to join on (columns in the right data frame).
+        key_columns_left (Iterable[str]): A list or tuple of column names to join on (columns in the left data frame)
+        key_columns_right (Optional[Iterable[str]]): A list or tuple of column names to join on (columns in the right data frame).
             If not set or set to None, the key_columns_left is used on the right dataframe too.
-        suffixes: A list or tuple of two values which will be set as suffixes for the columns in the
+        suffixes (Iterable[Optional[str]]): A list or tuple of two values which will be set as suffixes for the columns in the
             result data frame for those columns that have the same name (and are not key columns).
 
-        named_output: Give the output of this rule a name so it can be used by another rule as a named input. Optional.
+        named_output (Optional[str]): Give the output of this rule a name so it can be used by another rule as a named input. Optional.
             When not set, the result of this rule will be available as the main output.
             When set to a name (string), the result will be available as that named output.
-        name: Give the rule a name. Optional.
+        name (Optional[str]): Give the rule a name. Optional.
             Named rules are more descriptive as to what they're trying to do/the intent.
-        description: Describe in detail what the rules does, how it does it. Optional.
+        description (Optional[str]): Describe in detail what the rules does, how it does it. Optional.
             Together with the name, the description acts as the documentation of the rule.
-        strict: When set to True, the rule does a stricter valiation. Default: True
+        strict (bool): When set to True, the rule does a stricter valiation. Default: True
 
     Raises:
-        MissingColumnError is raised if any columns (keys) are missing from any of the two input data frames.
+        MissingColumnError: raised if any columns (keys) are missing from any of the two input data frames.
     """
 
     JOIN_TYPE = "left"
@@ -135,29 +135,29 @@ class InnerJoinRule(BaseJoinRule):
         | 1  | a  | c  |
 
     Args:
-        named_input_left: Which dataframe to use as the input on the left side of the join.
+        named_input_left (Optional[str]): Which dataframe to use as the input on the left side of the join.
             When set to None, the input is taken from the main output of the previous rule.
             Set it to a string value, the name of an output dataframe of a previous rule.
-        named_input_right: Which dataframe to use as the input on the right side of the join.
+        named_input_right (Optional[str]): Which dataframe to use as the input on the right side of the join.
             When set to None, the input is taken from the main output of the previous rule.
             Set it to a string value, the name of an output dataframe of a previous rule.
-        key_columns_left: A list or tuple of column names to join on (columns in the left data frame)
-        key_columns_right: A list or tuple of column names to join on (columns in the right data frame).
+        key_columns_left (Iterable[str]): A list or tuple of column names to join on (columns in the left data frame)
+        key_columns_right (Optional[Iterable[str]]): A list or tuple of column names to join on (columns in the right data frame).
             If not set or set to None, the key_columns_left is used on the right dataframe too.
-        suffixes: A list or tuple of two values which will be set as suffixes for the columns in the
+        suffixes (Iterable[Optional[str]]): A list or tuple of two values which will be set as suffixes for the columns in the
             result data frame for those columns that have the same name (and are not key columns).
 
-        named_output: Give the output of this rule a name so it can be used by another rule as a named input. Optional.
+        named_output (Optional[str]): Give the output of this rule a name so it can be used by another rule as a named input. Optional.
             When not set, the result of this rule will be available as the main output.
             When set to a name (string), the result will be available as that named output.
-        name: Give the rule a name. Optional.
+        name (Optional[str]): Give the rule a name. Optional.
             Named rules are more descriptive as to what they're trying to do/the intent.
-        description: Describe in detail what the rules does, how it does it. Optional.
+        description (Optional[str]): Describe in detail what the rules does, how it does it. Optional.
             Together with the name, the description acts as the documentation of the rule.
-        strict: When set to True, the rule does a stricter valiation. Default: True
+        strict (bool): When set to True, the rule does a stricter valiation. Default: True
 
     Raises:
-        MissingColumnError is raised if any columns (keys) are missing from any of the two input data frames.
+        MissingColumnError: raised if any columns (keys) are missing from any of the two input data frames.
     """
 
     JOIN_TYPE = "inner"
@@ -201,29 +201,29 @@ class OuterJoinRule(BaseJoinRule):
         | 3  | NA | d  |
 
     Args:
-        named_input_left: Which dataframe to use as the input on the left side of the join.
+        named_input_left (Optional[str]): Which dataframe to use as the input on the left side of the join.
             When set to None, the input is taken from the main output of the previous rule.
             Set it to a string value, the name of an output dataframe of a previous rule.
-        named_input_right: Which dataframe to use as the input on the right side of the join.
+        named_input_right (Optional[str]): Which dataframe to use as the input on the right side of the join.
             When set to None, the input is taken from the main output of the previous rule.
             Set it to a string value, the name of an output dataframe of a previous rule.
-        key_columns_left: A list or tuple of column names to join on (columns in the left data frame)
-        key_columns_right: A list or tuple of column names to join on (columns in the right data frame).
+        key_columns_left (Iterable[str]): A list or tuple of column names to join on (columns in the left data frame)
+        key_columns_right (Optional[Iterable[str]]): A list or tuple of column names to join on (columns in the right data frame).
             If not set or set to None, the key_columns_left is used on the right dataframe too.
-        suffixes: A list or tuple of two values which will be set as suffixes for the columns in the
+        suffixes (Iterable[Optional[str]]): A list or tuple of two values which will be set as suffixes for the columns in the
             result data frame for those columns that have the same name (and are not key columns).
 
-        named_output: Give the output of this rule a name so it can be used by another rule as a named input. Optional.
+        named_output (Optional[str]): Give the output of this rule a name so it can be used by another rule as a named input. Optional.
             When not set, the result of this rule will be available as the main output.
             When set to a name (string), the result will be available as that named output.
-        name: Give the rule a name. Optional.
+        name (Optional[str]): Give the rule a name. Optional.
             Named rules are more descriptive as to what they're trying to do/the intent.
-        description: Describe in detail what the rules does, how it does it. Optional.
+        description (Optional[str]): Describe in detail what the rules does, how it does it. Optional.
             Together with the name, the description acts as the documentation of the rule.
-        strict: When set to True, the rule does a stricter valiation. Default: True
+        strict (bool): When set to True, the rule does a stricter valiation. Default: True
 
     Raises:
-        MissingColumnError is raised if any columns (keys) are missing from any of the two input data frames.
+        MissingColumnError: raised if any columns (keys) are missing from any of the two input data frames.
     """
 
     JOIN_TYPE = "outer"
@@ -273,29 +273,29 @@ class RightJoinRule(BaseJoinRule):
         although the order of the rows will be different.
 
     Args:
-        named_input_left: Which dataframe to use as the input on the left side of the join.
+        named_input_left (Optional[str]): Which dataframe to use as the input on the left side of the join.
             When set to None, the input is taken from the main output of the previous rule.
             Set it to a string value, the name of an output dataframe of a previous rule.
-        named_input_right: Which dataframe to use as the input on the right side of the join.
+        named_input_right (Optional[str]): Which dataframe to use as the input on the right side of the join.
             When set to None, the input is taken from the main output of the previous rule.
             Set it to a string value, the name of an output dataframe of a previous rule.
-        key_columns_left: A list or tuple of column names to join on (columns in the left data frame)
-        key_columns_right: A list or tuple of column names to join on (columns in the right data frame).
+        key_columns_left (Iterable[str]): A list or tuple of column names to join on (columns in the left data frame)
+        key_columns_right (Optional[Iterable[str]]): A list or tuple of column names to join on (columns in the right data frame).
             If not set or set to None, the key_columns_left is used on the right dataframe too.
-        suffixes: A list or tuple of two values which will be set as suffixes for the columns in the
+        suffixes (Iterable[Optional[str]]): A list or tuple of two values which will be set as suffixes for the columns in the
             result data frame for those columns that have the same name (and are not key columns).
 
-        named_output: Give the output of this rule a name so it can be used by another rule as a named input. Optional.
+        named_output (Optional[str]): Give the output of this rule a name so it can be used by another rule as a named input. Optional.
             When not set, the result of this rule will be available as the main output.
             When set to a name (string), the result will be available as that named output.
-        name: Give the rule a name. Optional.
+        name (Optional[str]): Give the rule a name. Optional.
             Named rules are more descriptive as to what they're trying to do/the intent.
-        description: Describe in detail what the rules does, how it does it. Optional.
+        description (Optional[str]): Describe in detail what the rules does, how it does it. Optional.
             Together with the name, the description acts as the documentation of the rule.
-        strict: When set to True, the rule does a stricter valiation. Default: True
+        strict (bool): When set to True, the rule does a stricter valiation. Default: True
 
     Raises:
-        MissingColumnError is raised if any columns (keys) are missing from any of the two input data frames.
+        MissingColumnError: raised if any columns (keys) are missing from any of the two input data frames.
     """
 
     JOIN_TYPE = "right"

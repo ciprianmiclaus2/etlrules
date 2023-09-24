@@ -23,8 +23,8 @@ class TypeConversionRule(UnaryOpBaseRule):
         strict: When set to True, the rule does a stricter valiation. Default: True
 
     Raises:
-        MissingColumnError is raised when a column specified in the mapper doesn't exist in the input data frame.
-        UnsupportedTypeError is raised when an unknown type is speified in the values of the mapper.
+        MissingColumnError: is raised when a column specified in the mapper doesn't exist in the input data frame.
+        UnsupportedTypeError: is raised when an unknown type is speified in the values of the mapper.
     """
 
     SUPPORTED_TYPES = {

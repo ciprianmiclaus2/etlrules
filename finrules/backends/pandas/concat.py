@@ -55,8 +55,8 @@ class VConcatRule(BinaryOpBaseRule):
         strict: When set to True, the rule does a stricter valiation. Default: True
 
     Raises:
-        MissingColumnError is raised if any subset columns specified are missing from any of the dataframe.
-        SchemaError is raised in strict mode only if the columns differ between the two dataframes and subset_columns is not specified.
+        MissingColumnError: raised if any subset columns specified are missing from any of the dataframe.
+        SchemaError: raised in strict mode only if the columns differ between the two dataframes and subset_columns is not specified.
     
     Note:
         In strict mode, as described above, SchemaError is raised if the columns are not the same (names, types can be inferred).
@@ -130,9 +130,13 @@ class HConcatRule(BinaryOpBaseRule):
         strict: When set to True, the rule does a stricter valiation. Default: True
 
     Raises:
-        ColumnAlreadyExistsError is raised if the two dataframes have columns with the same name.
-        SchemaError is raised in strict mode only if the two dataframes have different number of rows.
+        ColumnAlreadyExistsError: raised if the two dataframes have columns with the same name.
+        SchemaError: raised in strict mode only if the two dataframes have different number of rows.
     """
+
+    def __init__(self, named_input_left: Optional[str], named_input_right: Optional[str], subset_columns: Optional[Iterable[str]]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
+        # This __init__ not really needed but the type annotations are extracted from it
+        super().__init__(named_input_left=named_input_left, named_input_right=named_input_right, named_output=named_output, name=name, description=description, strict=strict)
 
     def apply(self, data):
         super().apply(data)

@@ -26,7 +26,7 @@ class AddNewColumnRule(UnaryOpBaseRule):
         | 3   | 4  | 7   |
 
     Args:
-        column_nae: The name of the new column to be added.
+        column_name: The name of the new column to be added.
         column_expression: An expression that gets evaluated and produces the value for the new column.
             The syntax: df["EXISTING_COL"] can be used in the expression to refer to other columns in the dataframe.
 
@@ -43,12 +43,11 @@ class AddNewColumnRule(UnaryOpBaseRule):
         strict: When set to True, the rule does a stricter valiation. Default: True
 
     Raises:
-        ColumnAlreadyExistsError is raised in strict mode only if a column with the same name already exists in the dataframe.
-        AddNewColumnSyntaxError is raised if the column expression has a Python syntax error.
-        A variety of Python exceptions can be raised when evaluating the expression, e.g.:
-            - TypeError is raised if an operation is not supported between the types involved
-            - NameError is raised if an unknown variable is used
-            - KeyError is raised if you try to use an unknown column (i.e. df['ANY_UNKNOWN_COLUMN'])
+        ColumnAlreadyExistsError: raised in strict mode only if a column with the same name already exists in the dataframe.
+        AddNewColumnSyntaxError: raised if the column expression has a Python syntax error.
+        TypeError: raised if an operation is not supported between the types involved
+        NameError: raised if an unknown variable is used
+        KeyError: raised if you try to use an unknown column (i.e. df['ANY_UNKNOWN_COLUMN'])
 
     Note:
         The implementation will try to use dataframe operations for performance, but when those are not supported it
@@ -63,7 +62,7 @@ class AddNewColumnRule(UnaryOpBaseRule):
 
     EXCLUDE_FROM_COMPARE = ('_ast_expr', '_compiled_expr')
 
-    def __init__(self, column_name: str, column_expression: str, named_input:Optional[str]=None, named_output:Optional[str]=None, name:Optional[str]=None, description:Optional[str]=None, strict:bool=True):
+    def __init__(self, column_name: str, column_expression: str, named_input: Optional[str]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
         super().__init__(named_input=named_input, named_output=named_output, name=name, description=description, strict=strict)
         self.column_name = column_name
         self.column_expression = column_expression
