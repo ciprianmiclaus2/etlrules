@@ -1,3 +1,4 @@
+import numpy as np
 from pandas import DataFrame, concat
 from pandas.testing import assert_frame_equal
 import pytest
@@ -8,16 +9,19 @@ from tests.backends.pandas.utils.data import get_test_data
 
 
 INPUT_DF = DataFrame(data=[
-    {"A": 1, "B": 2, "C": 3, "D": "a", "E": "x"},
+    {"A": 1, "B": 2, "C": 3, "D": "a", "E": "x", "F": 2, "G": "a"},
     {"A": 2, "B": 3, "C": 4, "D": "b", "E": "y"},
     {"A": 3, "B": 4, "C": 5, "D": "c", "E": "z"},
-    {"A": 4, "B": 5, "C": 6, "D": "d", "E": "k"},
+    {"A": 4, "B": 5, "C": 6, "D": "d", "E": "k", "F": 3, "G": "b"},
 ])
 
 
 DF_OPS_SCENARIOS = [
     ["Sum", "df['A'] + df['B'] + df['C']", DataFrame(data=[
         {"Sum": 6}, {"Sum": 9}, {"Sum": 12}, {"Sum": 15}, 
+    ]), None],
+    ["AddConst", "df['A'] + 10", DataFrame(data=[
+        {"AddConst": 11}, {"AddConst": 12}, {"AddConst": 13}, {"AddConst": 14}, 
     ]), None],
     ["Diff", "df['B'] - df['A']", DataFrame(data=[
         {"Diff": 1}, {"Diff": 1}, {"Diff": 1}, {"Diff": 1}, 
@@ -62,6 +66,17 @@ NON_DF_OPS_SCENARIOS = [
     ]), None],
 ]
 
+
+NA_OPS_SCENARIOS = [
+    ["Sum", "df['A'] + df['F']", DataFrame(data=[
+        {"Sum": 3.0}, {"Sum": np.nan}, {"Sum": np.nan}, {"Sum": 7.0}, 
+    ]), None],
+    ["StringConcat", "df['D'] + df['G']", DataFrame(data=[
+        {"StringConcat": "aa"}, {"StringConcat": np.nan}, {"StringConcat": np.nan}, {"StringConcat": "db"}, 
+    ]), None],
+]
+
+
 ERROR_SCENARIOS = [
     ["A", "df['B'] + df['C']", ColumnAlreadyExistsError, "Column A already exists in the input dataframe"],
     ["ERR", "df['B'", AddNewColumnSyntaxError, "Error in expression 'df['B'':"],
@@ -75,6 +90,7 @@ ERROR_SCENARIOS = [
 @pytest.mark.parametrize("column_name,expression,expected,expected_info",
     DF_OPS_SCENARIOS +
     NON_DF_OPS_SCENARIOS +
+    NA_OPS_SCENARIOS +
     ERROR_SCENARIOS
 )
 def test_add_new_column(column_name, expression, expected, expected_info):
