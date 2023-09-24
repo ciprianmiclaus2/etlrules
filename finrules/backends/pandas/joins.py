@@ -1,5 +1,4 @@
 from typing import Iterable, Optional
-from pandas import DataFrame
 
 from finrules.exceptions import MissingColumnError
 from finrules.rule import BinaryOpBaseRule
@@ -9,7 +8,7 @@ class BaseJoinRule(BinaryOpBaseRule):
 
     JOIN_TYPE = None
 
-    def __init__(self, named_input_left: DataFrame, named_input_right: DataFrame, key_columns_left: Iterable[str], key_columns_right: Optional[Iterable[str]]=None, suffixes: Iterable[Optional[str]]=(None, "_r"), named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
+    def __init__(self, named_input_left: Optional[str], named_input_right: Optional[str], key_columns_left: Iterable[str], key_columns_right: Optional[Iterable[str]]=None, suffixes: Iterable[Optional[str]]=(None, "_r"), named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
         super().__init__(named_input_left=named_input_left, named_input_right=named_input_right, named_output=named_output, name=name, description=description, strict=strict)
         assert isinstance(key_columns_left, (list, tuple)) and key_columns_left and all(isinstance(col, str) for col in key_columns_left), "JoinRule: key_columns_left must a non-empty list of tuple with str column names"
         self.key_columns_left = [col for col in key_columns_left]

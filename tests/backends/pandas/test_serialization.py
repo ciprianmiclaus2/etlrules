@@ -5,6 +5,7 @@ from finrules.backends.pandas import (
     DedupeRule, ProjectRule, RenameRule, SortRule, TypeConversionRule,
     RulesBlock, LeftJoinRule, InnerJoinRule, OuterJoinRule, RightJoinRule,
     ForwardFillRule, BackFillRule, AddNewColumnRule,
+    VConcatRule,
 )
 from finrules.rule import BaseRule
 
@@ -39,6 +40,8 @@ from finrules.rule import BaseRule
                      named_input="BF1", named_output="BF2", name="BF", description="Some desc2 BF", strict=True),
         AddNewColumnRule("NEW_COL", "df['A'] + df['B']",
                          named_input="BF1", named_output="BF2", name="BF", description="Some desc2 BF", strict=True),
+        VConcatRule(named_input_left="left4", named_input_right="right4", subset_columns=["A", "F"],
+                    named_output="RJ2", name="RightJoinRule", description="Some desc4", strict=True),
     ]
 )
 def test_serialize(rule_instance):

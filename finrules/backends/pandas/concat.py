@@ -1,0 +1,79 @@
+from pandas import concat
+from typing import Iterable, Optional
+
+from finrules.exceptions import MissingColumnError, SchemaError
+from finrules.rule import BinaryOpBaseRule
+
+
+class VConcatRule(BinaryOpBaseRule):
+    """ Vertically concatenates two dataframe with the result having the rows from the left dataframe followed by the rows from the right dataframe.
+
+    Example::
+
+        Left dataframe:
+        | A   | B  |
+        | a   | 1  |
+        | b   | 2  |
+        | c   | 3  |
+
+        Right dataframe:
+        | A   | B  |
+        | d   | 4  |
+        | e   | 5  |
+        | f   | 6  |  
+
+    After a concat(left, right), the result will look like::
+
+        | A   | B  |
+        | a   | 1  |
+        | b   | 2  |
+        | c   | 3  |
+        | d   | 4  |
+        | e   | 5  |
+        | f   | 6  |
+
+    Args:
+        named_input_left: Which dataframe to use as the input on the left side of the join.
+            When set to None, the input is taken from the main output of the previous rule.
+            Set it to a string value, the name of an output dataframe of a previous rule.
+        named_input_right: Which dataframe to use as the input on the right side of the join.
+            When set to None, the input is taken from the main output of the previous rule.
+            Set it to a string value, the name of an output dataframe of a previous rule.
+        subset_columns: A subset list of columns available in both dataframes.
+            Only these columns will be concated.
+            The effect is similar to doing a ProjectRule(subset_columns) on both dataframes before the concat.
+
+        named_output: Give the output of this rule a name so it can be used by another rule as a named input. Optional.
+            When not set, the result of this rule will be available as the main output.
+            When set to a name (string), the result will be available as that named output.
+        name: Give the rule a name. Optional.
+            Named rules are more descriptive as to what they're trying to do/the intent.
+        description: Describe in detail what the rules does, how it does it. Optional.
+            Together with the name, the description acts as the documentation of the rule.
+        strict: When set to True, the rule does a stricter valiation. Default: True
+
+    Raises:
+        MissingColumnError is raised if any subset columns specified are missing from any of the dataframe.
+        SchemaError is raised in strict mode only if the columns differ between the two dataframes and subset_columns is not specified.
+    """
+
+    def __init__(self, named_input_left: Optional[str], named_input_right: Optional[str], subset_columns: Optional[Iterable[str]]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
+        super().__init__(named_input_left=named_input_left, named_input_right=named_input_right, named_output=named_output, name=name, description=description, strict=strict)
+        self.subset_columns = [col for col in subset_columns] if subset_columns is not None else None
+
+    def apply(self, data):
+        super().apply(data)
+        left_df = self._get_input_df_left(data)
+        right_df = self._get_input_df_right(data)
+        if self.subset_columns:
+            if not set(self.subset_columns) <= set(left_df.columns):
+                raise MissingColumnError(f"Missing columns in the left dataframe of the concat operation: {set(self.subset_columns) - set(left_df.columns)}")
+            if not set(self.subset_columns) <= set(right_df.columns):
+                raise MissingColumnError(f"Missing columns in the right dataframe of the concat operation: {set(self.subset_columns) - set(right_df.columns)}")
+            left_df = left_df[self.subset_columns]
+            right_df = right_df[self.subset_columns]
+        if self.strict:
+            if set(left_df.columns) != set(right_df.columns):
+                raise SchemaError(f"Concat needs both dataframe have the same schema. Missing columns in the right df: {set(right_df.columns) - set(left_df.columns)}. Missing columns in the left df: {set(left_df.columns) - set(right_df.columns)}")
+        df = concat([left_df, right_df], axis=0, ignore_index=True)
+        self._set_output_df(data, df)

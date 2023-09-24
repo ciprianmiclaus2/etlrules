@@ -14,3 +14,7 @@ class ColumnAlreadyExistsError(Exception):
 
 class AddNewColumnSyntaxError(SyntaxError):
     """ A column is created but there is a syntax error in the column expression. """
+
+
+class SchemaError(Exception):
+    """ An operation needs a certain schema for the dataframe which is not present. """
