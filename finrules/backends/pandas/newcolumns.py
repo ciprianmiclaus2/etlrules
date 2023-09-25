@@ -1,7 +1,7 @@
 import ast
 from typing import Optional
 
-from finrules.exceptions import AddNewColumnSyntaxError, ColumnAlreadyExistsError
+from finrules.exceptions import ExpressionSyntaxError, ColumnAlreadyExistsError
 from finrules.rule import UnaryOpBaseRule
 
 
@@ -44,7 +44,7 @@ class AddNewColumnRule(UnaryOpBaseRule):
 
     Raises:
         ColumnAlreadyExistsError: raised in strict mode only if a column with the same name already exists in the dataframe.
-        AddNewColumnSyntaxError: raised if the column expression has a Python syntax error.
+        ExpressionSyntaxError: raised if the column expression has a Python syntax error.
         TypeError: raised if an operation is not supported between the types involved
         NameError: raised if an unknown variable is used
         KeyError: raised if you try to use an unknown column (i.e. df['ANY_UNKNOWN_COLUMN'])
@@ -72,7 +72,7 @@ class AddNewColumnRule(UnaryOpBaseRule):
             )
             self._compiled_expr = compile(self._ast_expr, filename=f'{self.column_name}_expression.py', mode='eval')
         except SyntaxError as exc:
-            raise AddNewColumnSyntaxError(f"Error in expression '{self.column_expression}': {str(exc)}")
+            raise ExpressionSyntaxError(f"Error in expression '{self.column_expression}': {str(exc)}")
 
     def apply(self, data):
         df = self._get_input_df(data)

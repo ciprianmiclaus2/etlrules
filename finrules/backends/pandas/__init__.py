@@ -1,3 +1,4 @@
+from .aggregate import AggregateRule
 from .basic import DedupeRule, ProjectRule, RenameRule, SortRule
 from .concat import VConcatRule, HConcatRule
 from .fill import ForwardFillRule, BackFillRule

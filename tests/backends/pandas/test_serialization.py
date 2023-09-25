@@ -5,7 +5,7 @@ from finrules.backends.pandas import (
     DedupeRule, ProjectRule, RenameRule, SortRule, TypeConversionRule,
     RulesBlock, LeftJoinRule, InnerJoinRule, OuterJoinRule, RightJoinRule,
     ForwardFillRule, BackFillRule, AddNewColumnRule,
-    VConcatRule, HConcatRule,
+    VConcatRule, HConcatRule, AggregateRule
 )
 from finrules.rule import BaseRule
 
@@ -44,6 +44,16 @@ from finrules.rule import BaseRule
                     named_output="RJ2", name="RightJoinRule", description="Some desc4", strict=True),
         HConcatRule(named_input_left="left4", named_input_right="right4",
                     named_output="RJ2", name="RightJoinRule", description="Some desc4", strict=True),
+        AggregateRule(
+            group_by=["A", "Col B"],
+            aggregations={"D": "sum", "E": "last", "F": "csv"},
+            aggregation_expressions={
+                "C2": "sum(v**2 for v in values)",
+                "D2": "';'.join(values)",
+                "E2": "int(sum(v**2 for v in values if not isnull(v)))",
+                "F3": "':'.join(v for v in values if not isnull(v))"
+            },
+            named_input="BF1", named_output="BF2", name="BF", description="Some desc2 BF", strict=True),
     ]
 )
 def test_serialize(rule_instance):

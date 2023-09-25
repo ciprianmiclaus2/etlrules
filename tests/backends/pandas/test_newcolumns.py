@@ -3,7 +3,7 @@ from pandas import DataFrame, concat
 from pandas.testing import assert_frame_equal
 import pytest
 
-from finrules.exceptions import AddNewColumnSyntaxError, ColumnAlreadyExistsError
+from finrules.exceptions import ExpressionSyntaxError, ColumnAlreadyExistsError
 from finrules.backends.pandas import AddNewColumnRule
 from tests.backends.pandas.utils.data import get_test_data
 
@@ -79,10 +79,10 @@ NA_OPS_SCENARIOS = [
 
 ERROR_SCENARIOS = [
     ["A", "df['B'] + df['C']", ColumnAlreadyExistsError, "Column A already exists in the input dataframe"],
-    ["ERR", "df['B'", AddNewColumnSyntaxError, "Error in expression 'df['B'':"],
+    ["ERR", "df['B'", ExpressionSyntaxError, "Error in expression 'df['B'':"],
     ["ERR", "df['UNKNOWN'] + 1", KeyError, "UNKNOWN"],
     ["ERR", "df['A'] + unknown", NameError, "name 'unknown' is not defined"],
-    ["ERR", "for i in df['A']:print(i)", AddNewColumnSyntaxError, "Error in expression 'for i in df['A']:print(i)': invalid syntax"],  # only expressions allowed
+    ["ERR", "for i in df['A']:print(i)", ExpressionSyntaxError, "Error in expression 'for i in df['A']:print(i)': invalid syntax"],  # only expressions allowed
     ["IntStringConcat", "df['A'] + df['D']", TypeError, "unsupported operand type(s) for +: 'int' and 'str'"],
 ]
 
