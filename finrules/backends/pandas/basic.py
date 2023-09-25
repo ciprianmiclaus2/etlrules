@@ -1,4 +1,4 @@
-from typing import Literal, Iterable, Mapping, Optional
+from typing import Literal, Iterable, Mapping, Optional, Union
 
 from finrules.backends.common.basic import BaseProjectRule
 from finrules.exceptions import MissingColumnError
@@ -104,7 +104,7 @@ class SortRule(UnaryOpBaseRule):
         For any rows that have the same value in the first column, the second column is used to decide the sort order within that group and so on.
     """
 
-    def __init__(self, sort_by: Iterable[str], ascending: bool=True, named_input: Optional[str]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
+    def __init__(self, sort_by: Iterable[str], ascending: Union[bool,Iterable[bool]]=True, named_input: Optional[str]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
         super().__init__(named_input=named_input, named_output=named_output, name=name, description=description, strict=strict)
         self.sort_by = [col for col in sort_by]
         if isinstance(self.sort_by, str):
