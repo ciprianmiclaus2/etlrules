@@ -1,4 +1,4 @@
-"""Top-level package for Finrules."""
+"""Top-level package for ETLrules."""
 
 __author__ = """Ciprian Miclaus"""
 __email__ = "ciprianm@gmail.com"

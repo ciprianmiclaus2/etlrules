@@ -1,7 +1,7 @@
 from typing import Iterable, Optional
 
-from finrules.exceptions import MissingColumnError
-from finrules.rule import BinaryOpBaseRule
+from etlrules.exceptions import MissingColumnError
+from etlrules.rule import BinaryOpBaseRule
 
 
 class BaseJoinRule(BinaryOpBaseRule):

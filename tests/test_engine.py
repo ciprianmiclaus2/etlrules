@@ -1,10 +1,10 @@
 from pandas import DataFrame
 from pandas.testing import assert_frame_equal
 
-from finrules.data import RuleData
-from finrules.engine import RuleEngine
-from finrules.plan import Plan
-from finrules.backends.pandas import ProjectRule, RenameRule, SortRule
+from etlrules.data import RuleData
+from etlrules.engine import RuleEngine
+from etlrules.plan import Plan
+from etlrules.backends.pandas import ProjectRule, RenameRule, SortRule
 
 
 def test_run_simple_plan():

@@ -2,8 +2,8 @@ from pandas import DataFrame
 from pandas.testing import assert_frame_equal
 import pytest
 
-from finrules.exceptions import MissingColumnError
-from finrules.backends.pandas import LeftJoinRule, InnerJoinRule, OuterJoinRule, RightJoinRule
+from etlrules.exceptions import MissingColumnError
+from etlrules.backends.pandas import LeftJoinRule, InnerJoinRule, OuterJoinRule, RightJoinRule
 from tests.backends.pandas.utils.data import get_test_data
 
 

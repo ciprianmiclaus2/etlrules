@@ -1,1 +1,1 @@
-"""Unit test package for finrules."""
+"""Unit test package for etlrules."""

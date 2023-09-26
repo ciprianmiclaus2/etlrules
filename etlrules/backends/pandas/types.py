@@ -1,7 +1,7 @@
 from typing import Mapping, Optional
 
-from finrules.exceptions import MissingColumnError, UnsupportedTypeError
-from finrules.rule import UnaryOpBaseRule
+from etlrules.exceptions import MissingColumnError, UnsupportedTypeError
+from etlrules.rule import UnaryOpBaseRule
 
 
 class TypeConversionRule(UnaryOpBaseRule):

@@ -3,8 +3,8 @@ from pandas import DataFrame, concat
 from pandas.testing import assert_frame_equal
 import pytest
 
-from finrules.exceptions import ExpressionSyntaxError, ColumnAlreadyExistsError
-from finrules.backends.pandas import AddNewColumnRule
+from etlrules.exceptions import ExpressionSyntaxError, ColumnAlreadyExistsError
+from etlrules.backends.pandas import AddNewColumnRule
 from tests.backends.pandas.utils.data import get_test_data
 
 

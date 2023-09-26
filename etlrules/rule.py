@@ -46,7 +46,7 @@ class BaseRule:
         keys = tuple(dct.keys())
         assert len(keys) == 1
         rule_name = keys[0]
-        backend_pkg = f'finrules.backends.{backend}'
+        backend_pkg = f'etlrules.backends.{backend}'
         mod = importlib.import_module(backend_pkg, '')
         clss = getattr(mod, rule_name, None)
         assert clss, f"Cannot find class {rule_name} in package {backend_pkg}"

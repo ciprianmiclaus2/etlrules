@@ -1,13 +1,13 @@
 import pytest
 from pandas import DataFrame
 
-from finrules.backends.pandas import (
+from etlrules.backends.pandas import (
     DedupeRule, ProjectRule, RenameRule, SortRule, TypeConversionRule,
     RulesBlock, LeftJoinRule, InnerJoinRule, OuterJoinRule, RightJoinRule,
     ForwardFillRule, BackFillRule, AddNewColumnRule,
     VConcatRule, HConcatRule, AggregateRule
 )
-from finrules.rule import BaseRule
+from etlrules.rule import BaseRule
 
 
 @pytest.mark.parametrize(

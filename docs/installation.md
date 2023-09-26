@@ -2,33 +2,33 @@
 
 ## Stable release
 
-To install Finrules, run this command in your
+To install ETLrules, run this command in your
 terminal:
 
 ``` console
-pip install finrules
+pip install etlrules
 ```
 
-This is the preferred method to install Finrules, as it will always install the most recent stable release.
+This is the preferred method to install ETLrules, as it will always install the most recent stable release.
 
 If you don't have [pip][] installed, this [Python installation guide][]
 can guide you through the process.
 
 ## From source
 
-The source for Finrules can be downloaded from
+The source for ETLrules can be downloaded from
 the [Github repo][].
 
 You can either clone the public repository:
 
 ``` console
-git clone git://github.com/ciprianmiclaus/finrules
+git clone git://github.com/ciprianmiclaus/etlrules
 ```
 
 Or download the [tarball][]:
 
 ``` console
-curl -OJL https://github.com/ciprianmiclaus/finrules/tarball/master
+curl -OJL https://github.com/ciprianmiclaus/etlrules/tarball/master
 ```
 
 Once you have a copy of the source, you can install it with:

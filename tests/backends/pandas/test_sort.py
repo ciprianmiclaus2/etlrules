@@ -1,7 +1,7 @@
 from pandas import DataFrame
 from pandas.testing import assert_frame_equal
 
-from finrules.backends.pandas import SortRule
+from etlrules.backends.pandas import SortRule
 from tests.backends.pandas.utils.data import get_test_data
 
 

@@ -10,14 +10,13 @@
     ".vscode",
     "docs",
     "**/__pycache__",
-    "ciprianmiclaus_finrules.egg-info"
+    "ciprianmiclaus_etlrules.egg-info"
   ],
 
   "ignore": [
-    "src/oldstuff"
   ],
 
   "reportMissingImports": true,
   "reportMissingTypeStubs": false,
-  "pythonVersion": "3.8"
+  "pythonVersion": "3.9"
 }

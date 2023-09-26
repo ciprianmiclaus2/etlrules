@@ -1,8 +1,8 @@
 from pandas import concat
 from typing import Iterable, Optional
 
-from finrules.exceptions import ColumnAlreadyExistsError, MissingColumnError, SchemaError
-from finrules.rule import BinaryOpBaseRule
+from etlrules.exceptions import ColumnAlreadyExistsError, MissingColumnError, SchemaError
+from etlrules.rule import BinaryOpBaseRule
 
 
 class VConcatRule(BinaryOpBaseRule):

@@ -3,7 +3,7 @@ from contextlib import contextmanager
 from copy import deepcopy
 from pandas.testing import assert_frame_equal
 
-from finrules.data import RuleData
+from etlrules.data import RuleData
 
 
 @contextmanager

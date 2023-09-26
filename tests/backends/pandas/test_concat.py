@@ -2,8 +2,8 @@ from pandas import DataFrame
 from pandas.testing import assert_frame_equal
 import pytest
 
-from finrules.backends.pandas import VConcatRule, HConcatRule
-from finrules.exceptions import ColumnAlreadyExistsError, MissingColumnError, SchemaError
+from etlrules.backends.pandas import VConcatRule, HConcatRule
+from etlrules.exceptions import ColumnAlreadyExistsError, MissingColumnError, SchemaError
 from tests.backends.pandas.utils.data import get_test_data
 
 

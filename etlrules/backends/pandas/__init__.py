@@ -6,4 +6,4 @@ from .joins import LeftJoinRule, InnerJoinRule, OuterJoinRule, RightJoinRule
 from .newcolumns import AddNewColumnRule
 from .types import TypeConversionRule
 
-from finrules.backends.common.basic import RulesBlock
+from etlrules.backends.common.basic import RulesBlock

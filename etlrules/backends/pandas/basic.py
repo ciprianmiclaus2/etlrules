@@ -1,8 +1,8 @@
 from typing import Literal, Iterable, Mapping, Optional, Union
 
-from finrules.backends.common.basic import BaseProjectRule
-from finrules.exceptions import MissingColumnError
-from finrules.rule import UnaryOpBaseRule
+from etlrules.backends.common.basic import BaseProjectRule
+from etlrules.exceptions import MissingColumnError
+from etlrules.rule import UnaryOpBaseRule
 
 from .validation import PandasRuleValidationMixin
 

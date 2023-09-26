@@ -2,8 +2,8 @@ import ast
 from pandas import isnull
 from typing import Iterable, Mapping, Optional
 
-from finrules.exceptions import ColumnAlreadyExistsError, MissingColumnError, ExpressionSyntaxError
-from finrules.rule import UnaryOpBaseRule
+from etlrules.exceptions import ColumnAlreadyExistsError, MissingColumnError, ExpressionSyntaxError
+from etlrules.rule import UnaryOpBaseRule
 
 
 class AggregateRule(UnaryOpBaseRule):

@@ -1,7 +1,7 @@
 from typing import Iterable, Optional
 
-from finrules.exceptions import MissingColumnError
-from finrules.rule import UnaryOpBaseRule
+from etlrules.exceptions import MissingColumnError
+from etlrules.rule import UnaryOpBaseRule
 
 
 class BaseFillRule(UnaryOpBaseRule):

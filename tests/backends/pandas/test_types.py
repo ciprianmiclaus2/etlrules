@@ -2,8 +2,8 @@ from pandas import DataFrame
 from pandas.testing import assert_frame_equal
 import pytest
 
-from finrules.backends.pandas import TypeConversionRule
-from finrules.exceptions import MissingColumnError, UnsupportedTypeError
+from etlrules.backends.pandas import TypeConversionRule
+from etlrules.exceptions import MissingColumnError, UnsupportedTypeError
 from tests.backends.pandas.utils.data import get_test_data
 
 

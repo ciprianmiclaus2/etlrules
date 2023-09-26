@@ -1,7 +1,7 @@
-site_name: Finrules
+site_name: ETLrules
 # site_url: http://www.jieyu.ai
-repo_url: https://github.com/ciprianmiclaus/finrules
-repo_name: finrules
+repo_url: https://github.com/ciprianmiclaus/etlrules
+repo_name: etlrules
 #strict: true
 nav:
   - Home: index.md
@@ -59,7 +59,7 @@ plugins:
       lang: en
   - mkdocstrings:
       watch:
-        - finrules
+        - etlrules
 extra:
   version:
     provider: mike
@@ -73,7 +73,7 @@ extra:
       link: http://www.jieyu.ai
       name: Facebook
     - icon: fontawesome/brands/github
-      link: https://github.com/ciprianmiclaus/finrules
+      link: https://github.com/ciprianmiclaus/etlrules
       name: Github
     - icon: material/email
       link: "mailto:ciprianm@gmail.com"

@@ -1,8 +1,8 @@
 import ast
 from typing import Optional
 
-from finrules.exceptions import ExpressionSyntaxError, ColumnAlreadyExistsError
-from finrules.rule import UnaryOpBaseRule
+from etlrules.exceptions import ExpressionSyntaxError, ColumnAlreadyExistsError
+from etlrules.rule import UnaryOpBaseRule
 
 
 class AddNewColumnRule(UnaryOpBaseRule):

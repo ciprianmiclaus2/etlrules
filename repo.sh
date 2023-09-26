@@ -5,8 +5,8 @@
 # Once you got persona token, set enviroment variable GH_TOKEN with it
 
 # uncomment the following to create repo and push code to github
-# gh repo create finrules --public
-# git remote add origin git@github.com:ciprianmiclaus/finrules.git
+# gh repo create etlrules --public
+# git remote add origin git@github.com:ciprianmiclaus/etlrules.git
 # git add .
 # pre-commit run --all-files
 # git add .

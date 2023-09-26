@@ -1,7 +1,7 @@
 # Usage
 
-To use Finrules in a project
+To use ETLrules in a project
 
 ```
-    import finrules
+    import etlrules
 ```

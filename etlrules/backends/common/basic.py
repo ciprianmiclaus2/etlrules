@@ -1,8 +1,8 @@
 from typing import Iterable, Optional
 
-from finrules.data import RuleData
-from finrules.rule import BaseRule, UnaryOpBaseRule
-from finrules.exceptions import MissingColumnError
+from etlrules.data import RuleData
+from etlrules.rule import BaseRule, UnaryOpBaseRule
+from etlrules.exceptions import MissingColumnError
 
 
 class BaseProjectRule(UnaryOpBaseRule):
