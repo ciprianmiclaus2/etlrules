@@ -5,7 +5,7 @@ from etlrules.backends.pandas import (
     DedupeRule, ProjectRule, RenameRule, SortRule, TypeConversionRule,
     RulesBlock, LeftJoinRule, InnerJoinRule, OuterJoinRule, RightJoinRule,
     ForwardFillRule, BackFillRule, AddNewColumnRule,
-    VConcatRule, HConcatRule, AggregateRule
+    VConcatRule, HConcatRule, AggregateRule, RoundRule
 )
 from etlrules.rule import BaseRule
 
@@ -54,6 +54,8 @@ from etlrules.rule import BaseRule
                 "F3": "':'.join(v for v in values if not isnull(v))"
             },
             named_input="BF1", named_output="BF2", name="BF", description="Some desc2 BF", strict=True),
+        RoundRule({"A": 2, "B": 0, "C": 3}, named_input="input", 
+                  named_output="result", name="BF", description="Some desc2 BF", strict=True),
     ]
 )
 def test_serialize(rule_instance):
