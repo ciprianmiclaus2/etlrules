@@ -1,11 +1,10 @@
 import pytest
-from pandas import DataFrame
 
 from etlrules.backends.pandas import (
     DedupeRule, ProjectRule, RenameRule, SortRule, TypeConversionRule,
     RulesBlock, LeftJoinRule, InnerJoinRule, OuterJoinRule, RightJoinRule,
     ForwardFillRule, BackFillRule, AddNewColumnRule,
-    VConcatRule, HConcatRule, AggregateRule, RoundRule
+    VConcatRule, HConcatRule, AggregateRule, RoundRule, AbsRule
 )
 from etlrules.rule import BaseRule
 
@@ -55,6 +54,8 @@ from etlrules.rule import BaseRule
             },
             named_input="BF1", named_output="BF2", name="BF", description="Some desc2 BF", strict=True),
         RoundRule({"A": 2, "B": 0, "C": 3}, named_input="input", 
+                  named_output="result", name="BF", description="Some desc2 BF", strict=True),
+        AbsRule(["B", "D", "Z"], named_input="input", 
                   named_output="result", name="BF", description="Some desc2 BF", strict=True),
     ]
 )
