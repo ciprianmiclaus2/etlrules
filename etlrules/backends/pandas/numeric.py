@@ -58,7 +58,6 @@ class AbsRule(UnaryOpBaseRule):
 
     Basic usage::
 
-        # rounds Col_A to 2dps, Col_B to 0dps and Col_C to 4dps
         rule = AbsRule(["col_A", "col_B", "col_C"])
         rule.apply(data)
 
@@ -78,7 +77,7 @@ class AbsRule(UnaryOpBaseRule):
         strict: When set to True, the rule does a stricter valiation. Default: True
 
     Raises:
-        MissingColumnError: raised in strict mode only if a column in the mapper doesn't exist in the input dataframe.
+        MissingColumnError: raised in strict mode only if a column doesn't exist in the input dataframe.
 
     Note:
         In non-strict mode, missing columns are ignored.
