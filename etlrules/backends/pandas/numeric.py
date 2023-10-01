@@ -1,5 +1,6 @@
 from typing import Iterable, Mapping, Optional
 
+from etlrules.backends.pandas.validation import ColumnsInOutMixin
 from etlrules.exceptions import MissingColumnError
 from etlrules.rule import UnaryOpBaseRule
 
@@ -53,7 +54,7 @@ class RoundRule(UnaryOpBaseRule):
         self._set_output_df(data, df)
 
 
-class AbsRule(UnaryOpBaseRule):
+class AbsRule(UnaryOpBaseRule, ColumnsInOutMixin):
     """ Converts numbers to absolute values.
 
     Basic usage::
@@ -63,6 +64,10 @@ class AbsRule(UnaryOpBaseRule):
 
     Args:
         columns: A list of numeric columns to convert to absolute values.
+        output_columns: A list of new names for the columns with the absolute values.
+            Optional. If provided, if must have the same length as the columns sequence.
+            The existing columns are unchanged, and new columns are created with the absolute values.
+            If not provided, the result is updated in place.
 
         named_input: Which dataframe to use as the input. Optional.
             When not set, the input is taken from the main output.
@@ -78,24 +83,20 @@ class AbsRule(UnaryOpBaseRule):
 
     Raises:
         MissingColumnError: raised in strict mode only if a column doesn't exist in the input dataframe.
+        ValueError: raised if output_columns is provided and not the same length as the columns parameter.
 
     Note:
         In non-strict mode, missing columns are ignored.
     """
 
-    def __init__(self, columns: Iterable[str], named_input: Optional[str]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
+    def __init__(self, columns: Iterable[str], output_columns:Optional[Iterable[str]]=None, named_input: Optional[str]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
         super().__init__(named_input=named_input, named_output=named_output, name=name, description=description, strict=strict)
         self.columns = [col for col in columns]
+        self.output_columns = [out_col for out_col in output_columns] if output_columns else None
 
     def apply(self, data):
         df = self._get_input_df(data)
-        df_cols_set = set(df.columns)
-        if self.strict:
-            if not set(self.columns) <= df_cols_set:
-                raise MissingColumnError(f"Column(s) {set(self.columns) - df_cols_set} are missing from the input dataframe.")
-            columns = self.columns
-        else:
-            columns = [col for col in self.columns if col in df_cols_set]
+        columns, output_columns = self.validate_columns_in_out(df, self.columns, self.output_columns, self.strict)
         abs_df = df[columns].abs()
-        df = df.assign(**{col: abs_df[col] for col in columns})
+        df = df.assign(**{output_col: abs_df[col] for col, output_col in zip(columns, output_columns)})
         self._set_output_df(data, df)

@@ -15,32 +15,53 @@ INPUT_DF = DataFrame(data=[
 ])
 
 
-@pytest.mark.parametrize("rule_cls,columns,input_df,expected", [
-    [StrLowerRule, ["A", "C"], INPUT_DF, DataFrame(data=[
+@pytest.mark.parametrize("rule_cls,columns,output_columns,input_df,expected", [
+    [StrLowerRule, ["A", "C"], None, INPUT_DF, DataFrame(data=[
         {"A": "abcdefg", "B": 1.456, "C": "cccc", "D": -100},
         {"A": "baba", "B": -1.677, "C": "dddd"},
         {"A": "caaa", "B": 3.87, "D": -499},
         {"A": "diii", "B": -1.5, "C": "eeee", "D": 1},
     ])],
-    [StrLowerRule, ["A", "C", "Z"], INPUT_DF, MissingColumnError],
-    [StrUpperRule, ["A", "C"], INPUT_DF, DataFrame(data=[
+    [StrLowerRule, ["A", "C"], ["E", "F"], INPUT_DF, DataFrame(data=[
+        {"A": "AbCdEfG", "B": 1.456, "C": "cCcc", "D": -100, "E": "abcdefg", "F": "cccc"},
+        {"A": "babA", "B": -1.677, "C": "dDdd", "E": "baba", "F": "dddd"},
+        {"A": "cAAA", "B": 3.87, "D": -499, "E": "caaa"},
+        {"A": "diiI", "B": -1.5, "C": "eEee", "D": 1, "E": "diii", "F": "eeee"},
+    ])],
+    [StrLowerRule, ["A", "C", "Z"], None, INPUT_DF, MissingColumnError],
+    [StrLowerRule, ["A", "C"], ["E"], INPUT_DF, ValueError],
+    [StrUpperRule, ["A", "C"], None, INPUT_DF, DataFrame(data=[
         {"A": "ABCDEFG", "B": 1.456, "C": "CCCC", "D": -100},
         {"A": "BABA", "B": -1.677, "C": "DDDD"},
         {"A": "CAAA", "B": 3.87, "D": -499},
         {"A": "DIII", "B": -1.5, "C": "EEEE", "D": 1},
     ])],
-    [StrUpperRule, ["A", "C", "Z"], INPUT_DF, MissingColumnError],
-    [StrCapitalizeRule, ["A", "C"], INPUT_DF, DataFrame(data=[
+    [StrUpperRule, ["A", "C"], ["E", "F"], INPUT_DF, DataFrame(data=[
+        {"A": "AbCdEfG", "B": 1.456, "C": "cCcc", "D": -100, "E": "ABCDEFG", "F": "CCCC"},
+        {"A": "babA", "B": -1.677, "C": "dDdd", "E": "BABA", "F": "DDDD"},
+        {"A": "cAAA", "B": 3.87, "D": -499, "E": "CAAA"},
+        {"A": "diiI", "B": -1.5, "C": "eEee", "D": 1, "E": "DIII", "F": "EEEE"},
+    ])],
+    [StrUpperRule, ["A", "C", "Z"], None, INPUT_DF, MissingColumnError],
+    [StrUpperRule, ["A", "C"], ["E"], INPUT_DF, ValueError],
+    [StrCapitalizeRule, ["A", "C"], None, INPUT_DF, DataFrame(data=[
         {"A": "Abcdefg", "B": 1.456, "C": "Cccc", "D": -100},
         {"A": "Baba", "B": -1.677, "C": "Dddd"},
         {"A": "Caaa", "B": 3.87, "D": -499},
         {"A": "Diii", "B": -1.5, "C": "Eeee", "D": 1},
     ])],
-    [StrCapitalizeRule, ["A", "C", "Z"], INPUT_DF, MissingColumnError],
+    [StrCapitalizeRule, ["A", "C"], ["E", "F"], INPUT_DF, DataFrame(data=[
+        {"A": "AbCdEfG", "B": 1.456, "C": "cCcc", "D": -100, "E": "Abcdefg", "F": "Cccc"},
+        {"A": "babA", "B": -1.677, "C": "dDdd", "E": "Baba", "F": "Dddd"},
+        {"A": "cAAA", "B": 3.87, "D": -499, "E": "Caaa"},
+        {"A": "diiI", "B": -1.5, "C": "eEee", "D": 1, "E": "Diii", "F": "Eeee"},
+    ])],
+    [StrCapitalizeRule, ["A", "C", "Z"], None, INPUT_DF, MissingColumnError],
+    [StrCapitalizeRule, ["A", "C"], ["E"], INPUT_DF, ValueError],
 ])
-def test_str_scenarios(rule_cls, columns, input_df, expected):
+def test_str_scenarios(rule_cls, columns, output_columns, input_df, expected):
     with get_test_data(input_df, named_inputs={"input": input_df}, named_output="result") as data:
-        rule = rule_cls(columns, named_input="input", named_output="result")
+        rule = rule_cls(columns, output_columns=output_columns, named_input="input", named_output="result")
         if isinstance(expected, DataFrame):
             rule.apply(data)
             assert_frame_equal(data.get_named_output("result"), expected)

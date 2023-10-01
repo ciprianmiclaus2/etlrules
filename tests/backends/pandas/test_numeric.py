@@ -33,6 +33,19 @@ EXPECTED2 = DataFrame(data=[
     {"A": "d", "B": 1.5, "C": "e", "D": 1},
 ])
 
+INPUT_DF3 = DataFrame(data=[
+    {"A": "a", "B": 1.456, "C": "c", "D": -100},
+    {"A": "b", "B": -1.677, "C": "d"},
+    {"A": "c", "C": "x", "D": -499},
+    {"A": "d", "B": -1.5, "C": "e", "D": 1},
+])
+EXPECTED3 = DataFrame(data=[
+    {"A": "a", "B": 1.456, "C": "c", "D": -100, "E": 1.456, "F": 100},
+    {"A": "b", "B": -1.677, "C": "d", "E": 1.677},
+    {"A": "c", "C": "x", "D": -499, "F": 499},
+    {"A": "d", "B": -1.5, "C": "e", "D": 1, "E": 1.5, "F": 1},
+])
+
 
 def test_rounding():
     with get_test_data(INPUT_DF, named_inputs={"input": INPUT_DF}, named_output="result") as data:
@@ -61,6 +74,13 @@ def test_abs():
         rule = AbsRule(["B", "D"], named_input="input", named_output="result", strict=False)
         rule.apply(data)
         assert_frame_equal(data.get_named_output("result"), EXPECTED2)
+
+
+def test_abs_output_columns():
+    with get_test_data(INPUT_DF3, named_inputs={"input": INPUT_DF3}, named_output="result") as data:
+        rule = AbsRule(["B", "D"], output_columns=["E", "F"], named_input="input", named_output="result", strict=False)
+        rule.apply(data)
+        assert_frame_equal(data.get_named_output("result"), EXPECTED3)
 
 
 def test_abs_missing_column_strict():

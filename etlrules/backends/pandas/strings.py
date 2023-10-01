@@ -1,28 +1,24 @@
-from typing import Iterable, Optional
+from typing import Iterable, Mapping, Optional, Union
 
+from etlrules.backends.pandas.validation import ColumnsInOutMixin
 from etlrules.exceptions import MissingColumnError
 from etlrules.rule import UnaryOpBaseRule
 
 
-class BaseStrRule(UnaryOpBaseRule):
+class BaseStrRule(UnaryOpBaseRule, ColumnsInOutMixin):
 
-    def __init__(self, columns: Iterable[str], named_input: Optional[str]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
+    def __init__(self, columns: Iterable[str], output_columns:Optional[Iterable[str]]=None, named_input: Optional[str]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
         super().__init__(named_input=named_input, named_output=named_output, name=name, description=description, strict=strict)
         self.columns = [col for col in columns]
+        self.output_columns = [out_col for out_col in output_columns] if output_columns else None
 
     def do_apply(self, col):
         raise NotImplementedError
 
     def apply(self, data):
         df = self._get_input_df(data)
-        df_cols_set = set(df.columns)
-        if self.strict:
-            if not set(self.columns) <= df_cols_set:
-                raise MissingColumnError(f"Column(s) {set(self.columns) - df_cols_set} are missing from the input dataframe.")
-            columns = self.columns
-        else:
-            columns = [col for col in self.columns if col in df_cols_set]
-        df = df.assign(**{col: self.do_apply(df[col]) for col in columns})
+        columns, output_columns = self.validate_columns_in_out(df, self.columns, self.output_columns, self.strict)
+        df = df.assign(**{output_col: self.do_apply(df[col]) for col, output_col in zip(columns, output_columns)})
         self._set_output_df(data, df)
 
 
@@ -36,6 +32,10 @@ class StrLowerRule(BaseStrRule):
 
     Args:
         columns: A list of string columns to convert to lower case.
+        output_columns: A list of new names for the columns with the lower case values.
+            Optional. If provided, if must have the same length as the columns sequence.
+            The existing columns are unchanged, and new columns are created with the lower case values.
+            If not provided, the result is updated in place.
 
         named_input: Which dataframe to use as the input. Optional.
             When not set, the input is taken from the main output.
@@ -51,6 +51,7 @@ class StrLowerRule(BaseStrRule):
 
     Raises:
         MissingColumnError: raised in strict mode only if a column doesn't exist in the input dataframe.
+        ValueError: raised if output_columns is provided and not the same length as the columns parameter.
 
     Note:
         In non-strict mode, missing columns are ignored.
@@ -70,6 +71,10 @@ class StrUpperRule(BaseStrRule):
 
     Args:
         columns: A list of string columns to convert to upper case.
+        output_columns: A list of new names for the columns with the upper case values.
+            Optional. If provided, if must have the same length as the columns sequence.
+            The existing columns are unchanged, and new columns are created with the upper case values.
+            If not provided, the result is updated in place.
 
         named_input: Which dataframe to use as the input. Optional.
             When not set, the input is taken from the main output.
@@ -85,6 +90,7 @@ class StrUpperRule(BaseStrRule):
 
     Raises:
         MissingColumnError: raised in strict mode only if a column doesn't exist in the input dataframe.
+        ValueError: raised if output_columns is provided and not the same length as the columns parameter.
 
     Note:
         In non-strict mode, missing columns are ignored.
@@ -107,6 +113,10 @@ class StrCapitalizeRule(BaseStrRule):
 
     Args:
         columns: A list of string columns to convert to capitalize.
+        output_columns: A list of new names for the columns with the capitalized values.
+            Optional. If provided, if must have the same length as the columns sequence.
+            The existing columns are unchanged, and new columns are created with the capitalized values.
+            If not provided, the result is updated in place.
 
         named_input: Which dataframe to use as the input. Optional.
             When not set, the input is taken from the main output.
@@ -122,6 +132,7 @@ class StrCapitalizeRule(BaseStrRule):
 
     Raises:
         MissingColumnError: raised in strict mode only if a column doesn't exist in the input dataframe.
+        ValueError: raised if output_columns is provided and not the same length as the columns parameter.
 
     Note:
         In non-strict mode, missing columns are ignored.
