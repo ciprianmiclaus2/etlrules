@@ -3,7 +3,7 @@ from pandas.testing import assert_frame_equal
 import pytest
 
 from etlrules.exceptions import MissingColumnError
-from etlrules.backends.pandas import StrLowerRule, StrUpperRule, StrCapitalizeRule, StrStripRule
+from etlrules.backends.pandas import StrLowerRule, StrUpperRule, StrCapitalizeRule, StrStripRule, StrPadRule
 from tests.backends.pandas.utils.data import get_test_data
 
 
@@ -20,6 +20,14 @@ INPUT_DF2 = DataFrame(data=[
     {"A": "babA   ", "C": "cCcc "},
     {"A": "  AAcAAA", "C": "cCcc", "D": -499},
     {"A": "diiI", "C": " cCcc  ", "D": 1},
+])
+
+
+INPUT_DF3 = DataFrame(data=[
+    {"A": "AbCdEfG", "C": "cCcc", "D": -100},
+    {"A": "babA", "C": "cCcc "},
+    {"A": "AAcAAA", "C": " cCcc", "D": -499},
+    {"A": "diiI", "C": " cCcc ", "D": 1},
 ])
 
 
@@ -129,6 +137,27 @@ def test_str_scenarios(rule_cls, columns, output_columns, input_df, expected):
 def test_strip_scenarios(rule_cls, columns, how, characters, output_columns, input_df, expected):
     with get_test_data(input_df, named_inputs={"input": input_df}, named_output="result") as data:
         rule = rule_cls(columns, how=how, characters=characters, output_columns=output_columns, named_input="input", named_output="result")
+        if isinstance(expected, DataFrame):
+            rule.apply(data)
+            assert_frame_equal(data.get_named_output("result"), expected)
+        elif issubclass(expected, Exception):
+            with pytest.raises(expected):
+                rule.apply(data)
+        else:
+            assert False
+
+
+@pytest.mark.parametrize("rule_cls,columns,width,fill_char,how,output_columns,input_df,expected", [
+    [StrPadRule, ["A", "C"], 6, ".", "right", None, INPUT_DF3, DataFrame(data=[
+        {"A": "AbCdEfG", "C": "cCcc..", "D": -100},
+        {"A": "babA..", "C": "cCcc ."},
+        {"A": "AAcAAA", "C": " cCcc.", "D": -499},
+        {"A": "diiI..", "C": " cCcc ", "D": 1},
+    ])],
+])
+def test_justify_scenarios(rule_cls, columns, width, fill_char, how, output_columns, input_df, expected):
+    with get_test_data(input_df, named_inputs={"input": input_df}, named_output="result") as data:
+        rule = rule_cls(columns, width=width, fill_character=fill_char, how=how, output_columns=output_columns, named_input="input", named_output="result")
         if isinstance(expected, DataFrame):
             rule.apply(data)
             assert_frame_equal(data.get_named_output("result"), expected)

@@ -212,7 +212,62 @@ class StrReplaceRule(BaseStrRule):
 
 
 class StrPadRule(BaseStrRule):
-    ...
+    """ Makes strings of a given width (justifies) by padding left, right or both sides with a fill character.
+
+    Basic usage::
+
+        rule = StrPadRule(["col_A", "col_B", "col_C"], width=8, fill_character=".", how="right")
+        rule.apply(data)
+
+    Args:
+        columns (Iterable[str]): A list of string columns to convert to upper case.
+        width: Pad with the fill_character to this width.
+        fill_character: Character to fill with. Defaults to whitespace.
+        how: How should the stripping be done. One of left, right, both.
+            Left pads at the beggining of the string, right pads at the end, while both pads at both ends.
+        output_columns (Optional[Iterable[str]]): A list of new names for the columns with the upper case values.
+            Optional. If provided, if must have the same length as the columns sequence.
+            The existing columns are unchanged, and new columns are created with the upper case values.
+            If not provided, the result is updated in place.
+
+        named_input (Optional[str]): Which dataframe to use as the input. Optional.
+            When not set, the input is taken from the main output.
+            Set it to a string value, the name of an output dataframe of a previous rule.
+        named_output (Optional[str]): Give the output of this rule a name so it can be used by another rule as a named input. Optional.
+            When not set, the result of this rule will be available as the main output.
+            When set to a name (string), the result will be available as that named output.
+        name (Optional[str]): Give the rule a name. Optional.
+            Named rules are more descriptive as to what they're trying to do/the intent.
+        description (Optional[str]): Describe in detail what the rules does, how it does it. Optional.
+            Together with the name, the description acts as the documentation of the rule.
+        strict (bool): When set to True, the rule does a stricter valiation. Default: True
+
+    Raises:
+        MissingColumnError: raised in strict mode only if a column doesn't exist in the input dataframe.
+        ValueError: raised if output_columns is provided and not the same length as the columns parameter.
+
+    Note:
+        In non-strict mode, missing columns are ignored.
+    """
+
+    PAD_LEFT = 'left'
+    PAD_RIGHT = 'right'
+    PAD_BOTH = 'both'
+
+    def __init__(self, columns: Iterable[str], width: int, fill_character: str, how: Literal[PAD_LEFT, PAD_RIGHT, PAD_BOTH]=PAD_BOTH, output_columns:Optional[Iterable[str]]=None, named_input: Optional[str]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
+        super().__init__(columns=columns, output_columns=output_columns, named_input=named_input, named_output=named_output, 
+                         name=name, description=description, strict=strict)
+        assert how in (self.PAD_LEFT, self.PAD_RIGHT, self.PAD_BOTH), f"Unknown how parameter {how}. It must be one of: {(self.PAD_LEFT, self.PAD_RIGHT, self.PAD_BOTH)}"
+        self.how = how
+        self.width = width
+        self.fill_character = fill_character
+
+    def do_apply(self, col):
+        if self.how == self.PAD_RIGHT:
+            return col.str.ljust(self.width, fillchar=self.fill_character)
+        elif self.how == self.PAD_LEFT:
+            return col.str.rjust(self.width, fillchar=self.fill_character)
+        return col.str.center(self.width, fillchar=self.fill_character)
 
 
 class StrExtractRule(BaseStrRule):

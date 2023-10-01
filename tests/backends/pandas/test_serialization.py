@@ -5,7 +5,7 @@ from etlrules.backends.pandas import (
     RulesBlock, LeftJoinRule, InnerJoinRule, OuterJoinRule, RightJoinRule,
     ForwardFillRule, BackFillRule, AddNewColumnRule,
     VConcatRule, HConcatRule, AggregateRule, RoundRule, AbsRule,
-    StrLowerRule, StrUpperRule, StrCapitalizeRule, StrStripRule,
+    StrLowerRule, StrUpperRule, StrCapitalizeRule, StrStripRule, StrPadRule,
 )
 from etlrules.rule import BaseRule
 
@@ -65,6 +65,8 @@ from etlrules.rule import BaseRule
         StrCapitalizeRule(["B", "D", "Z"], output_columns=["F", "G"], named_input="input", 
                   named_output="result", name="BF", description="Some desc2 BF", strict=True),
         StrStripRule(["B", "D", "Z"], how="both", characters="Ac", output_columns=["F", "G"], named_input="input", 
+                  named_output="result", name="BF", description="Some desc2 BF", strict=True),
+        StrPadRule(["B", "D", "Z"], width=8, fill_character=".", how="both", output_columns=["F", "G"], named_input="input", 
                   named_output="result", name="BF", description="Some desc2 BF", strict=True),
     ]
 )
