@@ -3,7 +3,7 @@ from pandas.testing import assert_frame_equal
 import pytest
 
 from etlrules.exceptions import MissingColumnError
-from etlrules.backends.pandas import StrLowerRule, StrUpperRule, StrCapitalizeRule
+from etlrules.backends.pandas import StrLowerRule, StrUpperRule, StrCapitalizeRule, StrStripRule
 from tests.backends.pandas.utils.data import get_test_data
 
 
@@ -12,6 +12,14 @@ INPUT_DF = DataFrame(data=[
     {"A": "babA", "B": -1.677, "C": "dDdd"},
     {"A": "cAAA", "B": 3.87, "D": -499},
     {"A": "diiI", "B": -1.5, "C": "eEee", "D": 1},
+])
+
+
+INPUT_DF2 = DataFrame(data=[
+    {"A": "  AbCdEfG  ", "C": " cCcc", "D": -100},
+    {"A": "babA   ", "C": "cCcc "},
+    {"A": "  AAcAAA", "C": "cCcc", "D": -499},
+    {"A": "diiI", "C": " cCcc  ", "D": 1},
 ])
 
 
@@ -62,6 +70,65 @@ INPUT_DF = DataFrame(data=[
 def test_str_scenarios(rule_cls, columns, output_columns, input_df, expected):
     with get_test_data(input_df, named_inputs={"input": input_df}, named_output="result") as data:
         rule = rule_cls(columns, output_columns=output_columns, named_input="input", named_output="result")
+        if isinstance(expected, DataFrame):
+            rule.apply(data)
+            assert_frame_equal(data.get_named_output("result"), expected)
+        elif issubclass(expected, Exception):
+            with pytest.raises(expected):
+                rule.apply(data)
+        else:
+            assert False
+
+
+@pytest.mark.parametrize("rule_cls,columns,how,characters,output_columns,input_df,expected", [
+    [StrStripRule, ["A", "C"], "left", None, None, INPUT_DF2, DataFrame(data=[
+        {"A": "AbCdEfG  ", "C": "cCcc", "D": -100},
+        {"A": "babA   ", "C": "cCcc "},
+        {"A": "AAcAAA", "C": "cCcc", "D": -499},
+        {"A": "diiI", "C": "cCcc  ", "D": 1},
+    ])],
+    [StrStripRule, ["A", "C"], "right", None, None, INPUT_DF2, DataFrame(data=[
+        {"A": "  AbCdEfG", "C": " cCcc", "D": -100},
+        {"A": "babA", "C": "cCcc"},
+        {"A": "  AAcAAA", "C": "cCcc", "D": -499},
+        {"A": "diiI", "C": " cCcc", "D": 1},
+    ])],
+    [StrStripRule, ["A", "C"], "both", None, None, INPUT_DF2, DataFrame(data=[
+        {"A": "AbCdEfG", "C": "cCcc", "D": -100},
+        {"A": "babA", "C": "cCcc"},
+        {"A": "AAcAAA", "C": "cCcc", "D": -499},
+        {"A": "diiI", "C": "cCcc", "D": 1},
+    ])],
+    [StrStripRule, ["A", "C"], "left", "Ac", None, INPUT_DF2, DataFrame(data=[
+        {"A": "  AbCdEfG  ", "C": " cCcc", "D": -100},
+        {"A": "babA   ", "C": "Ccc "},
+        {"A": "  AAcAAA", "C": "Ccc", "D": -499},
+        {"A": "diiI", "C": " cCcc  ", "D": 1},
+    ])],
+    [StrStripRule, ["A", "C"], "right", "Ac", None, INPUT_DF2, DataFrame(data=[
+        {"A": "  AbCdEfG  ", "C": " cC", "D": -100},
+        {"A": "babA   ", "C": "cCcc "},
+        {"A": "  ", "C": "cC", "D": -499},
+        {"A": "diiI", "C": " cCcc  ", "D": 1},
+    ])],
+    [StrStripRule, ["A", "C"], "both", "Ac", None, INPUT_DF2, DataFrame(data=[
+        {"A": "  AbCdEfG  ", "C": " cC", "D": -100},
+        {"A": "babA   ", "C": "Ccc "},
+        {"A": "  ", "C": "C", "D": -499},
+        {"A": "diiI", "C": " cCcc  ", "D": 1},
+    ])],
+    [StrStripRule, ["A", "C"], "both", None, ["E", "F"], INPUT_DF2, DataFrame(data=[
+        {"A": "  AbCdEfG  ", "C": " cCcc", "D": -100, "E": "AbCdEfG", "F": "cCcc"},
+        {"A": "babA   ", "C": "cCcc ", "E": "babA", "F": "cCcc"},
+        {"A": "  AAcAAA", "C": "cCcc", "D": -499, "E": "AAcAAA", "F": "cCcc"},
+        {"A": "diiI", "C": " cCcc  ", "D": 1, "E": "diiI", "F": "cCcc"},
+    ])],
+    [StrStripRule, ["A", "C", "Z"], "left", None, None, INPUT_DF2, MissingColumnError],
+    [StrStripRule, ["A", "C"], "both", None, ["E"], INPUT_DF2, ValueError],
+])
+def test_strip_scenarios(rule_cls, columns, how, characters, output_columns, input_df, expected):
+    with get_test_data(input_df, named_inputs={"input": input_df}, named_output="result") as data:
+        rule = rule_cls(columns, how=how, characters=characters, output_columns=output_columns, named_input="input", named_output="result")
         if isinstance(expected, DataFrame):
             rule.apply(data)
             assert_frame_equal(data.get_named_output("result"), expected)
