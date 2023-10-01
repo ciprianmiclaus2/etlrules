@@ -31,23 +31,23 @@ class StrLowerRule(BaseStrRule):
         rule.apply(data)
 
     Args:
-        columns: A list of string columns to convert to lower case.
-        output_columns: A list of new names for the columns with the lower case values.
+        columns (Iterable[str]): A list of string columns to convert to lower case.
+        output_columns (Optional[Iterable[str]]): A list of new names for the columns with the lower case values.
             Optional. If provided, if must have the same length as the columns sequence.
             The existing columns are unchanged, and new columns are created with the lower case values.
             If not provided, the result is updated in place.
 
-        named_input: Which dataframe to use as the input. Optional.
+        named_input (Optional[str]): Which dataframe to use as the input. Optional.
             When not set, the input is taken from the main output.
             Set it to a string value, the name of an output dataframe of a previous rule.
-        named_output: Give the output of this rule a name so it can be used by another rule as a named input. Optional.
+        named_output (Optional[str]): Give the output of this rule a name so it can be used by another rule as a named input. Optional.
             When not set, the result of this rule will be available as the main output.
             When set to a name (string), the result will be available as that named output.
-        name: Give the rule a name. Optional.
+        name (Optional[str]): Give the rule a name. Optional.
             Named rules are more descriptive as to what they're trying to do/the intent.
-        description: Describe in detail what the rules does, how it does it. Optional.
+        description (Optional[str]): Describe in detail what the rules does, how it does it. Optional.
             Together with the name, the description acts as the documentation of the rule.
-        strict: When set to True, the rule does a stricter valiation. Default: True
+        strict (bool): When set to True, the rule does a stricter valiation. Default: True
 
     Raises:
         MissingColumnError: raised in strict mode only if a column doesn't exist in the input dataframe.
@@ -70,23 +70,23 @@ class StrUpperRule(BaseStrRule):
         rule.apply(data)
 
     Args:
-        columns: A list of string columns to convert to upper case.
-        output_columns: A list of new names for the columns with the upper case values.
+        columns (Iterable[str]): A list of string columns to convert to upper case.
+        output_columns (Optional[Iterable[str]]): A list of new names for the columns with the upper case values.
             Optional. If provided, if must have the same length as the columns sequence.
             The existing columns are unchanged, and new columns are created with the upper case values.
             If not provided, the result is updated in place.
 
-        named_input: Which dataframe to use as the input. Optional.
+        named_input (Optional[str]): Which dataframe to use as the input. Optional.
             When not set, the input is taken from the main output.
             Set it to a string value, the name of an output dataframe of a previous rule.
-        named_output: Give the output of this rule a name so it can be used by another rule as a named input. Optional.
+        named_output (Optional[str]): Give the output of this rule a name so it can be used by another rule as a named input. Optional.
             When not set, the result of this rule will be available as the main output.
             When set to a name (string), the result will be available as that named output.
-        name: Give the rule a name. Optional.
+        name (Optional[str]): Give the rule a name. Optional.
             Named rules are more descriptive as to what they're trying to do/the intent.
-        description: Describe in detail what the rules does, how it does it. Optional.
+        description (Optional[str]): Describe in detail what the rules does, how it does it. Optional.
             Together with the name, the description acts as the documentation of the rule.
-        strict: When set to True, the rule does a stricter valiation. Default: True
+        strict (bool): When set to True, the rule does a stricter valiation. Default: True
 
     Raises:
         MissingColumnError: raised in strict mode only if a column doesn't exist in the input dataframe.
@@ -112,23 +112,23 @@ class StrCapitalizeRule(BaseStrRule):
         rule.apply(data)
 
     Args:
-        columns: A list of string columns to convert to capitalize.
-        output_columns: A list of new names for the columns with the capitalized values.
+        columns (Iterable[str]): A list of string columns to convert to capitalize.
+        output_columns (Optional[Iterable[str]]): A list of new names for the columns with the capitalized values.
             Optional. If provided, if must have the same length as the columns sequence.
             The existing columns are unchanged, and new columns are created with the capitalized values.
             If not provided, the result is updated in place.
 
-        named_input: Which dataframe to use as the input. Optional.
+        named_input (Optional[str]): Which dataframe to use as the input. Optional.
             When not set, the input is taken from the main output.
             Set it to a string value, the name of an output dataframe of a previous rule.
-        named_output: Give the output of this rule a name so it can be used by another rule as a named input. Optional.
+        named_output (Optional[str]): Give the output of this rule a name so it can be used by another rule as a named input. Optional.
             When not set, the result of this rule will be available as the main output.
             When set to a name (string), the result will be available as that named output.
-        name: Give the rule a name. Optional.
+        name (Optional[str]): Give the rule a name. Optional.
             Named rules are more descriptive as to what they're trying to do/the intent.
-        description: Describe in detail what the rules does, how it does it. Optional.
+        description (Optional[str]): Describe in detail what the rules does, how it does it. Optional.
             Together with the name, the description acts as the documentation of the rule.
-        strict: When set to True, the rule does a stricter valiation. Default: True
+        strict (bool): When set to True, the rule does a stricter valiation. Default: True
 
     Raises:
         MissingColumnError: raised in strict mode only if a column doesn't exist in the input dataframe.
