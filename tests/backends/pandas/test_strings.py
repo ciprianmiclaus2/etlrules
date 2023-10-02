@@ -5,7 +5,7 @@ import pytest
 from etlrules.exceptions import MissingColumnError
 from etlrules.backends.pandas import (
     StrLowerRule, StrUpperRule, StrCapitalizeRule, StrStripRule, StrPadRule,
-    StrSplitRule,
+    StrSplitRule, StrSplitRejoinRule
 )
 from tests.backends.pandas.utils.data import get_test_data
 
@@ -254,6 +254,73 @@ def test_pad_scenarios(columns, width, fill_char, how, output_columns, input_df,
 def test_split_scenarios(columns, separator, separator_regex, limit, output_columns, input_df, expected):
     with get_test_data(input_df, named_inputs={"input": input_df}, named_output="result") as data:
         rule = StrSplitRule(columns, separator=separator, separator_regex=separator_regex, limit=limit, output_columns=output_columns, named_input="input", named_output="result")
+        if isinstance(expected, DataFrame):
+            rule.apply(data)
+            assert_frame_equal(data.get_named_output("result"), expected)
+        elif issubclass(expected, Exception):
+            with pytest.raises(expected):
+                rule.apply(data)
+        else:
+            assert False
+
+
+@pytest.mark.parametrize("columns,separator,separator_regex,limit,new_separator,sort,output_columns,input_df,expected", [
+    [["A", "C"], ",", None, None, "|", None, None, INPUT_DF4, DataFrame(data=[
+        {"A": "A|B;C|D;E", "C": "cCcc", "D": -100},
+        {"A": "1|2|3|4"},
+        {"A": "1;2;3;4", "C": " cCcc", "D": -499},
+        {"C": " cCcc ", "D": 1},
+    ])],
+    [["A", "C"], ",", None, None, "|", "ascending", None, INPUT_DF4, DataFrame(data=[
+        {"A": "A|B;C|D;E", "C": "cCcc", "D": -100},
+        {"A": "1|2|3|4"},
+        {"A": "1;2;3;4", "C": " cCcc", "D": -499},
+        {"C": " cCcc ", "D": 1},
+    ])],
+    [["A", "C"], ",", None, None, "|", "descending", None, INPUT_DF4, DataFrame(data=[
+        {"A": "D;E|B;C|A", "C": "cCcc", "D": -100},
+        {"A": "4|3|2|1"},
+        {"A": "1;2;3;4", "C": " cCcc", "D": -499},
+        {"C": " cCcc ", "D": 1},
+    ])],
+    [["A", "C"], ",", None, 2, "|", None, None, INPUT_DF4, DataFrame(data=[
+        {"A": "A|B;C|D;E", "C": "cCcc", "D": -100},
+        {"A": "1|2|3,4"},
+        {"A": "1;2;3;4", "C": " cCcc", "D": -499},
+        {"C": " cCcc ", "D": 1},
+    ])],
+    [["A", "C"], ";", None, None, "|", None, None, INPUT_DF4, DataFrame(data=[
+        {"A": "A,B|C,D|E", "C": "cCcc", "D": -100},
+        {"A": "1,2,3,4"},
+        {"A": "1|2|3|4", "C": " cCcc", "D": -499},
+        {"C": " cCcc ", "D": 1},
+    ])],
+    [["A", "C"], None, ",|;", None, "|", None, None, INPUT_DF4, DataFrame(data=[
+        {"A": "A|B|C|D|E", "C": "cCcc", "D": -100},
+        {"A": "1|2|3|4"},
+        {"A": "1|2|3|4", "C": " cCcc", "D": -499},
+        {"C": " cCcc ", "D": 1},
+    ])],
+    [["A", "C"], None, ",|;", 2, "|", None, None, INPUT_DF4, DataFrame(data=[
+        {"A": "A|B|C,D;E", "C": "cCcc", "D": -100},
+        {"A": "1|2|3,4"},
+        {"A": "1|2|3;4", "C": " cCcc", "D": -499},
+        {"C": " cCcc ", "D": 1},
+    ])],
+    [["A", "C"], ",", None, None, "|", None, ["E", "F"], INPUT_DF4, DataFrame(data=[
+        {"A": "A,B;C,D;E", "C": "cCcc", "D": -100, "E": "A|B;C|D;E", "F": "cCcc"},
+        {"A": "1,2,3,4", "E": "1|2|3|4"},
+        {"A": "1;2;3;4", "C": " cCcc", "D": -499, "E": "1;2;3;4", "F": " cCcc"},
+        {"C": " cCcc ", "D": 1, "F": " cCcc "},
+    ])],
+    [["A", "C", "Z"], ",", None, None, "|", None, None, INPUT_DF4, MissingColumnError],
+    [["A", "C"], ",", None, None, "|", None, ["E"], INPUT_DF4, ValueError],
+])
+def test_split_rejoin_scenarios(columns, separator, separator_regex, limit, new_separator, sort, output_columns, input_df, expected):
+    with get_test_data(input_df, named_inputs={"input": input_df}, named_output="result") as data:
+        rule = StrSplitRejoinRule(
+            columns, separator=separator, separator_regex=separator_regex, limit=limit, new_separator=new_separator,
+            sort=sort, output_columns=output_columns, named_input="input", named_output="result")
         if isinstance(expected, DataFrame):
             rule.apply(data)
             assert_frame_equal(data.get_named_output("result"), expected)

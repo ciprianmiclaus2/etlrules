@@ -1,4 +1,6 @@
 import re
+from pandas import NA
+from numpy import nan
 from typing import Iterable, Optional, Literal
 
 from etlrules.backends.pandas.validation import ColumnsInOutMixin
@@ -211,7 +213,83 @@ class StrSplitRule(BaseStrRule):
 
 
 class StrSplitRejoinRule(BaseStrRule):
-    ...
+    """ Splits a string into an array of substrings based on a string separator or a regular expression, then rejoin with a new separator, optionally sorting the substrings.
+
+    Note:
+        The output is an array of substrings which can optionally be limited via the limit parameter to only
+        include the first <limit> number of substrings.
+
+    Basic usage::
+
+        # splits col_A, col_B, col_C on ,
+        # "b,d;a,c" will be split and rejoined as "b|c|d;a"
+        rule = StrSplitRejoinRule(["col_A", "col_B", "col_C"], separator=",", new_separator="|", sort="ascending")
+        rule.apply(data)
+
+    Args:
+        columns (Iterable[str]): A list of string columns to convert to upper case.
+        separator: A literal value to split the string by. Optional.
+        separator_regex: A regular expression to split the string by. Optional
+            Note: One and only one of separator or separator_regex must be specified.
+        limit: A limit to the number of substrings. If specified, only the first <limit> substrings are returned
+            plus an additional remainder. At most, limit + 1 substrings are returned with the last beind the remainder.
+        new_separator: A new separator used to rejoin the substrings.
+        sort: Optionally sorts the substrings before rejoining using the new_separator.
+            It can be set to either ascending or descending, sorting the substrings accordingly.
+            When the value is set to None, there is no sorting.
+        output_columns (Optional[Iterable[str]]): A list of new names for the columns with the upper case values.
+            Optional. If provided, if must have the same length as the columns sequence.
+            The existing columns are unchanged, and new columns are created with the upper case values.
+            If not provided, the result is updated in place.
+
+        named_input (Optional[str]): Which dataframe to use as the input. Optional.
+            When not set, the input is taken from the main output.
+            Set it to a string value, the name of an output dataframe of a previous rule.
+        named_output (Optional[str]): Give the output of this rule a name so it can be used by another rule as a named input. Optional.
+            When not set, the result of this rule will be available as the main output.
+            When set to a name (string), the result will be available as that named output.
+        name (Optional[str]): Give the rule a name. Optional.
+            Named rules are more descriptive as to what they're trying to do/the intent.
+        description (Optional[str]): Describe in detail what the rules does, how it does it. Optional.
+            Together with the name, the description acts as the documentation of the rule.
+        strict (bool): When set to True, the rule does a stricter valiation. Default: True
+
+    Raises:
+        MissingColumnError: raised in strict mode only if a column doesn't exist in the input dataframe.
+        ValueError: raised if output_columns is provided and not the same length as the columns parameter.
+
+    Note:
+        In non-strict mode, missing columns are ignored.
+    """
+
+    SORT_ASCENDING = "ascending"
+    SORT_DESCENDING = "descending"
+
+    def __init__(self, columns: Iterable[str], separator: Optional[str]=None, separator_regex:Optional[str]=None, limit:Optional[int]=None, new_separator:str=",", sort:Optional[Literal[SORT_ASCENDING, SORT_DESCENDING]]=None, output_columns:Optional[Iterable[str]]=None, named_input: Optional[str]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
+        super().__init__(columns=columns, output_columns=output_columns, named_input=named_input, named_output=named_output, 
+                         name=name, description=description, strict=strict)
+        assert bool(separator) != bool(separator_regex), "One and only one of separator and separator_regex can be specified."
+        self.separator = separator
+        self.separator_regex = separator_regex
+        self._compiled_regex = re.compile(self.separator_regex) if self.separator_regex is not None else None
+        self.limit = limit
+        assert isinstance(new_separator, str) and new_separator
+        self.new_separator = new_separator
+        assert sort in (None, self.SORT_ASCENDING, self.SORT_DESCENDING)
+        self.sort = sort
+
+    def do_apply(self, col):
+        if self.separator_regex is not None:
+            new_col = col.str.split(pat=self._compiled_regex, n=self.limit, regex=True)
+        else:
+            new_col = col.str.split(pat=self.separator, n=self.limit, regex=False)
+        new_separator = self.new_separator
+        if self.sort is not None:
+            reverse = self.sort==self.SORT_DESCENDING
+            func = lambda val: new_separator.join(sorted(val, reverse=reverse)) if val not in (nan, NA, None) else val
+        else:
+            func = lambda val: new_separator.join(val) if val not in (nan, NA, None) else val
+        return new_col.apply(func)
 
 
 class StrStripRule(BaseStrRule):
