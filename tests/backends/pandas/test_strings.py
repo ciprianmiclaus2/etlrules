@@ -3,7 +3,10 @@ from pandas.testing import assert_frame_equal
 import pytest
 
 from etlrules.exceptions import MissingColumnError
-from etlrules.backends.pandas import StrLowerRule, StrUpperRule, StrCapitalizeRule, StrStripRule, StrPadRule
+from etlrules.backends.pandas import (
+    StrLowerRule, StrUpperRule, StrCapitalizeRule, StrStripRule, StrPadRule,
+    StrSplitRule,
+)
 from tests.backends.pandas.utils.data import get_test_data
 
 
@@ -28,6 +31,14 @@ INPUT_DF3 = DataFrame(data=[
     {"A": "babA", "C": "cCcc "},
     {"A": "AAcAAA", "C": " cCcc", "D": -499},
     {"A": "diiI", "C": " cCcc ", "D": 1},
+])
+
+
+INPUT_DF4 = DataFrame(data=[
+    {"A": "A,B;C,D;E", "C": "cCcc", "D": -100},
+    {"A": "1,2,3,4"},
+    {"A": "1;2;3;4", "C": " cCcc", "D": -499},
+    {"C": " cCcc ", "D": 1},
 ])
 
 
@@ -147,17 +158,102 @@ def test_strip_scenarios(rule_cls, columns, how, characters, output_columns, inp
             assert False
 
 
-@pytest.mark.parametrize("rule_cls,columns,width,fill_char,how,output_columns,input_df,expected", [
-    [StrPadRule, ["A", "C"], 6, ".", "right", None, INPUT_DF3, DataFrame(data=[
+@pytest.mark.parametrize("columns,width,fill_char,how,output_columns,input_df,expected", [
+    [["A", "C"], 6, ".", "right", None, INPUT_DF3, DataFrame(data=[
         {"A": "AbCdEfG", "C": "cCcc..", "D": -100},
         {"A": "babA..", "C": "cCcc ."},
         {"A": "AAcAAA", "C": " cCcc.", "D": -499},
         {"A": "diiI..", "C": " cCcc ", "D": 1},
     ])],
+    [["A", "C"], 6, ".", "left", None, INPUT_DF3, DataFrame(data=[
+        {"A": "AbCdEfG", "C": "..cCcc", "D": -100},
+        {"A": "..babA", "C": ".cCcc "},
+        {"A": "AAcAAA", "C": ". cCcc", "D": -499},
+        {"A": "..diiI", "C": " cCcc ", "D": 1},
+    ])],
+    [["A", "C"], 6, ".", "both", None, INPUT_DF3, DataFrame(data=[
+        {"A": "AbCdEfG", "C": ".cCcc.", "D": -100},
+        {"A": ".babA.", "C": "cCcc ."},
+        {"A": "AAcAAA", "C": " cCcc.", "D": -499},
+        {"A": ".diiI.", "C": " cCcc ", "D": 1},
+    ])],
+    [["A", "C"], 6, ".", "right", ["E", "F"], INPUT_DF3, DataFrame(data=[
+        {"A": "AbCdEfG", "C": "cCcc", "D": -100, "E": "AbCdEfG", "F": "cCcc.."},
+        {"A": "babA", "C": "cCcc ", "E": "babA..", "F": "cCcc ."},
+        {"A": "AAcAAA", "C": " cCcc", "D": -499, "E": "AAcAAA", "F": " cCcc."},
+        {"A": "diiI", "C": " cCcc ", "D": 1, "E": "diiI..", "F": " cCcc "},
+    ])],
+    [["A", "C"], 6, ".", "left", ["E", "F"], INPUT_DF3, DataFrame(data=[
+        {"A": "AbCdEfG", "C": "cCcc", "D": -100, "E": "AbCdEfG", "F": "..cCcc"},
+        {"A": "babA", "C": "cCcc ", "E": "..babA", "F": ".cCcc "},
+        {"A": "AAcAAA", "C": " cCcc", "D": -499, "E": "AAcAAA", "F": ". cCcc"},
+        {"A": "diiI", "C": " cCcc ", "D": 1, "E": "..diiI", "F": " cCcc "},
+    ])],
+    [["A", "C"], 6, ".", "both", ["E", "F"], INPUT_DF3, DataFrame(data=[
+        {"A": "AbCdEfG", "C": "cCcc", "D": -100, "E": "AbCdEfG", "F": ".cCcc."},
+        {"A": "babA", "C": "cCcc ", "E": ".babA.", "F": "cCcc ."},
+        {"A": "AAcAAA", "C": " cCcc", "D": -499, "E": "AAcAAA", "F": " cCcc."},
+        {"A": "diiI", "C": " cCcc ", "D": 1, "E": ".diiI.", "F": " cCcc "},
+    ])],
+    [["A", "C", "Z"], 6, ".", "left", None, INPUT_DF3, MissingColumnError],
+    [["A", "C"], 6, ".", "both", ["E"], INPUT_DF3, ValueError],
 ])
-def test_justify_scenarios(rule_cls, columns, width, fill_char, how, output_columns, input_df, expected):
+def test_pad_scenarios(columns, width, fill_char, how, output_columns, input_df, expected):
     with get_test_data(input_df, named_inputs={"input": input_df}, named_output="result") as data:
-        rule = rule_cls(columns, width=width, fill_character=fill_char, how=how, output_columns=output_columns, named_input="input", named_output="result")
+        rule = StrPadRule(columns, width=width, fill_character=fill_char, how=how, output_columns=output_columns, named_input="input", named_output="result")
+        if isinstance(expected, DataFrame):
+            rule.apply(data)
+            assert_frame_equal(data.get_named_output("result"), expected)
+        elif issubclass(expected, Exception):
+            with pytest.raises(expected):
+                rule.apply(data)
+        else:
+            assert False
+
+
+@pytest.mark.parametrize("columns,separator,separator_regex,limit,output_columns,input_df,expected", [
+    [["A", "C"], ",", None, None, None, INPUT_DF4, DataFrame(data=[
+        {"A": ["A", "B;C", "D;E"], "C": ["cCcc"], "D": -100},
+        {"A": ["1", "2", "3", "4"]},
+        {"A": ["1;2;3;4"], "C": [" cCcc"], "D": -499},
+        {"C": [" cCcc "], "D": 1},
+    ])],
+    [["A", "C"], ",", None, 2, None, INPUT_DF4, DataFrame(data=[
+        {"A": ["A", "B;C", "D;E"], "C": ["cCcc"], "D": -100},
+        {"A": ["1", "2", "3,4"]},
+        {"A": ["1;2;3;4"], "C": [" cCcc"], "D": -499},
+        {"C": [" cCcc "], "D": 1},
+    ])],
+    [["A", "C"], ";", None, None, None, INPUT_DF4, DataFrame(data=[
+        {"A": ["A,B", "C,D", "E"], "C": ["cCcc"], "D": -100},
+        {"A": ["1,2,3,4"]},
+        {"A": ["1", "2", "3", "4"], "C": [" cCcc"], "D": -499},
+        {"C": [" cCcc "], "D": 1},
+    ])],
+    [["A", "C"], None, ",|;", None, None, INPUT_DF4, DataFrame(data=[
+        {"A": ["A", "B", "C", "D", "E"], "C": ["cCcc"], "D": -100},
+        {"A": ["1", "2", "3", "4"]},
+        {"A": ["1", "2", "3", "4"], "C": [" cCcc"], "D": -499},
+        {"C": [" cCcc "], "D": 1},
+    ])],
+    [["A", "C"], None, ",|;", 2, None, INPUT_DF4, DataFrame(data=[
+        {"A": ["A", "B", "C,D;E"], "C": ["cCcc"], "D": -100},
+        {"A": ["1", "2", "3,4"]},
+        {"A": ["1", "2", "3;4"], "C": [" cCcc"], "D": -499},
+        {"C": [" cCcc "], "D": 1},
+    ])],
+    [["A", "C"], ",", None, None, ["E", "F"], INPUT_DF4, DataFrame(data=[
+        {"A": "A,B;C,D;E", "C": "cCcc", "D": -100, "E": ["A", "B;C", "D;E"], "F": ["cCcc"]},
+        {"A": "1,2,3,4", "E": ["1", "2", "3", "4"]},
+        {"A": "1;2;3;4", "C": " cCcc", "D": -499, "E": ["1;2;3;4"], "F": [" cCcc"]},
+        {"C": " cCcc ", "D": 1, "F": [" cCcc "]},
+    ])],
+    [["A", "C", "Z"], ",", None, None, None, INPUT_DF4, MissingColumnError],
+    [["A", "C"], ",", None, None, ["E"], INPUT_DF4, ValueError],
+])
+def test_split_scenarios(columns, separator, separator_regex, limit, output_columns, input_df, expected):
+    with get_test_data(input_df, named_inputs={"input": input_df}, named_output="result") as data:
+        rule = StrSplitRule(columns, separator=separator, separator_regex=separator_regex, limit=limit, output_columns=output_columns, named_input="input", named_output="result")
         if isinstance(expected, DataFrame):
             rule.apply(data)
             assert_frame_equal(data.get_named_output("result"), expected)

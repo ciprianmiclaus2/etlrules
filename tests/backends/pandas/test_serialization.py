@@ -6,6 +6,7 @@ from etlrules.backends.pandas import (
     ForwardFillRule, BackFillRule, AddNewColumnRule,
     VConcatRule, HConcatRule, AggregateRule, RoundRule, AbsRule,
     StrLowerRule, StrUpperRule, StrCapitalizeRule, StrStripRule, StrPadRule,
+    StrSplitRule,
 )
 from etlrules.rule import BaseRule
 
@@ -67,6 +68,10 @@ from etlrules.rule import BaseRule
         StrStripRule(["B", "D", "Z"], how="both", characters="Ac", output_columns=["F", "G"], named_input="input", 
                   named_output="result", name="BF", description="Some desc2 BF", strict=True),
         StrPadRule(["B", "D", "Z"], width=8, fill_character=".", how="both", output_columns=["F", "G"], named_input="input", 
+                  named_output="result", name="BF", description="Some desc2 BF", strict=True),
+        StrSplitRule(["B", "D", "Z"], separator=";", limit=4, output_columns=["F", "G"], named_input="input", 
+                  named_output="result", name="BF", description="Some desc2 BF", strict=True),
+        StrSplitRule(["B", "D", "Z"], separator=",|;", limit=4, output_columns=["F", "G"], named_input="input", 
                   named_output="result", name="BF", description="Some desc2 BF", strict=True),
     ]
 )
