@@ -1,7 +1,7 @@
 from pandas import DataFrame
 from pandas.testing import assert_frame_equal
 import pytest
-from etlrules.backends.pandas import DedupeRule, ProjectRule, RenameRule
+from etlrules.backends.pandas import DedupeRule, ProjectRule, RenameRule, ReplaceRule
 from etlrules.exceptions import MissingColumnError
 from tests.backends.pandas.utils.data import get_test_data
 
@@ -167,3 +167,46 @@ def test_dedupe_rule_raises_missing_column():
         rule = DedupeRule(["A", "B", "D"], keep='first', strict=False)
         with pytest.raises(MissingColumnError):
             rule.apply(data)
+
+
+@pytest.mark.parametrize("columns,values,new_values,regex,output_columns,input_df,expected", [
+    [["A"], ["a", 1], ["new_a", 2], False, None, 
+        DataFrame(data=[{"A": "a", "B": 3}, {"A": "aa", "B": 1}]),
+        DataFrame(data=[{"A": "new_a", "B": 3}, {"A": "aa", "B": 1}])
+    ],
+    [["A"], ["a", "aa"], ["new_a", "new_aa"], False, None, 
+        DataFrame(data=[{"A": "a", "B": 3}, {"A": "aa", "B": 1}]),
+        DataFrame(data=[{"A": "new_a", "B": 3}, {"A": "new_aa", "B": 1}])
+    ],
+    [["A", "B"], ["a", 1], ["new_a", 2], False, ["E", "F"], 
+        DataFrame(data=[{"A": "a", "B": 3}, {"A": "aa", "B": 1}]),
+        DataFrame(data=[{"A": "a", "B": 3, "E": "new_a", "F": 3}, {"A": "aa", "B": 1, "E": "aa", "F": 2}]),
+    ],
+    [["A", "B"], ["a", 1], ["new_a", 2], False, None, 
+        DataFrame(data=[{"A": "a", "B": 3}, {"A": "aa", "B": 1}]),
+        DataFrame(data=[{"A": "new_a", "B": 3}, {"A": "aa", "B": 2}])
+    ],
+    [["A"], ["a.*d"], ["new_a"], True, None, 
+        DataFrame(data=[{"A": "agagd", "B": 3}, {"A": "aad", "B": 1}]),
+        DataFrame(data=[{"A": "new_a", "B": 3}, {"A": "new_a", "B": 1}])
+    ],
+    [["A"], [r"a(.*)d"], [r"new_\1_"], True, None, 
+        DataFrame(data=[{"A": "agagd", "B": 3}, {"A": "aad", "B": 1}]),
+        DataFrame(data=[{"A": "new_gag_", "B": 3}, {"A": "new_a_", "B": 1}])
+    ],
+    [["A", "C", "Z"], ["a", 1], ["new_a", 2], False, None, DataFrame(data=[{"A": "a", "B": 3}, {"A": "aa", "B": 1}]), MissingColumnError],
+    [["A", "B"], ["a", 1], ["new_a", 2], False, ["E"], DataFrame(data=[{"A": "a", "B": 3}, {"A": "aa", "B": 1}]), ValueError],
+])
+def test_replace_scenarios(columns, values, new_values, regex, output_columns, input_df, expected):
+    with get_test_data(input_df, named_inputs={"input": input_df}, named_output="result") as data:
+        rule = ReplaceRule(
+            columns, values=values, new_values=new_values, regex=regex,
+            output_columns=output_columns, named_input="input", named_output="result")
+        if isinstance(expected, DataFrame):
+            rule.apply(data)
+            assert_frame_equal(data.get_named_output("result"), expected)
+        elif issubclass(expected, Exception):
+            with pytest.raises(expected):
+                rule.apply(data)
+        else:
+            assert False

@@ -4,7 +4,8 @@ from etlrules.backends.common.basic import BaseProjectRule
 from etlrules.exceptions import MissingColumnError
 from etlrules.rule import UnaryOpBaseRule
 
-from .validation import PandasRuleValidationMixin
+from etlrules.backends.pandas.base import BaseAssignRule
+from etlrules.backends.pandas.validation import PandasRuleValidationMixin
 
 
 class ProjectRule(BaseProjectRule, PandasRuleValidationMixin):
@@ -173,3 +174,64 @@ class DedupeRule(UnaryOpBaseRule):
             raise MissingColumnError(f"Missing column(s) to dedupe on: {set(self.columns) - set(df.columns)}")
         df = df.drop_duplicates(subset=self.columns, keep=self.keep, ignore_index=True)
         self._set_output_df(data, df)
+
+
+class ReplaceRule(BaseAssignRule):
+    """ Replaces some some values (or regular expressions) with another set of values (or regular expressions) in a set of columns.
+
+    Basic usage::
+
+        # replaces A with new_A and b with new_b in col_A, col_B and col_C
+        rule = ReplaceRule(["col_A", "col_B", "col_C"], values=["A", "b"], new_values=["new_A", "new_b"])
+        rule.apply(data)
+
+        # replaces 1 with 3 and 2 with 4 in the col_I column
+        rule = ReplaceRule(["col_I"], values=[1, 2], new_values=[3, 4])
+        rule.apply(data)
+
+    Args:
+        columns (Iterable[str]): A list of string columns to convert to upper case.
+        values: A sequence of values to replace. Regular expressions can be used to match values more widely,
+            in which case, the regex parameter must be set to True.
+            Values can be any supported types but they should match the type of the columns.
+        new_values: A sequence of the same length as values. Each value within new_values will replace the
+            corresponding value in values (at the same index).
+            New values can be any supported types but they should match the type of the columns.
+        regex: True if all the values and new_values are to be interpreted as regular expressions. Default: False.
+            regex=True is only applicable to string columns.
+        output_columns (Optional[Iterable[str]]): A list of new names for the columns with the upper case values.
+            Optional. If provided, if must have the same length as the columns sequence.
+            The existing columns are unchanged, and new columns are created with the upper case values.
+            If not provided, the result is updated in place.
+
+        named_input (Optional[str]): Which dataframe to use as the input. Optional.
+            When not set, the input is taken from the main output.
+            Set it to a string value, the name of an output dataframe of a previous rule.
+        named_output (Optional[str]): Give the output of this rule a name so it can be used by another rule as a named input. Optional.
+            When not set, the result of this rule will be available as the main output.
+            When set to a name (string), the result will be available as that named output.
+        name (Optional[str]): Give the rule a name. Optional.
+            Named rules are more descriptive as to what they're trying to do/the intent.
+        description (Optional[str]): Describe in detail what the rules does, how it does it. Optional.
+            Together with the name, the description acts as the documentation of the rule.
+        strict (bool): When set to True, the rule does a stricter valiation. Default: True
+
+    Raises:
+        MissingColumnError: raised in strict mode only if a column doesn't exist in the input dataframe.
+        ValueError: raised if output_columns is provided and not the same length as the columns parameter.
+
+    Note:
+        In non-strict mode, missing columns are ignored.
+    """
+
+    def __init__(self, columns: Iterable[str], values: Iterable[Union[int,float,str]], new_values: Iterable[Union[int,float,str]], regex=False, output_columns:Optional[Iterable[str]]=None, named_input: Optional[str]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
+        super().__init__(columns=columns, output_columns=output_columns, named_input=named_input, named_output=named_output, 
+                         name=name, description=description, strict=strict)
+        self.values = [val for val in values]
+        self.new_values = [val for val in new_values]
+        assert len(self.values) == len(self.new_values), "values and new_values must be of the same length."
+        assert self.values, "values must not be empty."
+        self.regex = regex
+
+    def do_apply(self, col):
+        return col.replace(to_replace=self.values, value=self.new_values, regex=self.regex)

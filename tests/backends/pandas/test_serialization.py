@@ -1,7 +1,7 @@
 import pytest
 
 from etlrules.backends.pandas import (
-    DedupeRule, ProjectRule, RenameRule, SortRule, TypeConversionRule,
+    DedupeRule, ProjectRule, RenameRule, ReplaceRule, SortRule, TypeConversionRule,
     RulesBlock, LeftJoinRule, InnerJoinRule, OuterJoinRule, RightJoinRule,
     ForwardFillRule, BackFillRule, AddNewColumnRule,
     VConcatRule, HConcatRule, AggregateRule, RoundRule, AbsRule,
@@ -76,6 +76,10 @@ from etlrules.rule import BaseRule
         StrSplitRejoinRule(["B", "D", "Z"], separator=";", limit=4, new_separator="|", sort="descending", output_columns=["F", "G"], named_input="input", 
                   named_output="result", name="BF", description="Some desc2 BF", strict=True),
         StrSplitRejoinRule(["B", "D", "Z"], separator=",|;", limit=4, new_separator="&", sort="ascending", output_columns=["F", "G"], named_input="input", 
+                  named_output="result", name="BF", description="Some desc2 BF", strict=True),
+        ReplaceRule(["B", "D", "Z"], values=["abc", 1], new_values=["aaa", 2], regex=False, output_columns=["F", "G"], named_input="input", 
+                  named_output="result", name="BF", description="Some desc2 BF", strict=True),
+        ReplaceRule(["B", "D", "Z"], values=["a.*d", "a.c"], new_values=[r"\1", r"a_\1_b"], regex=True, output_columns=["F", "G"], named_input="input", 
                   named_output="result", name="BF", description="Some desc2 BF", strict=True),
     ]
 )

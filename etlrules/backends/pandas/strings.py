@@ -1,30 +1,12 @@
 import re
 from pandas import NA
 from numpy import nan
-from typing import Iterable, Optional, Literal
+from typing import Iterable, Optional, Literal, Union, Sequence
 
-from etlrules.backends.pandas.validation import ColumnsInOutMixin
-from etlrules.rule import UnaryOpBaseRule
-
-
-class BaseStrRule(UnaryOpBaseRule, ColumnsInOutMixin):
-
-    def __init__(self, columns: Iterable[str], output_columns:Optional[Iterable[str]]=None, named_input: Optional[str]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
-        super().__init__(named_input=named_input, named_output=named_output, name=name, description=description, strict=strict)
-        self.columns = [col for col in columns]
-        self.output_columns = [out_col for out_col in output_columns] if output_columns else None
-
-    def do_apply(self, col):
-        raise NotImplementedError
-
-    def apply(self, data):
-        df = self._get_input_df(data)
-        columns, output_columns = self.validate_columns_in_out(df, self.columns, self.output_columns, self.strict)
-        df = df.assign(**{output_col: self.do_apply(df[col]) for col, output_col in zip(columns, output_columns)})
-        self._set_output_df(data, df)
+from etlrules.backends.pandas.base import BaseAssignRule
 
 
-class StrLowerRule(BaseStrRule):
+class StrLowerRule(BaseAssignRule):
     """ Converts a set of string columns to lower case.
 
     Basic usage::
@@ -63,7 +45,7 @@ class StrLowerRule(BaseStrRule):
         return col.str.lower()
 
 
-class StrUpperRule(BaseStrRule):
+class StrUpperRule(BaseAssignRule):
     """ Converts a set of string columns to upper case.
 
     Basic usage::
@@ -102,7 +84,7 @@ class StrUpperRule(BaseStrRule):
         return col.str.upper()
 
 
-class StrCapitalizeRule(BaseStrRule):
+class StrCapitalizeRule(BaseAssignRule):
     """ Converts a set of string columns to capitalize.
 
     Capitalization will convert the first letter in the string to upper case and the rest of the letters
@@ -144,7 +126,7 @@ class StrCapitalizeRule(BaseStrRule):
         return col.str.capitalize()
 
 
-class StrSplitRule(BaseStrRule):
+class StrSplitRule(BaseAssignRule):
     """ Splits a string into an array of substrings based on a string separator or a regular expression.
 
     Note:
@@ -212,7 +194,7 @@ class StrSplitRule(BaseStrRule):
         return col.str.split(pat=self.separator, n=self.limit, regex=False)
 
 
-class StrSplitRejoinRule(BaseStrRule):
+class StrSplitRejoinRule(BaseAssignRule):
     """ Splits a string into an array of substrings based on a string separator or a regular expression, then rejoin with a new separator, optionally sorting the substrings.
 
     Note:
@@ -292,7 +274,7 @@ class StrSplitRejoinRule(BaseStrRule):
         return new_col.apply(func)
 
 
-class StrStripRule(BaseStrRule):
+class StrStripRule(BaseAssignRule):
     """ Strips leading, trailing or both whitespaces or other characters from given columns.
 
     Basic usage::
@@ -350,11 +332,7 @@ class StrStripRule(BaseStrRule):
         return col.str.lstrip(to_strip=self.characters)
 
 
-class StrReplaceRule(BaseStrRule):
-    ...
-
-
-class StrPadRule(BaseStrRule):
+class StrPadRule(BaseAssignRule):
     """ Makes strings of a given width (justifies) by padding left, right or both sides with a fill character.
 
     Basic usage::
@@ -413,5 +391,5 @@ class StrPadRule(BaseStrRule):
         return col.str.center(self.width, fillchar=self.fill_character)
 
 
-class StrExtractRule(BaseStrRule):
+class StrExtractRule(BaseAssignRule):
     ...
