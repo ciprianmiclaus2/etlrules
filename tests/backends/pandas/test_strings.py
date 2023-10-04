@@ -5,7 +5,7 @@ import pytest
 from etlrules.exceptions import MissingColumnError
 from etlrules.backends.pandas import (
     StrLowerRule, StrUpperRule, StrCapitalizeRule, StrStripRule, StrPadRule,
-    StrSplitRule, StrSplitRejoinRule
+    StrSplitRule, StrSplitRejoinRule, StrExtractRule
 )
 from tests.backends.pandas.utils.data import get_test_data
 
@@ -321,6 +321,89 @@ def test_split_rejoin_scenarios(columns, separator, separator_regex, limit, new_
         rule = StrSplitRejoinRule(
             columns, separator=separator, separator_regex=separator_regex, limit=limit, new_separator=new_separator,
             sort=sort, output_columns=output_columns, named_input="input", named_output="result")
+        if isinstance(expected, DataFrame):
+            rule.apply(data)
+            assert_frame_equal(data.get_named_output("result"), expected)
+        elif issubclass(expected, Exception):
+            with pytest.raises(expected):
+                rule.apply(data)
+        else:
+            assert False
+
+
+
+@pytest.mark.parametrize("columns,regular_expression,keep_original_value,output_columns,input_df,expected", [
+    [["A"], r"a([\d]*)_end", True, None, 
+        DataFrame(data=[{"A": "a123_end", "B": "a321_end"}, {"A": "a123f_end", "B": "a321f_end"}]),
+        DataFrame(data=[{"A": "123", "B": "a321_end"}, {"A": "a123f_end", "B": "a321f_end"}]),
+    ],
+    [["A"], r"a([\d]*)_end", False, None, 
+        DataFrame(data=[{"A": "a123_end", "B": "a321_end"}, {"A": "a123f_end", "B": "a321f_end"}]),
+        DataFrame(data=[{"A": "123", "B": "a321_end"}, {"B": "a321f_end"}]),
+    ],
+    [["A", "B"], r"a([\d]*)_end", True, None, 
+        DataFrame(data=[{"A": "a123_end", "B": "a321_end"}, {"A": "a123f_end", "B": "a321f_end"}]),
+        DataFrame(data=[{"A": "123", "B": "321"}, {"A": "a123f_end", "B": "a321f_end"}]),
+    ],
+    [["A", "B"], r"a([\d]*)_end", False, None, 
+        DataFrame(data=[{"A": "a123_end", "B": "a321_end"}, {"A": "a123f_end", "B": "a321f_end"}]),
+        DataFrame(data=[{"A": "123", "B": "321"}, {}]),
+    ],
+    [["A"], r"a([\d]*)((?:f{0,1})_end)", True, ["E", "F"], 
+        DataFrame(data=[
+            {"A": "a123_end", "B": "a321_end"},
+            {"A": "a123f_end", "B": "a321f_end"},
+            {"A": "no_match", "B": "a321f_end"},
+        ]),
+        DataFrame(data=[
+            {"A": "a123_end", "B": "a321_end", "E": "123", "F": "_end"},
+            {"A": "a123f_end", "B": "a321f_end", "E": "123", "F": "f_end"},
+            {"A": "no_match", "B": "a321f_end", "E": "no_match"},
+        ]),
+    ],
+    [["A"], r"a([\d]*)((?:f{0,1})_end)", False, ["E", "F"], 
+        DataFrame(data=[
+            {"A": "a123_end", "B": "a321_end"},
+            {"A": "a123f_end", "B": "a321f_end"},
+            {"A": "no_match", "B": "a321f_end"},
+        ]),
+        DataFrame(data=[
+            {"A": "a123_end", "B": "a321_end", "E": "123", "F": "_end"},
+            {"A": "a123f_end", "B": "a321f_end", "E": "123", "F": "f_end"},
+            {"A": "no_match", "B": "a321f_end"},
+        ]),
+    ],
+    [["A", "B"], r"a([\d]*)((?:f{0,1})_end)", True, ["E", "F", "G", "H"], 
+        DataFrame(data=[
+            {"A": "a123_end", "B": "a321_end"},
+            {"A": "a123f_end", "B": "a321f_end"},
+            {"A": "no_match", "B": "nomatch"},
+        ]),
+        DataFrame(data=[
+            {"A": "a123_end", "B": "a321_end", "E": "123", "F": "_end", "G": "321", "H": "_end"},
+            {"A": "a123f_end", "B": "a321f_end", "E": "123", "F": "f_end", "G": "321", "H": "f_end"},
+            {"A": "no_match", "B": "nomatch", "E": "no_match", "G": "nomatch"},
+        ]),
+    ],
+    [["A", "B"], r"a([\d]*)((?:f{0,1})_end)", False, ["E", "F", "G", "H"], 
+        DataFrame(data=[
+            {"A": "a123_end", "B": "a321_end"},
+            {"A": "a123f_end", "B": "a321f_end"},
+            {"A": "no_match", "B": "nomatch"},
+        ]),
+        DataFrame(data=[
+            {"A": "a123_end", "B": "a321_end", "E": "123", "F": "_end", "G": "321", "H": "_end"},
+            {"A": "a123f_end", "B": "a321f_end", "E": "123", "F": "f_end", "G": "321", "H": "f_end"},
+            {"A": "no_match", "B": "nomatch"},
+        ]),
+    ],
+    [["A", "C", "Z"], "a(.*)", True, None, INPUT_DF4, MissingColumnError],
+])
+def test_extract_scenarios(columns, regular_expression, keep_original_value, output_columns, input_df, expected):
+    with get_test_data(input_df, named_inputs={"input": input_df}, named_output="result") as data:
+        rule = StrExtractRule(
+            columns, regular_expression=regular_expression, keep_original_value=keep_original_value,
+            output_columns=output_columns, named_input="input", named_output="result")
         if isinstance(expected, DataFrame):
             rule.apply(data)
             assert_frame_equal(data.get_named_output("result"), expected)

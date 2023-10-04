@@ -4,6 +4,8 @@ from numpy import nan
 from typing import Iterable, Optional, Literal, Union, Sequence
 
 from etlrules.backends.pandas.base import BaseAssignRule
+from etlrules.backends.pandas.validation import ColumnsInOutMixin
+from etlrules.rule import UnaryOpBaseRule
 
 
 class StrLowerRule(BaseAssignRule):
@@ -391,5 +393,88 @@ class StrPadRule(BaseAssignRule):
         return col.str.center(self.width, fillchar=self.fill_character)
 
 
-class StrExtractRule(BaseAssignRule):
-    ...
+class StrExtractRule(UnaryOpBaseRule, ColumnsInOutMixin):
+    r""" Extract substrings from strings columns using regular expressions.
+
+    Basic usage::
+
+        # extracts the number between start_ and _end
+        # ie: for an input value of start_1234_end - will extract 1234 in col_A
+        rule = StrExtractRule(["col_A"], regular_expression=r"start_([\d]*)_end")
+        rule.apply(data)
+
+        # extracts with multiple groups, extracting the single digit at the end as well
+        # for an input value of start_1234_end_9, col_1 will extract 1234, col_2 will extract 9
+        rule = StrExtractRule(["col_A"], regular_expression=r"start_([\d]*)_end_([\d])", output_columns=["col_1", "col_2"])
+        rule.apply(data)
+
+    Args:
+        columns (Iterable[str]): A list of string columns to convert to upper case.
+        regular_expression: The regular expression used to extract data.
+            The regular expression must have 1 or more groups - ie sections between brackets.
+            The groups do the actual extraction of data.
+            If there is a single group, then the column can be modified in place (ie no output_columns are needed) but
+            if there are multiple groups, then output_columns must be specified as each group will be extracted in a new
+            output column.
+        keep_original_value: Only used in case there isn't a match and it specifies if NA should be used in the output or the original value.
+            Defaults: True.
+            If the regular expression has multiple groups and therefore multiple output_columns, only the first output column
+            will keep the original value, the rest will be populated with NA.
+        output_columns (Optional[Iterable[str]]): A list of new names for the columns with the upper case values.
+            Optional. If provided, it must have one output_column per regular expression group, for every input columns.
+            For example, if input column is ["A"] and the regular expression is "a_([\d])_([\d])" with 2 groups, then
+            the output columns must have 2 columns (one per group) - for example ["A1_out", "A2_out"].
+            If the input columns are ["A", "B"] and the regular expression is "a_([\d])_([\d])" with 2 groups, then
+            the output columns must have 2 columns (one per group) for every input column - e.g. ["A1_out", "A2_out", "B1_out", "B2_out"].
+            The existing columns are unchanged, and new columns are created with the upper case values.
+            If not provided, the result is updated in place (only possible if the regular expression has a single group).
+
+        named_input (Optional[str]): Which dataframe to use as the input. Optional.
+            When not set, the input is taken from the main output.
+            Set it to a string value, the name of an output dataframe of a previous rule.
+        named_output (Optional[str]): Give the output of this rule a name so it can be used by another rule as a named input. Optional.
+            When not set, the result of this rule will be available as the main output.
+            When set to a name (string), the result will be available as that named output.
+        name (Optional[str]): Give the rule a name. Optional.
+            Named rules are more descriptive as to what they're trying to do/the intent.
+        description (Optional[str]): Describe in detail what the rules does, how it does it. Optional.
+            Together with the name, the description acts as the documentation of the rule.
+        strict (bool): When set to True, the rule does a stricter valiation. Default: True
+
+    Raises:
+        MissingColumnError: raised in strict mode only if a column doesn't exist in the input dataframe.
+
+    Note:
+        In non-strict mode, missing columns are ignored.
+    """
+
+    def __init__(self, columns: Iterable[str], regular_expression: str, keep_original_value: bool=False, output_columns:Optional[Iterable[str]]=None, named_input: Optional[str]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
+        super().__init__(named_input=named_input, named_output=named_output, 
+                         name=name, description=description, strict=strict)
+        self.columns = [col for col in columns]
+        self.output_columns = [out_col for out_col in output_columns] if output_columns else None
+        self.regular_expression = regular_expression
+        self._compiled_expr = re.compile(regular_expression)
+        groups = self._compiled_expr.groups
+        assert groups > 0, "The regular expression must have at least 1 group - ie a secstion in () - which gets extracted."
+        if groups == 1 and self.output_columns is not None:
+            assert len(self.output_columns) == len(self.columns), "The regular expression has one group and the output_columns must match 1 to 1 the length of the columns"
+        if groups > 1:
+            assert self.output_columns is not None, f"The regular expression has {groups} groups in which case the output_columns must be specified."
+            assert len(self.output_columns) == groups * len(self.columns), f"The regular expression has {groups} groups, the output_columns must have {groups} columns per each input column."
+        self.keep_original_value = keep_original_value
+
+    def apply(self, data):
+        df = self._get_input_df(data)
+        columns, output_columns = self.validate_columns_in_out(df, self.columns, self.output_columns, self.strict, validate_length=False)
+        new_cols_dict = {}
+        groups = self._compiled_expr.groups
+        for idx, col in enumerate(columns):
+            new_col = df[col].str.extract(self._compiled_expr, expand=True)
+            if self.keep_original_value:
+                # only the first new column keeps the value (in case of multiple groups)
+                new_col[0].fillna(value=df[col], inplace=True)
+            for group in range(groups):
+                new_cols_dict[output_columns[idx * groups + group]] = new_col[group]
+        df = df.assign(**new_cols_dict)
+        self._set_output_df(data, df)

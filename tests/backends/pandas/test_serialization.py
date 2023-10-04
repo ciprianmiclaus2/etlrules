@@ -6,7 +6,7 @@ from etlrules.backends.pandas import (
     ForwardFillRule, BackFillRule, AddNewColumnRule,
     VConcatRule, HConcatRule, AggregateRule, RoundRule, AbsRule,
     StrLowerRule, StrUpperRule, StrCapitalizeRule, StrStripRule, StrPadRule,
-    StrSplitRule, StrSplitRejoinRule,
+    StrSplitRule, StrSplitRejoinRule, StrExtractRule,
 )
 from etlrules.rule import BaseRule
 
@@ -80,6 +80,8 @@ from etlrules.rule import BaseRule
         ReplaceRule(["B", "D", "Z"], values=["abc", 1], new_values=["aaa", 2], regex=False, output_columns=["F", "G"], named_input="input", 
                   named_output="result", name="BF", description="Some desc2 BF", strict=True),
         ReplaceRule(["B", "D", "Z"], values=["a.*d", "a.c"], new_values=[r"\1", r"a_\1_b"], regex=True, output_columns=["F", "G"], named_input="input", 
+                  named_output="result", name="BF", description="Some desc2 BF", strict=True),
+        StrExtractRule(["B", "D"], regular_expression="a(.*)d", keep_original_value=True, output_columns=["F", "G"], named_input="input", 
                   named_output="result", name="BF", description="Some desc2 BF", strict=True),
     ]
 )
