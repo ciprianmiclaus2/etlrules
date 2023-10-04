@@ -7,6 +7,7 @@ from etlrules.backends.pandas import (
     VConcatRule, HConcatRule, AggregateRule, RoundRule, AbsRule,
     StrLowerRule, StrUpperRule, StrCapitalizeRule, StrStripRule, StrPadRule,
     StrSplitRule, StrSplitRejoinRule, StrExtractRule,
+    IfThenElseRule,
 )
 from etlrules.rule import BaseRule
 
@@ -82,6 +83,10 @@ from etlrules.rule import BaseRule
         ReplaceRule(["B", "D", "Z"], values=["a.*d", "a.c"], new_values=[r"\1", r"a_\1_b"], regex=True, output_columns=["F", "G"], named_input="input", 
                   named_output="result", name="BF", description="Some desc2 BF", strict=True),
         StrExtractRule(["B", "D"], regular_expression="a(.*)d", keep_original_value=True, output_columns=["F", "G"], named_input="input", 
+                  named_output="result", name="BF", description="Some desc2 BF", strict=True),
+        IfThenElseRule(condition_expression="df['A'] > df['B']", output_column="O", then_value="A is greater", else_value="B is greater", named_input="input", 
+                  named_output="result", name="BF", description="Some desc2 BF", strict=True),
+        IfThenElseRule(condition_expression="df['A'] > df['B']", output_column="O", then_column="C", else_column="D", named_input="input", 
                   named_output="result", name="BF", description="Some desc2 BF", strict=True),
     ]
 )
