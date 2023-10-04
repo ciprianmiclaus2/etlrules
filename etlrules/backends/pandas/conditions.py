@@ -28,7 +28,7 @@ class IfThenElseRule(UnaryOpBaseRule):
         | 3   | 4  | B is greater |
 
     Args:
-        condition: An expression as a string. The expression must evaluate to a boolean scalar or a boolean series.
+        condition_expression: An expression as a string. The expression must evaluate to a boolean scalar or a boolean series.
         then_value: The value to use if the condition is true.
         then_column: Use the value from the then_column if the condition is true.
             One and only one of then_value and then_column can be used.
