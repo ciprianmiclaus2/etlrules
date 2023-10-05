@@ -1,9 +1,9 @@
-import ast
 import numpy as np
 from typing import Optional, Union
 
-from etlrules.exceptions import ColumnAlreadyExistsError, ExpressionSyntaxError, MissingColumnError
+from etlrules.exceptions import ColumnAlreadyExistsError, MissingColumnError
 from etlrules.rule import UnaryOpBaseRule
+from etlrules.backends.common.expressions import Expression
 
 
 class IfThenElseRule(UnaryOpBaseRule):
@@ -58,7 +58,7 @@ class IfThenElseRule(UnaryOpBaseRule):
         KeyError: raised if you try to use an unknown column (i.e. df['ANY_UNKNOWN_COLUMN'])
     """
 
-    EXCLUDE_FROM_COMPARE = ('_ast_expr', '_compiled_expr')
+    EXCLUDE_FROM_COMPARE = ('_condition_expression', )
 
     def __init__(self, condition_expression: str, output_column: str, then_value: Optional[Union[int,float,bool,str]]=None, then_column: Optional[str]=None,
                  else_value: Optional[Union[int,float,bool,str]]=None, else_column: Optional[str]=None, 
@@ -74,13 +74,7 @@ class IfThenElseRule(UnaryOpBaseRule):
         self.then_column = then_column
         self.else_value = else_value
         self.else_column = else_column
-        try:
-            self._ast_expr = ast.parse(
-                self.condition_expression, filename=f'{self.output_column}.py', mode='eval'
-            )
-            self._compiled_expr = compile(self._ast_expr, filename=f'{self.output_column}.py', mode='eval')
-        except SyntaxError as exc:
-            raise ExpressionSyntaxError(f"Error in expression '{self.condition_expression}': {str(exc)}")
+        self._condition_expression = Expression(self.condition_expression, filename=f'{self.output_column}.py')
 
     def apply(self, data):
         df = self._get_input_df(data)
@@ -91,14 +85,88 @@ class IfThenElseRule(UnaryOpBaseRule):
             raise MissingColumnError(f"Column {self.then_column} is missing from the input dataframe.")
         if self.else_column is not None and self.else_column not in df_columns:
             raise MissingColumnError(f"Column {self.else_column} is missing from the input dataframe.")
-        try:
-            cond_series = eval(self._compiled_expr, {}, {'df': df})
-        except TypeError:
-            # attempt to run a slower apply
-            expr = self._compiled_expr
-            cond_series = df.apply(lambda df: eval(expr, {}, {'df': df}), axis=1)
+        cond_series = self._condition_expression.eval(df)
         then_value = self.then_value if self.then_value is not None else df[self.then_column]
         else_value = self.else_value if self.else_value is not None else df[self.else_column]
         result = np.where(cond_series, then_value, else_value)
         df = df.assign(**{self.output_column: result})
         self._set_output_df(data, df)
+
+
+class FilterRule(UnaryOpBaseRule):
+    """ Exclude rows based on a condition.
+
+    Example::
+
+        Given df:
+        | A   | B  |
+        | 1   | 2  |
+        | 5   | 3  |
+        | 3   | 4  |
+
+        rule = FilterRule("df['A'] > df['B']")
+        rule.apply(df)
+
+    Result::
+
+        | A   | B  |
+        | 5   | 3  |
+
+    Same example using discarded_matching_rows=True::
+
+        rule = FilterRule("df['A'] > df['B']", discard_matching_rows=True)
+        rule.apply(df)
+
+    Result::
+
+        | A   | B  |
+        | 1   | 2  |
+        | 3   | 4  |
+
+    Args:
+        condition_expression: An expression as a string. The expression must evaluate to a boolean scalar or a boolean series.
+        discard_matching_rows: By default the rows matching the condition (ie where the condition is True) are kept, the rest of the
+            rows being dropped from the result. Setting this parameter to True essentially inverts the condition, so the rows
+            matching the condition are discarded and the rest of the rows kept. Default: False.
+        named_output_discarded: A named output for the records being discarded if those need to be kept for further processing.
+            Default: None, which doesn't keep track of discarded records.
+        output_column: The column name of the result column which will be added to the dataframe.
+
+        named_input: Which dataframe to use as the input. Optional.
+            When not set, the input is taken from the main output.
+            Set it to a string value, the name of an output dataframe of a previous rule.
+        named_output: Give the output of this rule a name so it can be used by another rule as a named input. Optional.
+            When not set, the result of this rule will be available as the main output.
+            When set to a name (string), the result will be available as that named output.
+        name: Give the rule a name. Optional.
+            Named rules are more descriptive as to what they're trying to do/the intent.
+        description: Describe in detail what the rules does, how it does it. Optional.
+            Together with the name, the description acts as the documentation of the rule.
+        strict: When set to True, the rule does a stricter valiation. Default: True
+
+    Raises:
+        ExpressionSyntaxError: raised if the column expression has a Python syntax error.
+        TypeError: raised if an operation is not supported between the types involved
+        NameError: raised if an unknown variable is used
+        KeyError: raised if you try to use an unknown column (i.e. df['ANY_UNKNOWN_COLUMN'])
+    """
+
+    EXCLUDE_FROM_COMPARE = ('_condition_expression', )
+
+    def __init__(self, condition_expression: str, discard_matching_rows: bool=False, named_output_discarded: Optional[str]=None,
+                 named_input: Optional[str]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
+        super().__init__(named_input=named_input, named_output=named_output, name=name, description=description, strict=strict)
+        assert condition_expression, "condition_expression cannot be empty"
+        self.condition_expression = condition_expression
+        self.discard_matching_rows = discard_matching_rows
+        self.named_output_discarded = named_output_discarded
+        self._condition_expression = Expression(self.condition_expression, filename="FilterRule.py")
+
+    def apply(self, data):
+        df = self._get_input_df(data)
+        cond_series = self._condition_expression.eval(df)
+        if self.discard_matching_rows:
+            cond_series = ~cond_series
+        self._set_output_df(data, df[cond_series].reset_index(drop=True))
+        if self.named_output_discarded:
+            data.set_named_output(self.named_output_discarded, df[~cond_series].reset_index(drop=True))

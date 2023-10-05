@@ -1,7 +1,7 @@
-import ast
 from typing import Optional
 
-from etlrules.exceptions import ExpressionSyntaxError, ColumnAlreadyExistsError
+from etlrules.backends.common.expressions import Expression
+from etlrules.exceptions import ColumnAlreadyExistsError
 from etlrules.rule import UnaryOpBaseRule
 
 
@@ -60,29 +60,18 @@ class AddNewColumnRule(UnaryOpBaseRule):
         To avoid such behavior, fill the NAs before performing operations.
     """
 
-    EXCLUDE_FROM_COMPARE = ('_ast_expr', '_compiled_expr')
+    EXCLUDE_FROM_COMPARE = ('_column_expression', )
 
     def __init__(self, column_name: str, column_expression: str, named_input: Optional[str]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
         super().__init__(named_input=named_input, named_output=named_output, name=name, description=description, strict=strict)
         self.column_name = column_name
         self.column_expression = column_expression
-        try:
-            self._ast_expr = ast.parse(
-                self.column_expression, filename=f'{self.column_name}_expression.py', mode='eval'
-            )
-            self._compiled_expr = compile(self._ast_expr, filename=f'{self.column_name}_expression.py', mode='eval')
-        except SyntaxError as exc:
-            raise ExpressionSyntaxError(f"Error in expression '{self.column_expression}': {str(exc)}")
+        self._column_expression = Expression(self.column_expression, filename=f'{self.column_name}_expression.py')
 
     def apply(self, data):
         df = self._get_input_df(data)
         if self.strict and self.column_name in df.columns:
             raise ColumnAlreadyExistsError(f"Column {self.column_name} already exists in the input dataframe.")
-        try:
-            result = eval(self._compiled_expr, {}, {'df': df})
-        except TypeError:
-            # attempt to run a slower apply
-            expr = self._compiled_expr
-            result = df.apply(lambda df: eval(expr, {}, {'df': df}), axis=1)
+        result = self._column_expression.eval(df)
         df = df.assign(**{self.column_name: result})
         self._set_output_df(data, df)
