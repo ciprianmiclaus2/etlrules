@@ -28,10 +28,14 @@ class TypeConversionRule(UnaryOpBaseRule):
     """
 
     SUPPORTED_TYPES = {
+        'int8',
+        'int16',
         'int32',
         'int64',
+        'float32',
         'float64',
         'str',
+        'datetime64',
     }
 
     def __init__(self, mapper: Mapping[str, str], named_input: Optional[str]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
