@@ -130,7 +130,6 @@ class FilterRule(UnaryOpBaseRule):
             matching the condition are discarded and the rest of the rows kept. Default: False.
         named_output_discarded: A named output for the records being discarded if those need to be kept for further processing.
             Default: None, which doesn't keep track of discarded records.
-        output_column: The column name of the result column which will be added to the dataframe.
 
         named_input: Which dataframe to use as the input. Optional.
             When not set, the input is taken from the main output.
