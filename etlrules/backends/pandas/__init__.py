@@ -2,6 +2,7 @@ from .aggregate import AggregateRule
 from .basic import DedupeRule, ProjectRule, RenameRule, ReplaceRule, SortRule
 from .concat import VConcatRule, HConcatRule
 from .conditions import IfThenElseRule, FilterRule
+from .datetime import DateTimeLocalNowRule
 from .fill import ForwardFillRule, BackFillRule
 from .joins import LeftJoinRule, InnerJoinRule, OuterJoinRule, RightJoinRule
 from .newcolumns import AddNewColumnRule
