@@ -7,7 +7,8 @@ from etlrules.backends.pandas import (
     VConcatRule, HConcatRule, AggregateRule, RoundRule, AbsRule,
     StrLowerRule, StrUpperRule, StrCapitalizeRule, StrStripRule, StrPadRule,
     StrSplitRule, StrSplitRejoinRule, StrExtractRule,
-    IfThenElseRule, FilterRule
+    IfThenElseRule, FilterRule,
+    DateTimeLocalNowRule,
 )
 from etlrules.rule import BaseRule
 
@@ -89,6 +90,8 @@ from etlrules.rule import BaseRule
         IfThenElseRule(condition_expression="df['A'] > df['B']", output_column="O", then_column="C", else_column="D", named_input="input", 
                   named_output="result", name="BF", description="Some desc2 BF", strict=True),
         FilterRule(condition_expression="df['A'] > df['B']", discard_matching_rows=True, named_output_discarded="discarded", named_input="input", 
+                  named_output="result", name="BF", description="Some desc2 BF", strict=True),
+        DateTimeLocalNowRule(output_column="TimeNow", named_input="input", 
                   named_output="result", name="BF", description="Some desc2 BF", strict=True),
     ]
 )
