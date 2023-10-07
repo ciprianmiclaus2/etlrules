@@ -20,6 +20,20 @@ EXPECTED = DataFrame(data=[
     {"A": 1.45, "B": 2.0, "C": 3.87},
 ])
 
+EXPECTED_2 = DataFrame(data=[
+    {"A": 1.46, "B": 1.46, "C": 3.87},
+    {"A": 1.46, "B": 1.68, "C": 3.87},
+    {"A": 1.4, "C": 3.87},
+    {"A": 1.45, "B": 1.5, "C": 3.87},
+])
+
+EXPECTED_3 = DataFrame(data=[
+    {"A": 1.456, "B": 1.456, "C": 3.8734, "E": 1.46, "F": 1.46, "G": 3.87},
+    {"A": 1.455, "B": 1.677, "C": 3.8739, "E": 1.46, "F": 1.68, "G": 3.87},
+    {"A": 1.4, "C": 3.87, "E": 1.4, "G": 3.87},
+    {"A": 1.454, "B": 1.5, "C": 3.87, "E": 1.45, "F": 1.5, "G": 3.87},
+])
+
 INPUT_DF2 = DataFrame(data=[
     {"A": "a", "B": 1.456, "C": "c", "D": -100},
     {"A": "b", "B": -1.677, "C": "d"},
@@ -49,14 +63,28 @@ EXPECTED3 = DataFrame(data=[
 
 def test_rounding():
     with get_test_data(INPUT_DF, named_inputs={"input": INPUT_DF}, named_output="result") as data:
-        rule = RoundRule({"A": 2, "B": 0, "C": 3}, named_input="input", named_output="result")
+        rule = RoundRule(["A", "B", "C"], [2, 0, 3], named_input="input", named_output="result")
         rule.apply(data)
         assert_frame_equal(data.get_named_output("result"), EXPECTED)
 
 
+def test_rounding2():
+    with get_test_data(INPUT_DF, named_inputs={"input": INPUT_DF}, named_output="result") as data:
+        rule = RoundRule(["A", "B", "C"], 2, named_input="input", named_output="result")
+        rule.apply(data)
+        assert_frame_equal(data.get_named_output("result"), EXPECTED_2)
+
+
+def test_rounding3():
+    with get_test_data(INPUT_DF, named_inputs={"input": INPUT_DF}, named_output="result") as data:
+        rule = RoundRule(["A", "B", "C"], 2, output_columns=["E", "F", "G"], named_input="input", named_output="result")
+        rule.apply(data)
+        assert_frame_equal(data.get_named_output("result"), EXPECTED_3)
+
+
 def test_rounding_missing_column_strict():
     with get_test_data(INPUT_DF, named_inputs={"input": INPUT_DF}, named_output="result") as data:
-        rule = RoundRule({"A": 2, "B": 0, "C": 3, "Z": 2}, named_input="input", named_output="result")
+        rule = RoundRule(["A", "B", "Z"], 2, named_input="input", named_output="result")
         with pytest.raises(MissingColumnError) as exc:
             rule.apply(data)
         assert str(exc.value) == "Column(s) {'Z'} are missing from the input dataframe."
@@ -64,7 +92,7 @@ def test_rounding_missing_column_strict():
 
 def test_rounding_missing_column_non_strict():
     with get_test_data(INPUT_DF, named_inputs={"input": INPUT_DF}, named_output="result") as data:
-        rule = RoundRule({"A": 2, "B": 0, "C": 3, "Z": 2}, named_input="input", named_output="result", strict=False)
+        rule = RoundRule(["A", "B", "C", "Z"], [2, 0, 3, 2], named_input="input", named_output="result", strict=False)
         rule.apply(data)
         assert_frame_equal(data.get_named_output("result"), EXPECTED)
 

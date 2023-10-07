@@ -58,7 +58,9 @@ from etlrules.rule import BaseRule
                 "F3": "':'.join(v for v in values if not isnull(v))"
             },
             named_input="BF1", named_output="BF2", name="BF", description="Some desc2 BF", strict=True),
-        RoundRule({"A": 2, "B": 0, "C": 3}, named_input="input", 
+        RoundRule(["A", "B", "C"], 2, output_columns=["E", "F", "G"], named_input="input", 
+                  named_output="result", name="BF", description="Some desc2 BF", strict=True),
+        RoundRule(["A", "B", "C"], [2, 0, 4], named_input="input", 
                   named_output="result", name="BF", description="Some desc2 BF", strict=True),
         AbsRule(["B", "D", "Z"], output_columns=["F", "G"], named_input="input", 
                   named_output="result", name="BF", description="Some desc2 BF", strict=True),
