@@ -9,6 +9,7 @@ from etlrules.backends.pandas import (
     StrSplitRule, StrSplitRejoinRule, StrExtractRule,
     IfThenElseRule, FilterRule,
     DateTimeLocalNowRule, DateTimeUTCNowRule, DateTimeToStrFormatRule,
+    DateTimeRoundRule,
 )
 from etlrules.rule import BaseRule
 
@@ -96,6 +97,10 @@ from etlrules.rule import BaseRule
         DateTimeUTCNowRule(output_column="UTCTimeNow", named_input="input", 
                   named_output="result", name="BF", description="Some desc2 BF", strict=True),
         DateTimeToStrFormatRule(columns=["A", "B"], format="%Y-%m-%d %H:%M:%S", output_columns=["E", "F"], named_input="input", 
+                  named_output="result", name="BF", description="Some desc2 BF", strict=True),
+        DateTimeRoundRule(columns=["A", "B"], granularity="day", output_columns=["E", "F"], named_input="input", 
+                  named_output="result", name="BF", description="Some desc2 BF", strict=True),
+        DateTimeRoundRule(columns=["A", "B"], granularity=["day", "hour"], output_columns=["E", "F"], named_input="input", 
                   named_output="result", name="BF", description="Some desc2 BF", strict=True),
     ]
 )

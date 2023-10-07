@@ -1,7 +1,7 @@
 import re
 from pandas import NA
 from numpy import nan
-from typing import Iterable, Optional, Literal, Union, Sequence
+from typing import Iterable, Optional, Literal
 
 from etlrules.backends.pandas.base import BaseAssignRule
 from etlrules.backends.pandas.validation import ColumnsInOutMixin
@@ -37,10 +37,11 @@ class StrLowerRule(BaseAssignRule):
 
     Raises:
         MissingColumnError: raised in strict mode only if a column doesn't exist in the input dataframe.
+        ColumnAlreadyExistsError: raised in strict mode only if an output_column already exists in the dataframe.
         ValueError: raised if output_columns is provided and not the same length as the columns parameter.
 
     Note:
-        In non-strict mode, missing columns are ignored.
+        In non-strict mode, missing columns or overwriting existing columns are ignored.
     """
 
     def do_apply(self, col):
@@ -76,10 +77,11 @@ class StrUpperRule(BaseAssignRule):
 
     Raises:
         MissingColumnError: raised in strict mode only if a column doesn't exist in the input dataframe.
+        ColumnAlreadyExistsError: raised in strict mode only if an output_column already exists in the dataframe.
         ValueError: raised if output_columns is provided and not the same length as the columns parameter.
 
     Note:
-        In non-strict mode, missing columns are ignored.
+        In non-strict mode, missing columns or overwriting existing columns are ignored.
     """
 
     def do_apply(self, col):
@@ -118,10 +120,11 @@ class StrCapitalizeRule(BaseAssignRule):
 
     Raises:
         MissingColumnError: raised in strict mode only if a column doesn't exist in the input dataframe.
+        ColumnAlreadyExistsError: raised in strict mode only if an output_column already exists in the dataframe.
         ValueError: raised if output_columns is provided and not the same length as the columns parameter.
 
     Note:
-        In non-strict mode, missing columns are ignored.
+        In non-strict mode, missing columns or overwriting existing columns are ignored.
     """
 
     def do_apply(self, col):
@@ -175,10 +178,11 @@ class StrSplitRule(BaseAssignRule):
 
     Raises:
         MissingColumnError: raised in strict mode only if a column doesn't exist in the input dataframe.
+        ColumnAlreadyExistsError: raised in strict mode only if an output_column already exists in the dataframe.
         ValueError: raised if output_columns is provided and not the same length as the columns parameter.
 
     Note:
-        In non-strict mode, missing columns are ignored.
+        In non-strict mode, missing columns or overwriting existing columns are ignored.
     """
 
     def __init__(self, columns: Iterable[str], separator: Optional[str]=None, separator_regex:Optional[str]=None, limit:Optional[int]=None, output_columns:Optional[Iterable[str]]=None, named_input: Optional[str]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
@@ -240,10 +244,11 @@ class StrSplitRejoinRule(BaseAssignRule):
 
     Raises:
         MissingColumnError: raised in strict mode only if a column doesn't exist in the input dataframe.
+        ColumnAlreadyExistsError: raised in strict mode only if an output_column already exists in the dataframe.
         ValueError: raised if output_columns is provided and not the same length as the columns parameter.
 
     Note:
-        In non-strict mode, missing columns are ignored.
+        In non-strict mode, missing columns or overwriting existing columns are ignored.
     """
 
     SORT_ASCENDING = "ascending"
@@ -309,10 +314,11 @@ class StrStripRule(BaseAssignRule):
 
     Raises:
         MissingColumnError: raised in strict mode only if a column doesn't exist in the input dataframe.
+        ColumnAlreadyExistsError: raised in strict mode only if an output_column already exists in the dataframe.
         ValueError: raised if output_columns is provided and not the same length as the columns parameter.
 
     Note:
-        In non-strict mode, missing columns are ignored.
+        In non-strict mode, missing columns or overwriting existing columns are ignored.
     """
 
     STRIP_LEFT = 'left'
@@ -367,10 +373,11 @@ class StrPadRule(BaseAssignRule):
 
     Raises:
         MissingColumnError: raised in strict mode only if a column doesn't exist in the input dataframe.
+        ColumnAlreadyExistsError: raised in strict mode only if an output_column already exists in the dataframe.
         ValueError: raised if output_columns is provided and not the same length as the columns parameter.
 
     Note:
-        In non-strict mode, missing columns are ignored.
+        In non-strict mode, missing columns or overwriting existing columns are ignored.
     """
 
     PAD_LEFT = 'left'
@@ -443,9 +450,11 @@ class StrExtractRule(UnaryOpBaseRule, ColumnsInOutMixin):
 
     Raises:
         MissingColumnError: raised in strict mode only if a column doesn't exist in the input dataframe.
+        ColumnAlreadyExistsError: raised in strict mode only if an output_column already exists in the dataframe.
+        ValueError: raised if output_columns is provided and not the same length as the columns parameter.
 
     Note:
-        In non-strict mode, missing columns are ignored.
+        In non-strict mode, missing columns or overwriting existing columns are ignored.
     """
 
     def __init__(self, columns: Iterable[str], regular_expression: str, keep_original_value: bool=False, output_columns:Optional[Iterable[str]]=None, named_input: Optional[str]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):

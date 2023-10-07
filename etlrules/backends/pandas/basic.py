@@ -218,10 +218,11 @@ class ReplaceRule(BaseAssignRule):
 
     Raises:
         MissingColumnError: raised in strict mode only if a column doesn't exist in the input dataframe.
+        ColumnAlreadyExistsError: raised in strict mode only if an output_column already exists in the dataframe.
         ValueError: raised if output_columns is provided and not the same length as the columns parameter.
 
     Note:
-        In non-strict mode, missing columns are ignored.
+        In non-strict mode, missing columns or overwriting existing columns are ignored.
     """
 
     def __init__(self, columns: Iterable[str], values: Iterable[Union[int,float,str]], new_values: Iterable[Union[int,float,str]], regex=False, output_columns:Optional[Iterable[str]]=None, named_input: Optional[str]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):

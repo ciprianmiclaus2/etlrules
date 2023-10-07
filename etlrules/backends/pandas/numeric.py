@@ -39,7 +39,7 @@ class RoundRule(UnaryOpBaseRule):
 
     def __init__(self, mapper: Mapping[str, int], named_input: Optional[str]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
         super().__init__(named_input=named_input, named_output=named_output, name=name, description=description, strict=strict)
-        assert all(isinstance(col, str) and isinstance(scale, (int, float)) and int(scale) >= 0 for col, scale in mapper.items()), "Mapper is a {column_name: precision} where column names are strings and precision is an int or float and >=0."
+        assert all(isinstance(col, str) and isinstance(scale, (int, float)) and int(scale) >= 0 for col, scale in mapper.items()), f"Mapper is a {column_name: precision} where column names are strings and precision is an int or float and >=0."
         self.mapper = {col: int(scale) for col, scale in mapper.items()}
 
     def apply(self, data):
