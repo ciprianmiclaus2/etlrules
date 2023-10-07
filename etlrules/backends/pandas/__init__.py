@@ -4,7 +4,7 @@ from .concat import VConcatRule, HConcatRule
 from .conditions import IfThenElseRule, FilterRule
 from .datetime import (
     DateTimeLocalNowRule, DateTimeUTCNowRule, DateTimeToStrFormatRule,
-    DateTimeRoundRule,
+    DateTimeRoundRule, DateTimeRoundDownRule, DateTimeRoundUpRule,
 )
 from .fill import ForwardFillRule, BackFillRule
 from .joins import LeftJoinRule, InnerJoinRule, OuterJoinRule, RightJoinRule
@@ -25,7 +25,7 @@ __all__ = [
     'VConcatRule', 'HConcatRule',
     'IfThenElseRule', 'FilterRule',
     'DateTimeLocalNowRule', 'DateTimeUTCNowRule', 'DateTimeToStrFormatRule',
-    'DateTimeRoundRule',
+    'DateTimeRoundRule', 'DateTimeRoundDownRule', 'DateTimeRoundUpRule',
     'ForwardFillRule', 'BackFillRule',
     'LeftJoinRule', 'InnerJoinRule', 'OuterJoinRule', 'RightJoinRule',
     'AddNewColumnRule',

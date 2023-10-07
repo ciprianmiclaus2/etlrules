@@ -9,7 +9,7 @@ from etlrules.backends.pandas import (
     StrSplitRule, StrSplitRejoinRule, StrExtractRule,
     IfThenElseRule, FilterRule,
     DateTimeLocalNowRule, DateTimeUTCNowRule, DateTimeToStrFormatRule,
-    DateTimeRoundRule,
+    DateTimeRoundRule, DateTimeRoundDownRule, DateTimeRoundUpRule, 
 )
 from etlrules.rule import BaseRule
 
@@ -101,6 +101,14 @@ from etlrules.rule import BaseRule
         DateTimeRoundRule(columns=["A", "B"], granularity="day", output_columns=["E", "F"], named_input="input", 
                   named_output="result", name="BF", description="Some desc2 BF", strict=True),
         DateTimeRoundRule(columns=["A", "B"], granularity=["day", "hour"], output_columns=["E", "F"], named_input="input", 
+                  named_output="result", name="BF", description="Some desc2 BF", strict=True),
+        DateTimeRoundDownRule(columns=["A", "B"], granularity="day", output_columns=["E", "F"], named_input="input", 
+                  named_output="result", name="BF", description="Some desc2 BF", strict=True),
+        DateTimeRoundDownRule(columns=["A", "B"], granularity=["day", "hour"], output_columns=["E", "F"], named_input="input", 
+                  named_output="result", name="BF", description="Some desc2 BF", strict=True),
+        DateTimeRoundUpRule(columns=["A", "B"], granularity="day", output_columns=["E", "F"], named_input="input", 
+                  named_output="result", name="BF", description="Some desc2 BF", strict=True),
+        DateTimeRoundUpRule(columns=["A", "B"], granularity=["day", "hour"], output_columns=["E", "F"], named_input="input", 
                   named_output="result", name="BF", description="Some desc2 BF", strict=True),
     ]
 )
