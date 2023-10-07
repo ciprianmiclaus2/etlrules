@@ -8,7 +8,7 @@ from etlrules.backends.pandas import (
     StrLowerRule, StrUpperRule, StrCapitalizeRule, StrStripRule, StrPadRule,
     StrSplitRule, StrSplitRejoinRule, StrExtractRule,
     IfThenElseRule, FilterRule,
-    DateTimeLocalNowRule, DateTimeUTCNowRule,
+    DateTimeLocalNowRule, DateTimeUTCNowRule, DateTimeToStrFormatRule,
 )
 from etlrules.rule import BaseRule
 
@@ -94,6 +94,8 @@ from etlrules.rule import BaseRule
         DateTimeLocalNowRule(output_column="TimeNow", named_input="input", 
                   named_output="result", name="BF", description="Some desc2 BF", strict=True),
         DateTimeUTCNowRule(output_column="UTCTimeNow", named_input="input", 
+                  named_output="result", name="BF", description="Some desc2 BF", strict=True),
+        DateTimeToStrFormatRule(columns=["A", "B"], format="%Y-%m-%d %H:%M:%S", output_columns=["E", "F"], named_input="input", 
                   named_output="result", name="BF", description="Some desc2 BF", strict=True),
     ]
 )

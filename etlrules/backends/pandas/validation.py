@@ -21,7 +21,7 @@ class ColumnsInOutMixin:
     def validate_columns_out(self, df: DataFrame, columns: Sequence[str], output_columns: Optional[Sequence[str]], strict: bool, validate_length: bool=True) -> Sequence[str]:
         if output_columns:
             if strict:
-                existing_columns = set(output_columns) <= set(df.columns)
+                existing_columns = set(output_columns) & set(df.columns)
                 if existing_columns:
                     raise ColumnAlreadyExistsError(f"Column(s) already exist: {existing_columns}")
             if validate_length and len(output_columns) != len(columns):
