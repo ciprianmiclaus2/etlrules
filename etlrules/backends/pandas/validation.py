@@ -10,6 +10,23 @@ class PandasRuleValidationMixin:
 
 
 class ColumnsInOutMixin:
+    def validate_input_column(self, df: DataFrame, input_column: str, strict: bool):
+        if input_column not in set(df.columns):
+            raise MissingColumnError(f"Column '{input_column}' is missing from the input dataframe.")
+        return input_column
+
+    def validate_output_column(self, df: DataFrame, input_column: str, output_column: Optional[str], strict: bool):
+        if output_column is not None:
+            if strict and output_column in set(df.columns):
+                raise ColumnAlreadyExistsError(f"Column '{output_column}' already exists in the input dataframe.")
+            return output_column
+        return input_column
+
+    def validate_in_out_columns(self, df: DataFrame, input_column: str, output_column: Optional[str], strict: bool):
+        input_column = self.validate_input_column(df, input_column, strict)
+        output_column = self.validate_output_column(df, input_column, output_column, strict)
+        return input_column, output_column
+
     def validate_columns_in(self, df: DataFrame, columns: Sequence[str], strict: bool) -> Sequence[str]:
         df_cols_set = set(df.columns)
         if strict:

@@ -7,7 +7,7 @@ from etlrules.exceptions import ColumnAlreadyExistsError, MissingColumnError
 from etlrules.backends.pandas import (
     DateTimeLocalNowRule, DateTimeUTCNowRule, DateTimeToStrFormatRule,
     DateTimeRoundRule, DateTimeRoundDownRule, DateTimeRoundUpRule,
-    DateTimeExtractComponentRule,
+    DateTimeExtractComponentRule, DateTimeAddRule, DateTimeSubstractRule,
 )
 from tests.backends.pandas.utils.data import get_test_data
 
@@ -370,6 +370,104 @@ def test_extract_component_rules(columns, component, locale, output_columns, inp
                 rule = DateTimeExtractComponentRule(
                     columns, component, locale,
                     output_columns=output_columns, named_input="input", named_output="result")
+                rule.apply(data)
+        else:
+            assert False
+
+
+INPUT_ADD_SUB_DF = DataFrame(data=[
+    {"A": datetime.datetime(2023, 5, 11, 10, 20, 30, 100)},
+    {"A": datetime.datetime(2023, 6, 10, 11, 21, 31, 101)},
+    {},
+])
+
+INPUT_ADD_SUB_DF2 = DataFrame(data=[
+    {"A": datetime.datetime(2023, 5, 11, 10, 20, 30, 100), "B": 1},
+    {"A": datetime.datetime(2023, 6, 10, 11, 21, 31, 101), "B": 2},
+    {},
+])
+
+@pytest.mark.parametrize("rule_cls, input_column, unit_value, unit, output_column, input_df, expected", [
+    [DateTimeAddRule, "A", 40, "days", None, INPUT_ADD_SUB_DF, DataFrame(data=[
+        {"A": datetime.datetime(2023, 6, 20, 10, 20, 30, 100)},
+        {"A": datetime.datetime(2023, 7, 20, 11, 21, 31, 101)},
+        {},
+    ])],
+    [DateTimeAddRule, "A", 40, "days", "E", INPUT_ADD_SUB_DF, DataFrame(data=[
+        {"A": datetime.datetime(2023, 5, 11, 10, 20, 30, 100), "E": datetime.datetime(2023, 6, 20, 10, 20, 30, 100)},
+        {"A": datetime.datetime(2023, 6, 10, 11, 21, 31, 101), "E": datetime.datetime(2023, 7, 20, 11, 21, 31, 101)},
+        {},
+    ])],
+    [DateTimeAddRule, "A", -1, "days", None, INPUT_ADD_SUB_DF, DataFrame(data=[
+        {"A": datetime.datetime(2023, 5, 10, 10, 20, 30, 100)},
+        {"A": datetime.datetime(2023, 6, 9, 11, 21, 31, 101)},
+        {},
+    ])],
+    [DateTimeSubstractRule, "A", -40, "days", None, INPUT_ADD_SUB_DF, DataFrame(data=[
+        {"A": datetime.datetime(2023, 6, 20, 10, 20, 30, 100)},
+        {"A": datetime.datetime(2023, 7, 20, 11, 21, 31, 101)},
+        {},
+    ])],
+    [DateTimeSubstractRule, "A", 1, "days", None, INPUT_ADD_SUB_DF, DataFrame(data=[
+        {"A": datetime.datetime(2023, 5, 10, 10, 20, 30, 100)},
+        {"A": datetime.datetime(2023, 6, 9, 11, 21, 31, 101)},
+        {},
+    ])],
+    [DateTimeAddRule, "A", 40, "hours", None, INPUT_ADD_SUB_DF, DataFrame(data=[
+        {"A": datetime.datetime(2023, 5, 13, 2, 20, 30, 100)},
+        {"A": datetime.datetime(2023, 6, 12, 3, 21, 31, 101)},
+        {},
+    ])],
+    [DateTimeSubstractRule, "A", 40, "hours", None, INPUT_ADD_SUB_DF, DataFrame(data=[
+        {"A": datetime.datetime(2023, 5, 9, 18, 20, 30, 100)},
+        {"A": datetime.datetime(2023, 6, 8, 19, 21, 31, 101)},
+        {},
+    ])],
+    [DateTimeAddRule, "A", 10, "minutes", None, INPUT_ADD_SUB_DF, DataFrame(data=[
+        {"A": datetime.datetime(2023, 5, 11, 10, 30, 30, 100)},
+        {"A": datetime.datetime(2023, 6, 10, 11, 31, 31, 101)},
+        {},
+    ])],
+    [DateTimeSubstractRule, "A", 10, "minutes", None, INPUT_ADD_SUB_DF, DataFrame(data=[
+        {"A": datetime.datetime(2023, 5, 11, 10, 10, 30, 100)},
+        {"A": datetime.datetime(2023, 6, 10, 11, 11, 31, 101)},
+        {},
+    ])],
+    [DateTimeAddRule, "A", 10, "seconds", None, INPUT_ADD_SUB_DF, DataFrame(data=[
+        {"A": datetime.datetime(2023, 5, 11, 10, 20, 40, 100)},
+        {"A": datetime.datetime(2023, 6, 10, 11, 21, 41, 101)},
+        {},
+    ])],
+    [DateTimeSubstractRule, "A", 10, "seconds", None, INPUT_ADD_SUB_DF, DataFrame(data=[
+        {"A": datetime.datetime(2023, 5, 11, 10, 20, 20, 100)},
+        {"A": datetime.datetime(2023, 6, 10, 11, 21, 21, 101)},
+        {},
+    ])],
+    [DateTimeAddRule, "A", 10, "microseconds", None, INPUT_ADD_SUB_DF, DataFrame(data=[
+        {"A": datetime.datetime(2023, 5, 11, 10, 20, 30, 110)},
+        {"A": datetime.datetime(2023, 6, 10, 11, 21, 31, 111)},
+        {},
+    ])],
+    [DateTimeSubstractRule, "A", 10, "microseconds", None, INPUT_ADD_SUB_DF, DataFrame(data=[
+        {"A": datetime.datetime(2023, 5, 11, 10, 20, 30, 90)},
+        {"A": datetime.datetime(2023, 6, 10, 11, 21, 31, 91)},
+        {},
+    ])],
+    [DateTimeAddRule, "B", 10, "days", None, INPUT_ADD_SUB_DF, MissingColumnError],
+    [DateTimeAddRule, "A", 10, "days", "B", INPUT_ADD_SUB_DF2, ColumnAlreadyExistsError],
+    [DateTimeSubstractRule, "B", 10, "days", None, INPUT_ADD_SUB_DF, MissingColumnError],
+    [DateTimeSubstractRule, "A", 10, "days", "B", INPUT_ADD_SUB_DF2, ColumnAlreadyExistsError],
+])
+def test_add_sub_rules(rule_cls, input_column, unit_value, unit, output_column, input_df, expected):
+    with get_test_data(input_df, named_inputs={"input": input_df}, named_output="result") as data:
+        rule = rule_cls(
+            input_column, unit_value, unit, output_column,
+            named_input="input", named_output="result")
+        if isinstance(expected, DataFrame):
+            rule.apply(data)
+            assert_frame_equal(data.get_named_output("result"), expected)
+        elif issubclass(expected, Exception):
+            with pytest.raises(expected):
                 rule.apply(data)
         else:
             assert False

@@ -4,10 +4,11 @@ try:
     from pandas._config.localization import can_set_locale
 except:
     can_set_locale = None
+from pandas import Timedelta
 from typing import Iterable, Optional, Literal, Sequence, Union
 
 from etlrules.exceptions import ColumnAlreadyExistsError, MissingColumnError
-from etlrules.backends.pandas.base import BaseAssignRule
+from etlrules.backends.pandas.base import BaseAssignRule, BaseAssignColumnRule
 from etlrules.backends.pandas.validation import ColumnsInOutMixin
 from etlrules.rule import UnaryOpBaseRule
 
@@ -264,7 +265,6 @@ class DateTimeExtractComponentRule(BaseAssignRule):
         locale: An optional locale string applicable to weekday_name and month_name. When specified,
             the names will use the given locale to print the names in the given language.
             Default: en_US.utf8 will print the names in English.
-            Setting this locale to 
             Use the command `locale -a` on your terminal on Unix systems to find your locale language code.
             Trying to set the locale to a value that doesn't appear under the `locale -a` output will fail
             with ValueError: Unsupported locale.
@@ -334,15 +334,133 @@ class DateTimeExtractComponentRule(BaseAssignRule):
 
 # date arithmetic
 
-class DateTimeAddRule(BaseAssignRule):
-    ...
+class AddSubBaseRule(BaseAssignColumnRule):
+
+    SIGN = 0
+
+    UNITS = {
+        "days": "days",
+        "hours": "hours",
+        "minutes": "minutes",
+        "seconds": "seconds",
+        "milliseconds": "milliseconds",
+        "microseconds": "microseconds",
+        "nanoseconds": "nanoseconds",
+    }
+
+    def __init__(self, input_column: Iterable[str], unit_value: int, 
+                 unit: Literal["days", "hours", "minutes", "seconds", "milliseconds", "microseconds", "nanoseconds"],
+                 output_column:Optional[str]=None, named_input: Optional[str]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
+        assert self.SIGN in (1, -1)
+        super().__init__(input_column=input_column, output_column=output_column, named_input=named_input, named_output=named_output, name=name, description=description, strict=strict)
+        self.unit_value = unit_value
+        assert unit in self.UNITS.keys(), f"Unsupported unit: '{unit}'. It must be one of {self.UNITS.keys()}"
+        self.unit = unit
+        self._unit = self.UNITS[self.unit]
+
+    def do_apply(self, col):
+        return col + Timedelta(value=self.SIGN * self.unit_value, unit=self._unit)
 
 
-class DateTimeSubstractRule(BaseAssignRule):
-    ...
+class DateTimeAddRule(AddSubBaseRule):
+    """ Adds a number of units (days, hours, minutes, etc.) to a datetime column.
+
+    Basic usage::
+
+        # adds 2 days the A column
+        rule = DateTimeAddRule("A", 2, "days")
+        rule.apply(data)
+
+        # adds 2 hours to the A column
+        rule = DateTimeAddRule("A", 2, "hours")
+        rule.apply(data)
+
+    Args:
+        input_column (str): The name of a datetime column to add to.
+        unit_value (int): The number of units to add to the datetime column.
+            The unit_value can be negative, in which case this rule performs a substract.
+        unit (str): Specifies what unit the unit_value is in. Supported values are:
+            days, hours, minutes, seconds, microseconds, nanoseconds.
+
+        output_column (Optional[str]): The name of a new column with the result. Optional.
+            If not provided, the result is updated in place.
+            In strict mode, if provided, the output_column must not exist in the input dataframe.
+            In non-strict mode, if provided, the output_column with overwrite a column with
+            the same name in the input dataframe (if any).
+
+        named_input (Optional[str]): Which dataframe to use as the input. Optional.
+            When not set, the input is taken from the main output.
+            Set it to a string value, the name of an output dataframe of a previous rule.
+        named_output (Optional[str]): Give the output of this rule a name so it can be used by another rule as a named input. Optional.
+            When not set, the result of this rule will be available as the main output.
+            When set to a name (string), the result will be available as that named output.
+        name (Optional[str]): Give the rule a name. Optional.
+            Named rules are more descriptive as to what they're trying to do/the intent.
+        description (Optional[str]): Describe in detail what the rules does, how it does it. Optional.
+            Together with the name, the description acts as the documentation of the rule.
+        strict (bool): When set to True, the rule does a stricter valiation. Default: True
+
+    Raises:
+        MissingColumnError: raised if the input_column doesn't exist in the input dataframe.
+        ColumnAlreadyExistsError: raised in strict mode only if the output_column already exists in the dataframe.
+
+    Note:
+        In non-strict mode, missing columns or overwriting existing columns are ignored.
+    """
+
+    SIGN = 1
 
 
-class DateTimeDiffRule(BaseAssignRule):
+class DateTimeSubstractRule(AddSubBaseRule):
+    """ Substracts a number of units (days, hours, minutes, etc.) from a datetime column.
+
+    Basic usage::
+
+        # substracts 2 days the A column
+        rule = DateTimeSubstractRule("A", 2, "days")
+        rule.apply(data)
+
+        # substracts 2 hours to the A column
+        rule = DateTimeSubstractRule("A", 2, "hours")
+        rule.apply(data)
+
+    Args:
+        input_column (str): The name of a datetime column to add to.
+        unit_value (int): The number of units to add to the datetime column.
+            The unit_value can be negative, in which case this rule performs an addition.
+        unit (str): Specifies what unit the unit_value is in. Supported values are:
+            days, hours, minutes, seconds, microseconds, nanoseconds.
+
+        output_column (Optional[str]): The name of a new column with the result. Optional.
+            If not provided, the result is updated in place.
+            In strict mode, if provided, the output_column must not exist in the input dataframe.
+            In non-strict mode, if provided, the output_column with overwrite a column with
+            the same name in the input dataframe (if any).
+
+        named_input (Optional[str]): Which dataframe to use as the input. Optional.
+            When not set, the input is taken from the main output.
+            Set it to a string value, the name of an output dataframe of a previous rule.
+        named_output (Optional[str]): Give the output of this rule a name so it can be used by another rule as a named input. Optional.
+            When not set, the result of this rule will be available as the main output.
+            When set to a name (string), the result will be available as that named output.
+        name (Optional[str]): Give the rule a name. Optional.
+            Named rules are more descriptive as to what they're trying to do/the intent.
+        description (Optional[str]): Describe in detail what the rules does, how it does it. Optional.
+            Together with the name, the description acts as the documentation of the rule.
+        strict (bool): When set to True, the rule does a stricter valiation. Default: True
+
+    Raises:
+        MissingColumnError: raised if the input_column doesn't exist in the input dataframe.
+        ColumnAlreadyExistsError: raised in strict mode only if the output_column already exists in the dataframe.
+
+    Note:
+        In non-strict mode, missing columns or overwriting existing columns are ignored.
+    """
+
+    SIGN = -1
+
+
+class DateTimeDiffRule(BaseAssignColumnRule):
     ...
 
 

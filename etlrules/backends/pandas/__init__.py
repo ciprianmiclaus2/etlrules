@@ -5,7 +5,7 @@ from .conditions import IfThenElseRule, FilterRule
 from .datetime import (
     DateTimeLocalNowRule, DateTimeUTCNowRule, DateTimeToStrFormatRule,
     DateTimeRoundRule, DateTimeRoundDownRule, DateTimeRoundUpRule,
-    DateTimeExtractComponentRule,
+    DateTimeExtractComponentRule, DateTimeAddRule, DateTimeSubstractRule,
 )
 from .fill import ForwardFillRule, BackFillRule
 from .joins import LeftJoinRule, InnerJoinRule, OuterJoinRule, RightJoinRule

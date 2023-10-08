@@ -10,6 +10,7 @@ from etlrules.backends.pandas import (
     IfThenElseRule, FilterRule,
     DateTimeLocalNowRule, DateTimeUTCNowRule, DateTimeToStrFormatRule,
     DateTimeRoundRule, DateTimeRoundDownRule, DateTimeRoundUpRule, 
+    DateTimeAddRule, DateTimeSubstractRule,
 )
 from etlrules.rule import BaseRule
 
@@ -111,6 +112,10 @@ from etlrules.rule import BaseRule
         DateTimeRoundUpRule(columns=["A", "B"], granularity="day", output_columns=["E", "F"], named_input="input", 
                   named_output="result", name="BF", description="Some desc2 BF", strict=True),
         DateTimeRoundUpRule(columns=["A", "B"], granularity=["day", "hour"], output_columns=["E", "F"], named_input="input", 
+                  named_output="result", name="BF", description="Some desc2 BF", strict=True),
+        DateTimeAddRule(input_column="A", unit_value=40, unit="days", output_column="E", named_input="input", 
+                  named_output="result", name="BF", description="Some desc2 BF", strict=True),
+        DateTimeSubstractRule(input_column="A", unit_value=40, unit="days", output_column="E", named_input="input", 
                   named_output="result", name="BF", description="Some desc2 BF", strict=True),
     ]
 )
