@@ -115,7 +115,11 @@ from etlrules.rule import BaseRule
                   named_output="result", name="BF", description="Some desc2 BF", strict=True),
         DateTimeAddRule(input_column="A", unit_value=40, unit="days", output_column="E", named_input="input", 
                   named_output="result", name="BF", description="Some desc2 BF", strict=True),
+        DateTimeAddRule(input_column="A", unit_value="B", unit="days", output_column="E", named_input="input", 
+                  named_output="result", name="BF", description="Some desc2 BF", strict=True),
         DateTimeSubstractRule(input_column="A", unit_value=40, unit="days", output_column="E", named_input="input", 
+                  named_output="result", name="BF", description="Some desc2 BF", strict=True),
+        DateTimeSubstractRule(input_column="A", unit_value="B", unit="days", output_column="E", named_input="input", 
                   named_output="result", name="BF", description="Some desc2 BF", strict=True),
     ]
 )

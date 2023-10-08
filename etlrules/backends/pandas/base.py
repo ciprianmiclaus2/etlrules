@@ -13,13 +13,13 @@ class BaseAssignColumnRule(UnaryOpBaseRule, ColumnsInOutMixin):
         self.input_column = input_column
         self.output_column = output_column
 
-    def do_apply(self, col):
+    def do_apply(self, df, col):
         raise NotImplementedError
 
     def apply(self, data):
         df = self._get_input_df(data)
         input_column, output_column = self.validate_in_out_columns(df, self.input_column, self.output_column, self.strict)
-        df = df.assign(**{output_column: self.do_apply(df[input_column])})
+        df = df.assign(**{output_column: self.do_apply(df, df[input_column])})
         self._set_output_df(data, df)
 
 

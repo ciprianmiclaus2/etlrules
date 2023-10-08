@@ -387,6 +387,18 @@ INPUT_ADD_SUB_DF2 = DataFrame(data=[
     {},
 ])
 
+INPUT_ADD_SUB_DF3 = DataFrame(data=[
+    {"A": datetime.datetime(2023, 5, 11, 10, 20, 30, 100), "B": datetime.timedelta(days=1)},
+    {"A": datetime.datetime(2023, 6, 10, 11, 21, 31, 101), "B": datetime.timedelta(days=2)},
+    {},
+])
+
+INPUT_ADD_SUB_DF4 = DataFrame(data=[
+    {"A": datetime.datetime(2023, 5, 11, 10, 20, 30, 100), "B": 1},
+    {"A": datetime.datetime(2023, 6, 10, 11, 21, 31, 101), "B": 2},
+    {},
+])
+
 @pytest.mark.parametrize("rule_cls, input_column, unit_value, unit, output_column, input_df, expected", [
     [DateTimeAddRule, "A", 40, "days", None, INPUT_ADD_SUB_DF, DataFrame(data=[
         {"A": datetime.datetime(2023, 6, 20, 10, 20, 30, 100)},
@@ -453,10 +465,35 @@ INPUT_ADD_SUB_DF2 = DataFrame(data=[
         {"A": datetime.datetime(2023, 6, 10, 11, 21, 31, 91)},
         {},
     ])],
+
+    [DateTimeAddRule, "A", "B", None, None, INPUT_ADD_SUB_DF3, DataFrame(data=[
+        {"A": datetime.datetime(2023, 5, 12, 10, 20, 30, 100), "B": datetime.timedelta(days=1)},
+        {"A": datetime.datetime(2023, 6, 12, 11, 21, 31, 101), "B": datetime.timedelta(days=2)},
+        {},
+    ])],
+    [DateTimeSubstractRule, "A", "B", None, None, INPUT_ADD_SUB_DF3, DataFrame(data=[
+        {"A": datetime.datetime(2023, 5, 10, 10, 20, 30, 100), "B": datetime.timedelta(days=1)},
+        {"A": datetime.datetime(2023, 6, 8, 11, 21, 31, 101), "B": datetime.timedelta(days=2)},
+        {},
+    ])],
+
+    [DateTimeAddRule, "A", "B", "days", None, INPUT_ADD_SUB_DF4, DataFrame(data=[
+        {"A": datetime.datetime(2023, 5, 12, 10, 20, 30, 100), "B": 1},
+        {"A": datetime.datetime(2023, 6, 12, 11, 21, 31, 101), "B": 2},
+        {},
+    ])],
+    [DateTimeSubstractRule, "A", "B", "days", None, INPUT_ADD_SUB_DF4, DataFrame(data=[
+        {"A": datetime.datetime(2023, 5, 10, 10, 20, 30, 100), "B": 1},
+        {"A": datetime.datetime(2023, 6, 8, 11, 21, 31, 101), "B": 2},
+        {},
+    ])],
+
     [DateTimeAddRule, "B", 10, "days", None, INPUT_ADD_SUB_DF, MissingColumnError],
     [DateTimeAddRule, "A", 10, "days", "B", INPUT_ADD_SUB_DF2, ColumnAlreadyExistsError],
+    [DateTimeAddRule, "A", "C", "days", None, INPUT_ADD_SUB_DF2, MissingColumnError],
     [DateTimeSubstractRule, "B", 10, "days", None, INPUT_ADD_SUB_DF, MissingColumnError],
     [DateTimeSubstractRule, "A", 10, "days", "B", INPUT_ADD_SUB_DF2, ColumnAlreadyExistsError],
+    [DateTimeSubstractRule, "A", "C", "days", None, INPUT_ADD_SUB_DF2, MissingColumnError],
 ])
 def test_add_sub_rules(rule_cls, input_column, unit_value, unit, output_column, input_df, expected):
     with get_test_data(input_df, named_inputs={"input": input_df}, named_output="result") as data:
