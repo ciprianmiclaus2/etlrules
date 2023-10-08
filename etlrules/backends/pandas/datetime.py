@@ -1,4 +1,9 @@
 import datetime
+import locale
+try:
+    from pandas._config.localization import can_set_locale
+except:
+    can_set_locale = None
 from typing import Iterable, Optional, Literal, Sequence, Union
 
 from etlrules.exceptions import ColumnAlreadyExistsError, MissingColumnError
@@ -234,11 +239,97 @@ class DateTimeRoundUpRule(BaseDateRoundTruncRule):
 
 
 class DateTimeExtractComponentRule(BaseAssignRule):
-    """ Extract an individual component of a date/time (e.g. year, month, day, hour, etc.). """
+    """ Extract an individual component of a date/time (e.g. year, month, day, hour, etc.).
 
+    Basic usage::
 
-class DateTimeExtractComponentNamesRule(BaseAssignRule):
-    """ Extract the weekday name or month name from a date. """
+        # displays the dates in %Y-%m-%d format, e.g. 2023-05-19
+        rule = DateTimeExtractComponentRule(["col_A", "col_B", "col_C"], component="year")
+        rule.apply(data)
+
+    Args:
+        columns (Iterable[str]): A list of string columns to convert to upper case.
+        component: The component of the datatime to extract from the datetime.
+            When the component is one of (year, month, day, hour, minute, second, microsecond) then
+            the extracted component will be an integer with the respective component of the datetime.
+            
+            When component is weekday, the component will be an integer with the values 0-6, with
+            Monday being 0 and Sunday 6.
+
+            When the component is weekday_name or month_name, the result column will be a string
+            column with the names of the weekdays (e.g. Monday, Tuesday, etc.) or month names
+            respectively (e.g. January, February, etc.). The names will be printed in the language
+            specified in the locale parameter (or English as the default).
+
+        locale: An optional locale string applicable to weekday_name and month_name. When specified,
+            the names will use the given locale to print the names in the given language.
+            Default: en_US.utf8 will print the names in English.
+            Setting this locale to 
+            Use the command `locale -a` on your terminal on Unix systems to find your locale language code.
+            Trying to set the locale to a value that doesn't appear under the `locale -a` output will fail
+            with ValueError: Unsupported locale.
+        output_columns (Optional[Iterable[str]]): A list of new names for the columns with the upper case values.
+            Optional. If provided, if must have the same length as the columns sequence.
+            The existing columns are unchanged, and new columns are created with the upper case values.
+            If not provided, the result is updated in place.
+
+        named_input (Optional[str]): Which dataframe to use as the input. Optional.
+            When not set, the input is taken from the main output.
+            Set it to a string value, the name of an output dataframe of a previous rule.
+        named_output (Optional[str]): Give the output of this rule a name so it can be used by another rule as a named input. Optional.
+            When not set, the result of this rule will be available as the main output.
+            When set to a name (string), the result will be available as that named output.
+        name (Optional[str]): Give the rule a name. Optional.
+            Named rules are more descriptive as to what they're trying to do/the intent.
+        description (Optional[str]): Describe in detail what the rules does, how it does it. Optional.
+            Together with the name, the description acts as the documentation of the rule.
+        strict (bool): When set to True, the rule does a stricter valiation. Default: True
+
+    Raises:
+        MissingColumnError: raised in strict mode only if a column doesn't exist in the input dataframe.
+        ColumnAlreadyExistsError: raised in strict mode only if an output_column already exists in the dataframe.
+        ValueError: raised if output_columns is provided and not the same length as the columns parameter.
+        ValueError: raised if a locale is specified which is not supported or available on the machine running the scripts.
+
+    Note:
+        In non-strict mode, missing columns or overwriting existing columns are ignored.
+    """
+
+    COMPONENTS = {
+        "year": "year",
+        "month": "month",
+        "day": "day",
+        "hour": "hour",
+        "minute": "minute",
+        "second": "second",
+        "microsecond": "microsecond",
+        "nanosecond": "nanosecond",
+        "weekday": "weekday",
+        "weekday_name": "day_name",
+        "month_name": "month_name",
+    }
+
+    def __init__(self, columns: Iterable[str], component: str, locale: Optional[str], output_columns:Optional[Iterable[str]]=None, named_input: Optional[str]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
+        super().__init__(columns=columns, output_columns=output_columns, named_input=named_input, named_output=named_output, 
+                         name=name, description=description, strict=strict)
+        self.component = component
+        assert self.component in self.COMPONENTS, f"Unsupported component={self.component}. Must be one of: {self.COMPONENTS.keys()}"
+        self._component = self.COMPONENTS[self.component]
+        self.locale = locale
+        self._locale = self.locale
+        if self.locale and can_set_locale and not can_set_locale(locale):
+            if self.strict:
+                raise ValueError(f"Unsupported locale: {locale}")
+            self._locale = None
+
+    def do_apply(self, col):
+        res = getattr(col.dt, self._component)
+        if self._component in ("day_name", "month_name"):
+            try:
+                res = res(locale=self._locale)
+            except locale.Error:
+                raise ValueError(f"Unsupported locale: {self._locale}")
+        return res
 
 
 # date arithmetic

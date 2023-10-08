@@ -6,7 +6,8 @@ import pytest
 from etlrules.exceptions import ColumnAlreadyExistsError, MissingColumnError
 from etlrules.backends.pandas import (
     DateTimeLocalNowRule, DateTimeUTCNowRule, DateTimeToStrFormatRule,
-    DateTimeRoundRule, DateTimeRoundDownRule, DateTimeRoundUpRule, 
+    DateTimeRoundRule, DateTimeRoundDownRule, DateTimeRoundUpRule,
+    DateTimeExtractComponentRule,
 )
 from tests.backends.pandas.utils.data import get_test_data
 
@@ -265,11 +266,6 @@ INPUT_DF = DataFrame(data=[
     [DateTimeRoundUpRule, ["A", "B"], "day", ["B", "A"], INPUT_DF, ColumnAlreadyExistsError],
 ])
 def test_round_trunc_rules(rule_cls, columns, granularity, output_columns, input_df, expected):
-    a = [DateTimeRoundUpRule, ["A", "B"], "day", None, INPUT_DF, DataFrame(data=[
-        {"A": datetime.datetime(2023, 5, 15, 9, 15, 45, 9999), "B": datetime.datetime(2023, 7, 15, 9, 45, 15, 99999)},
-        {"A": datetime.datetime(2023, 5, 16, 19, 25)},
-        {"A": datetime.datetime(2023, 5, 15, 12, 0, 0), "B": datetime.datetime(2023, 7, 15, 12, 0, 0, 1)},
-    ])]
     with get_test_data(input_df, named_inputs={"input": input_df}, named_output="result") as data:
         rule = rule_cls(
             columns, granularity,
@@ -279,6 +275,101 @@ def test_round_trunc_rules(rule_cls, columns, granularity, output_columns, input
             assert_frame_equal(data.get_named_output("result"), expected)
         elif issubclass(expected, Exception):
             with pytest.raises(expected):
+                rule.apply(data)
+        else:
+            assert False
+
+
+INPUT_COMPONENT_DF = DataFrame(data=[
+    {"A": datetime.datetime(2023, 5, 10, 19, 15, 45, 999)},
+    {"A": datetime.datetime(2023, 6, 11, 9, 35, 15, 777)},
+    {},
+])
+
+INPUT_COMPONENT_DF2 = DataFrame(data=[
+    {"A": datetime.datetime(2023, 5, 10, 19, 15, 45, 999), "B": 1},
+    {"A": datetime.datetime(2023, 6, 11, 9, 35, 15, 777), "B": 2},
+    {},
+])
+
+@pytest.mark.parametrize("columns,component,locale,output_columns,input_df,expected", [
+    [["A"], "year", None, None, INPUT_COMPONENT_DF, DataFrame(data=[
+        {"A": 2023},
+        {"A": 2023},
+        {},
+    ])],
+    [["A"], "year", None, ["E"], INPUT_COMPONENT_DF, DataFrame(data=[
+        {"A": datetime.datetime(2023, 5, 10, 19, 15, 45, 999), "E": 2023},
+        {"A": datetime.datetime(2023, 6, 11, 9, 35, 15, 777), "E": 2023},
+        {},
+    ])],
+    [["A"], "month", None, None, INPUT_COMPONENT_DF, DataFrame(data=[
+        {"A": 5},
+        {"A": 6},
+        {},
+    ])],
+    [["A"], "day", None, None, INPUT_COMPONENT_DF, DataFrame(data=[
+        {"A": 10},
+        {"A": 11},
+        {},
+    ])],
+    [["A"], "hour", None, None, INPUT_COMPONENT_DF, DataFrame(data=[
+        {"A": 19},
+        {"A": 9},
+        {},
+    ])],
+    [["A"], "minute", None, None, INPUT_COMPONENT_DF, DataFrame(data=[
+        {"A": 15},
+        {"A": 35},
+        {},
+    ])],
+    [["A"], "second", None, None, INPUT_COMPONENT_DF, DataFrame(data=[
+        {"A": 45},
+        {"A": 15},
+        {},
+    ])],
+    [["A"], "microsecond", None, None, INPUT_COMPONENT_DF, DataFrame(data=[
+        {"A": 999},
+        {"A": 777},
+        {},
+    ])],
+    [["A"], "weekday", None, None, INPUT_COMPONENT_DF, DataFrame(data=[
+        {"A": 2},
+        {"A": 6},
+        {},
+    ])],
+    [["A"], "weekday_name", None, None, INPUT_COMPONENT_DF, DataFrame(data=[
+        {"A": "Wednesday"},
+        {"A": "Sunday"},
+        {},
+    ])],
+    [["A"], "weekday_name", "en_US.utf8", None, INPUT_COMPONENT_DF, DataFrame(data=[
+        {"A": "Wednesday"},
+        {"A": "Sunday"},
+        {},
+    ])],
+    [["A"], "month_name", None, None, INPUT_COMPONENT_DF, DataFrame(data=[
+        {"A": "May"},
+        {"A": "June"},
+        {},
+    ])],
+    [["A"], "weekday_name", "UNKNOWN_LOCALE", None, INPUT_COMPONENT_DF, ValueError],
+    [["Z"], "year", None, None, INPUT_COMPONENT_DF, MissingColumnError],
+    [["A"], "year", None, ["B"], INPUT_COMPONENT_DF2, ColumnAlreadyExistsError],
+])
+def test_extract_component_rules(columns, component, locale, output_columns, input_df, expected):
+    with get_test_data(input_df, named_inputs={"input": input_df}, named_output="result") as data:
+        if isinstance(expected, DataFrame):
+            rule = DateTimeExtractComponentRule(
+                columns, component, locale,
+                output_columns=output_columns, named_input="input", named_output="result")
+            rule.apply(data)
+            assert_frame_equal(data.get_named_output("result"), expected)
+        elif issubclass(expected, Exception):
+            with pytest.raises(expected):
+                rule = DateTimeExtractComponentRule(
+                    columns, component, locale,
+                    output_columns=output_columns, named_input="input", named_output="result")
                 rule.apply(data)
         else:
             assert False
