@@ -18,7 +18,7 @@
 </p>
 
 
-A python rule engine operating with data frames aimed at the financial services
+A python rule engine for applying transformations to dataframes
 
 
 * Free software: MIT
@@ -29,6 +29,3 @@ A python rule engine operating with data frames aimed at the financial services
 
 * TODO
 
-## Credits
-
-This package was created with the [ppw](https://zillionare.github.io/python-project-wizard) tool. For more information, please visit the [project page](https://zillionare.github.io/python-project-wizard/).
