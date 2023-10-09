@@ -35,13 +35,12 @@ class RulesBlock(UnaryOpBaseRule):
     """ Groups rules into encapsulated blocks or units of rules that achieve one thing.
     Blocks are reusable and encapsulated to reduce complexity.
 
-    Params:
+    Args:
         rules: An iterable of rules which are part of this block.
             The first rule in the block will take its input from the named_input of the RulesBlock (if any, if not from the main output of the previous rule).
             The last rule in the block will publish the output as the named_output of the RulesBlock (if any, or the main output of the block).
             Any named outputs in the block are not exposed to the rules outside of the block (proper encapsulation).
 
-    Common params:
         named_input: Which dataframe to use as the input. Optional.
             When not set, the input is taken from the main output.
             Set it to a string value, the name of an output dataframe of a previous rule.
