@@ -399,6 +399,7 @@ INPUT_ADD_SUB_DF4 = DataFrame(data=[
     {},
 ])
 
+
 @pytest.mark.parametrize("rule_cls, input_column, unit_value, unit, output_column, input_df, expected", [
     [DateTimeAddRule, "A", 40, "days", None, INPUT_ADD_SUB_DF, DataFrame(data=[
         {"A": datetime.datetime(2023, 6, 20, 10, 20, 30, 100)},
@@ -485,6 +486,90 @@ INPUT_ADD_SUB_DF4 = DataFrame(data=[
     [DateTimeSubstractRule, "A", "B", "days", None, INPUT_ADD_SUB_DF4, DataFrame(data=[
         {"A": datetime.datetime(2023, 5, 10, 10, 20, 30, 100), "B": 1},
         {"A": datetime.datetime(2023, 6, 8, 11, 21, 31, 101), "B": 2},
+        {},
+    ])],
+
+    [DateTimeAddRule, "A", 10, "weekdays", None, INPUT_ADD_SUB_DF, DataFrame(data=[
+        {"A": datetime.datetime(2023, 5, 25, 10, 20, 30, 100)},
+        {"A": datetime.datetime(2023, 6, 23, 11, 21, 31, 101)},
+        {},
+    ])],
+    [DateTimeSubstractRule, "A", 10, "weekdays", None, INPUT_ADD_SUB_DF, DataFrame(data=[
+        {"A": datetime.datetime(2023, 4, 27, 10, 20, 30, 100)},
+        {"A": datetime.datetime(2023, 5, 29, 11, 21, 31, 101)},
+        {},
+    ])],
+
+    [DateTimeAddRule, "A", 40, "years", None, INPUT_ADD_SUB_DF, DataFrame(data=[
+        {"A": datetime.datetime(2063, 5, 11, 10, 20, 30, 100)},
+        {"A": datetime.datetime(2063, 6, 10, 11, 21, 31, 101)},
+        {},
+    ])],
+    [DateTimeAddRule, "A", 5, "months", None, INPUT_ADD_SUB_DF, DataFrame(data=[
+        {"A": datetime.datetime(2023, 10, 11, 10, 20, 30, 100)},
+        {"A": datetime.datetime(2023, 11, 10, 11, 21, 31, 101)},
+        {},
+    ])],
+    [DateTimeAddRule, "A", 3, "weeks", None, INPUT_ADD_SUB_DF, DataFrame(data=[
+        {"A": datetime.datetime(2023, 6, 1, 10, 20, 30, 100)},
+        {"A": datetime.datetime(2023, 7, 1, 11, 21, 31, 101)},
+        {},
+    ])],
+    [DateTimeSubstractRule, "A", 40, "years", None, INPUT_ADD_SUB_DF, DataFrame(data=[
+        {"A": datetime.datetime(1983, 5, 11, 10, 20, 30, 100)},
+        {"A": datetime.datetime(1983, 6, 10, 11, 21, 31, 101)},
+        {},
+    ])],
+    [DateTimeSubstractRule, "A", 5, "months", None, INPUT_ADD_SUB_DF, DataFrame(data=[
+        {"A": datetime.datetime(2022, 12, 11, 10, 20, 30, 100)},
+        {"A": datetime.datetime(2023, 1, 10, 11, 21, 31, 101)},
+        {},
+    ])],
+    [DateTimeSubstractRule, "A", 3, "weeks", None, INPUT_ADD_SUB_DF, DataFrame(data=[
+        {"A": datetime.datetime(2023, 4, 20, 10, 20, 30, 100)},
+        {"A": datetime.datetime(2023, 5, 20, 11, 21, 31, 101)},
+        {},
+    ])],
+
+    [DateTimeAddRule, "A", "B", "weekdays", None, INPUT_ADD_SUB_DF4, DataFrame(data=[
+        {"A": datetime.datetime(2023, 5, 12, 10, 20, 30, 100), "B": 1},
+        {"A": datetime.datetime(2023, 6, 13, 11, 21, 31, 101), "B": 2},
+        {},
+    ])],
+    [DateTimeSubstractRule, "A", "B", "weekdays", None, INPUT_ADD_SUB_DF4, DataFrame(data=[
+        {"A": datetime.datetime(2023, 5, 10, 10, 20, 30, 100), "B": 1},
+        {"A": datetime.datetime(2023, 6, 8, 11, 21, 31, 101), "B": 2},
+        {},
+    ])],
+
+    [DateTimeAddRule, "A", "B", "years", None, INPUT_ADD_SUB_DF4, DataFrame(data=[
+        {"A": datetime.datetime(2024, 5, 11, 10, 20, 30, 100), "B": 1},
+        {"A": datetime.datetime(2025, 6, 10, 11, 21, 31, 101), "B": 2},
+        {},
+    ])],
+    [DateTimeAddRule, "A", "B", "months", None, INPUT_ADD_SUB_DF4, DataFrame(data=[
+        {"A": datetime.datetime(2023, 6, 11, 10, 20, 30, 100), "B": 1},
+        {"A": datetime.datetime(2023, 8, 10, 11, 21, 31, 101), "B": 2},
+        {},
+    ])],
+    [DateTimeAddRule, "A", "B", "weeks", None, INPUT_ADD_SUB_DF4, DataFrame(data=[
+        {"A": datetime.datetime(2023, 5, 18, 10, 20, 30, 100), "B": 1},
+        {"A": datetime.datetime(2023, 6, 24, 11, 21, 31, 101), "B": 2},
+        {},
+    ])],
+    [DateTimeSubstractRule, "A", "B", "years", None, INPUT_ADD_SUB_DF4, DataFrame(data=[
+        {"A": datetime.datetime(2022, 5, 11, 10, 20, 30, 100), "B": 1},
+        {"A": datetime.datetime(2021, 6, 10, 11, 21, 31, 101), "B": 2},
+        {},
+    ])],
+    [DateTimeSubstractRule, "A", "B", "months", None, INPUT_ADD_SUB_DF4, DataFrame(data=[
+        {"A": datetime.datetime(2023, 4, 11, 10, 20, 30, 100), "B": 1},
+        {"A": datetime.datetime(2023, 4, 10, 11, 21, 31, 101), "B": 2},
+        {},
+    ])],
+    [DateTimeSubstractRule, "A", "B", "weeks", None, INPUT_ADD_SUB_DF4, DataFrame(data=[
+        {"A": datetime.datetime(2023, 5, 4, 10, 20, 30, 100), "B": 1},
+        {"A": datetime.datetime(2023, 5, 27, 11, 21, 31, 101), "B": 2},
         {},
     ])],
 

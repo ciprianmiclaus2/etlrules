@@ -4,7 +4,8 @@ try:
     from pandas._config.localization import can_set_locale
 except:
     can_set_locale = None
-from pandas import Timedelta, to_timedelta
+from pandas import Timedelta, to_timedelta, isnull, to_datetime
+from pandas.tseries.offsets import DateOffset, BusinessDay
 from pandas.api.types import is_timedelta64_dtype
 from typing import Iterable, Optional, Literal, Sequence, Union
 
@@ -335,7 +336,11 @@ class DateTimeExtractComponentRule(BaseAssignRule):
 
 # date arithmetic
 DT_ARITHMETIC_UNITS = {
+    "years": "years",
+    "months": "months",
+    "weeks": "weeks",
     "days": "days",
+    "weekdays": None,
     "hours": "hours",
     "minutes": "minutes",
     "seconds": "seconds",
@@ -343,6 +348,8 @@ DT_ARITHMETIC_UNITS = {
     "microseconds": "microseconds",
     "nanoseconds": "nanoseconds",
 }
+
+DT_TIMEDELTA_UNITS = set(["days", "hours", "minutes", "seconds", "milliseconds", "microseconds", "nanoseconds"])
 
 
 class AddSubBaseRule(BaseAssignColumnRule):
@@ -366,9 +373,21 @@ class AddSubBaseRule(BaseAssignColumnRule):
                 raise MissingColumnError(f"Column {self.unit_value} in unit_value does not exist in the input dataframe.")
             col2 = df[self.unit_value]
             if not is_timedelta64_dtype(col2):
-                col2 = to_timedelta(col2, unit=DT_ARITHMETIC_UNITS[self.unit], errors="coerce")
+                if self.unit not in DT_ARITHMETIC_UNITS.keys():
+                    raise ValueError(f"Unsupported unit: '{self.unit}'. It must be one of {DT_ARITHMETIC_UNITS.keys()}")
+                if self.unit in DT_TIMEDELTA_UNITS:
+                    col2 = to_timedelta(col2, unit=DT_ARITHMETIC_UNITS[self.unit], errors="coerce")
+                else:
+                    unit, sign = self.unit, self.SIGN
+                    if self.unit == "weekdays":
+                        col2 = col2.apply(lambda x: BusinessDay(sign * (0 if isnull(x) else int(x))))
+                    else:
+                        col2 = col2.apply(lambda x: DateOffset(**{DT_ARITHMETIC_UNITS[unit]: sign * (0 if isnull(x) else int(x))}))
+                    return to_datetime(col + col2, errors='coerce')
             return col + self.SIGN * col2
-        return col + Timedelta(value=self.SIGN * self.unit_value, unit=DT_ARITHMETIC_UNITS[self.unit])
+        if self.unit == "weekdays":
+            return col + BusinessDay(self.SIGN * self.unit_value)
+        return col + DateOffset(**{DT_ARITHMETIC_UNITS[self.unit]: self.SIGN * self.unit_value})
 
 
 class DateTimeAddRule(AddSubBaseRule):
@@ -392,12 +411,13 @@ class DateTimeAddRule(AddSubBaseRule):
             A name of an existing column can be passed into unit_value, in which case, that
             column will be added to the input_column.
             If the column is a timedelta, it will be added as is, if it's a numeric column,
-            then it will be interpreted based on the unit parameter (e.g. days/hours/etc.).
+            then it will be interpreted based on the unit parameter (e.g. years/days/hours/etc.).
             In this case, if the column specified in the unit_value doesn't exist,
             MissingColumnError is raised.
 
         unit (str): Specifies what unit the unit_value is in. Supported values are:
-            days, hours, minutes, seconds, microseconds, nanoseconds.
+            years, months, weeks, weekdays, days, hours, minutes, seconds, microseconds, nanoseconds.
+            weekdays skips weekends (ie Saturdays and Sundays).
 
         output_column (Optional[str]): The name of a new column with the result. Optional.
             If not provided, the result is updated in place.
@@ -421,6 +441,7 @@ class DateTimeAddRule(AddSubBaseRule):
         MissingColumnError: raised if the input_column doesn't exist in the input dataframe.
         MissingColumnError: raised if unit_value is a name of a column but it doesn't exist in the input dataframe.
         ColumnAlreadyExistsError: raised in strict mode only if the output_column already exists in the dataframe.
+        ValueError: raised if unit_value is a column which is not a timedelta column and the unit parameter is not specified.
 
     Note:
         In non-strict mode, missing columns or overwriting existing columns are ignored.
