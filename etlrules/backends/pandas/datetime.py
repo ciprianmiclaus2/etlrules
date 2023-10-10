@@ -4,7 +4,7 @@ try:
     from pandas._config.localization import can_set_locale
 except:
     can_set_locale = None
-from pandas import Timedelta, to_timedelta, isnull, to_datetime
+from pandas import to_timedelta, isnull, to_datetime
 from pandas.tseries.offsets import DateOffset, BusinessDay
 from pandas.api.types import is_timedelta64_dtype, is_datetime64_any_dtype
 from typing import Iterable, Optional, Literal, Sequence, Union
