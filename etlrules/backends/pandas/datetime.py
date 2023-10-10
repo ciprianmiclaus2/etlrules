@@ -6,7 +6,7 @@ except:
     can_set_locale = None
 from pandas import Timedelta, to_timedelta, isnull, to_datetime
 from pandas.tseries.offsets import DateOffset, BusinessDay
-from pandas.api.types import is_timedelta64_dtype
+from pandas.api.types import is_timedelta64_dtype, is_datetime64_any_dtype
 from typing import Iterable, Optional, Literal, Sequence, Union
 
 from etlrules.exceptions import ColumnAlreadyExistsError, MissingColumnError
@@ -356,8 +356,8 @@ class AddSubBaseRule(BaseAssignColumnRule):
 
     SIGN = 0
 
-    def __init__(self, input_column: str, unit_value: Union[int, str], 
-                 unit: Literal["days", "hours", "minutes", "seconds", "milliseconds", "microseconds", "nanoseconds"],
+    def __init__(self, input_column: str, unit_value: Union[int, float, str], 
+                 unit: Optional[Literal["years", "months", "weeks", "weekdays", "days", "hours", "minutes", "seconds", "milliseconds", "microseconds", "nanoseconds"]],
                  output_column:Optional[str]=None, named_input: Optional[str]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
         assert self.SIGN in (1, -1)
         super().__init__(input_column=input_column, output_column=output_column, named_input=named_input, named_output=named_output, name=name, description=description, strict=strict)
@@ -372,7 +372,14 @@ class AddSubBaseRule(BaseAssignColumnRule):
             if self.unit_value not in df.columns:
                 raise MissingColumnError(f"Column {self.unit_value} in unit_value does not exist in the input dataframe.")
             col2 = df[self.unit_value]
-            if not is_timedelta64_dtype(col2):
+            if is_datetime64_any_dtype(col2):
+                if self.SIGN != -1:  # only supported for substracting a datetime from another datetime
+                    raise ValueError(f"Cannot add column {self.unit_value} of type datetime to another datetime column.")
+                return col - col2
+            elif is_timedelta64_dtype(col2):
+                pass  # do nothing for timedelta
+            else:
+                # another type - will be interpreted as an offset/timedelta
                 if self.unit not in DT_ARITHMETIC_UNITS.keys():
                     raise ValueError(f"Unsupported unit: '{self.unit}'. It must be one of {DT_ARITHMETIC_UNITS.keys()}")
                 if self.unit in DT_TIMEDELTA_UNITS:
@@ -385,6 +392,8 @@ class AddSubBaseRule(BaseAssignColumnRule):
                         col2 = col2.apply(lambda x: DateOffset(**{DT_ARITHMETIC_UNITS[unit]: sign * (0 if isnull(x) else int(x))}))
                     return to_datetime(col + col2, errors='coerce')
             return col + self.SIGN * col2
+        if self.unit not in DT_ARITHMETIC_UNITS.keys():
+            raise ValueError(f"Unsupported unit: '{self.unit}'. It must be one of {DT_ARITHMETIC_UNITS.keys()}")
         if self.unit == "weekdays":
             return col + BusinessDay(self.SIGN * self.unit_value)
         return col + DateOffset(**{DT_ARITHMETIC_UNITS[self.unit]: self.SIGN * self.unit_value})
@@ -465,7 +474,7 @@ class DateTimeSubstractRule(AddSubBaseRule):
 
     Args:
         input_column (str): The name of a datetime column to add to.
-        unit_value (int): The number of units to add to the datetime column.
+        unit_value (Union[int,float,str]): The number of units to add to the datetime column.
             The unit_value can be negative, in which case this rule performs an addition.
 
             A name of an existing column can be passed into unit_value, in which case, that
@@ -508,26 +517,88 @@ class DateTimeSubstractRule(AddSubBaseRule):
     SIGN = -1
 
 
-class DateTimeDiffRule(BaseAssignColumnRule):
+class DateTimeDiffRule(AddSubBaseRule):
+    """ Calculates the difference between two datetime columns, optionally extracting it in the specified unit.
+
+    Basic usage::
+
+        # calculates the A - B in days
+        rule = DateTimeDiffRule("A", "B", unit="days")
+        rule.apply(data)
+
+    Args:
+        input_column (str): The name of a datetime column.
+        input_column2 (str): The name of the second datetime column.
+            The result will be input_column - input_column2
+
+        unit (Optional[str]): If specified, it will extract the given component of the difference:
+            years, months, days, hours, minutes, seconds, microseconds, nanoseconds.
+
+        output_column (Optional[str]): The name of a new column with the result. Optional.
+            If not provided, the result is updated in place.
+            In strict mode, if provided, the output_column must not exist in the input dataframe.
+            In non-strict mode, if provided, the output_column with overwrite a column with
+            the same name in the input dataframe (if any).
+
+        named_input (Optional[str]): Which dataframe to use as the input. Optional.
+            When not set, the input is taken from the main output.
+            Set it to a string value, the name of an output dataframe of a previous rule.
+        named_output (Optional[str]): Give the output of this rule a name so it can be used by another rule as a named input. Optional.
+            When not set, the result of this rule will be available as the main output.
+            When set to a name (string), the result will be available as that named output.
+        name (Optional[str]): Give the rule a name. Optional.
+            Named rules are more descriptive as to what they're trying to do/the intent.
+        description (Optional[str]): Describe in detail what the rules does, how it does it. Optional.
+            Together with the name, the description acts as the documentation of the rule.
+        strict (bool): When set to True, the rule does a stricter valiation. Default: True
+
+    Raises:
+        MissingColumnError: raised if either input_column or input_column2 don't exist in the input dataframe.
+        ColumnAlreadyExistsError: raised in strict mode only if the output_column already exists in the dataframe.
+
+    Note:
+        For best results, round the datetime columns using one of the rounding rules before
+        calculating the difference. Otherwise, this rule will tend to truncate/round down.
+        For example: 2023-05-05 10:00:00 - 2023-05-04 10:00:01 will result in 0 days even though
+        the difference is 23:59:59. In cases like this one, it might be preferable to round, in this
+        case perhaps round to "day" using DateTimeRoundRule or DateTimeRoundDownRule. This will result
+        in a 2023-05-05 00:00:00 - 2023-05-04 00:00:00 which results in 1 day.
+
+    """
+
+    COMPONENTS = {
+        "days": "days",
+        "hours": "hours",
+        "minutes": "minutes",
+        "seconds": "seconds",
+        "microseconds": "microseconds",
+        "nanoseconds": "nanoseconds",
+        "total_seconds": None,
+    }
+
+    SIGN = -1
+
+    EXCLUDE_FROM_SERIALIZE = ('unit_value', )
+
     def __init__(self, input_column: str, input_column2: str, 
-                 unit: Optional[Literal["days", "hours", "minutes", "seconds", "milliseconds", "microseconds", "nanoseconds"]],
+                 unit: Optional[Literal["days", "hours", "minutes", "seconds", "milliseconds", "microseconds", "nanoseconds", "total_seconds"]],
                  output_column:Optional[str]=None, named_input: Optional[str]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
-        assert self.SIGN in (1, -1)
-        assert input_column2 and isinstance(input_column2, str), "input_column2 must be a non-empty string."
-        super().__init__(input_column=input_column, output_column=output_column, named_input=named_input, named_output=named_output, name=name, description=description, strict=strict)
-        assert unit in DT_ARITHMETIC_UNITS.keys(), f"Unsupported unit: '{unit}'. It must be one of {DT_ARITHMETIC_UNITS.keys()}"
-        self.unit = unit
-        self._unit = DT_ARITHMETIC_UNITS[self.unit] if self.unit else None
+        assert input_column2 and isinstance(input_column2, str), "input_column2 must be a non-empty string representing the name of a column."
+        assert unit is None or unit in self.COMPONENTS.keys(), f"unit must be None of one of: {self.COMPONENTS.keys()}"
+        super().__init__(input_column=input_column, unit_value=input_column2, unit=unit, output_column=output_column,
+                         named_input=named_input, named_output=named_output, name=name, description=description, strict=strict)
+        self.input_column2 = input_column2
 
     def do_apply(self, df, col):
-        if self.input_column2 not in df.columns:
-            raise MissingColumnError(f"Column {self.input_column2} in input_column2 does not exist in the input dataframe.")
-
-        res = col - df[self.input_column2]
-        #if is_timedelta64_dtype(res) and self.unit:
-        #    res
+        if self.unit_value not in df.columns:
+            raise MissingColumnError(f"Column {self.unit_value} in input_column2 does not exist in the input dataframe.")
+        res = super().do_apply(df, col)
+        if is_timedelta64_dtype(res) and self.unit:
+            if self.unit == "total_seconds":
+                res = res.dt.total_seconds()
+            else:
+                res = res.dt.components[self.unit]
         return res
-
 
 
 class DateTimeUTCNowRule(UnaryOpBaseRule):

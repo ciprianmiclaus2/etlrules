@@ -10,7 +10,7 @@ from etlrules.backends.pandas import (
     IfThenElseRule, FilterRule,
     DateTimeLocalNowRule, DateTimeUTCNowRule, DateTimeToStrFormatRule,
     DateTimeRoundRule, DateTimeRoundDownRule, DateTimeRoundUpRule, 
-    DateTimeAddRule, DateTimeSubstractRule,
+    DateTimeAddRule, DateTimeSubstractRule, DateTimeDiffRule,
 )
 from etlrules.rule import BaseRule
 
@@ -120,6 +120,8 @@ from etlrules.rule import BaseRule
         DateTimeSubstractRule(input_column="A", unit_value=40, unit="days", output_column="E", named_input="input", 
                   named_output="result", name="BF", description="Some desc2 BF", strict=True),
         DateTimeSubstractRule(input_column="A", unit_value="B", unit="days", output_column="E", named_input="input", 
+                  named_output="result", name="BF", description="Some desc2 BF", strict=True),
+        DateTimeDiffRule(input_column="A", input_column2="B", unit="days", output_column="E", named_input="input", 
                   named_output="result", name="BF", description="Some desc2 BF", strict=True),
     ]
 )

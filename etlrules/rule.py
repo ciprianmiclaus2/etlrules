@@ -7,6 +7,7 @@ from .data import RuleData
 class BaseRule:
 
     EXCLUDE_FROM_COMPARE = ()
+    EXCLUDE_FROM_SERIALIZE = ()
 
     def __init__(self, named_output=None, name=None, description=None, strict=True):
         assert named_output is None or isinstance(named_output, str) and named_output
@@ -36,7 +37,7 @@ class BaseRule:
     def to_dict(self):
         return {
             self.__class__.__name__: {
-                attr: value for attr, value in self.__dict__.items() if not attr.startswith("_")
+                attr: value for attr, value in self.__dict__.items() if not attr.startswith("_") and attr not in self.EXCLUDE_FROM_SERIALIZE
             }
         }
 

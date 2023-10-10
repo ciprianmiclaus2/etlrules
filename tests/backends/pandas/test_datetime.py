@@ -8,6 +8,7 @@ from etlrules.backends.pandas import (
     DateTimeLocalNowRule, DateTimeUTCNowRule, DateTimeToStrFormatRule,
     DateTimeRoundRule, DateTimeRoundDownRule, DateTimeRoundUpRule,
     DateTimeExtractComponentRule, DateTimeAddRule, DateTimeSubstractRule,
+    DateTimeDiffRule,
 )
 from tests.backends.pandas.utils.data import get_test_data
 
@@ -584,6 +585,63 @@ def test_add_sub_rules(rule_cls, input_column, unit_value, unit, output_column, 
     with get_test_data(input_df, named_inputs={"input": input_df}, named_output="result") as data:
         rule = rule_cls(
             input_column, unit_value, unit, output_column,
+            named_input="input", named_output="result")
+        if isinstance(expected, DataFrame):
+            rule.apply(data)
+            assert_frame_equal(data.get_named_output("result"), expected)
+        elif issubclass(expected, Exception):
+            with pytest.raises(expected):
+                rule.apply(data)
+        else:
+            assert False
+
+
+INPUT_DATE_DIFF_DF = DataFrame(data=[
+    {"A": datetime.datetime(2023, 5, 5, 10, 0, 0), "B": datetime.datetime(2023, 5, 4, 10, 0, 1)},
+    {"A": datetime.datetime(2023, 5, 5, 10, 0, 0), "B": datetime.datetime(2023, 5, 4, 10, 0, 0)},
+    {"A": datetime.datetime(2023, 5, 5, 10, 0, 0)},
+])
+
+@pytest.mark.parametrize("input_column, input_column2, unit, output_column, input_df, expected", [
+    ["A", "B", "days", None, INPUT_DATE_DIFF_DF, DataFrame(data=[
+        {"A": 0, "B": datetime.datetime(2023, 5, 4, 10, 0, 1)},
+        {"A": 1, "B": datetime.datetime(2023, 5, 4, 10, 0, 0)},
+        {},
+    ])],
+    ["A", "B", "days", "E", INPUT_DATE_DIFF_DF, DataFrame(data=[
+        {"A": datetime.datetime(2023, 5, 5, 10, 0, 0), "B": datetime.datetime(2023, 5, 4, 10, 0, 1), "E": 0},
+        {"A": datetime.datetime(2023, 5, 5, 10, 0, 0), "B": datetime.datetime(2023, 5, 4, 10, 0, 0), "E": 1},
+        {"A": datetime.datetime(2023, 5, 5, 10, 0, 0)},
+    ])],
+    ["A", "B", "hours", None, INPUT_DATE_DIFF_DF, DataFrame(data=[
+        {"A": 23, "B": datetime.datetime(2023, 5, 4, 10, 0, 1)},
+        {"A": 0, "B": datetime.datetime(2023, 5, 4, 10, 0, 0)},
+        {},
+    ])],
+    ["A", "B", "minutes", None, INPUT_DATE_DIFF_DF, DataFrame(data=[
+        {"A": 59, "B": datetime.datetime(2023, 5, 4, 10, 0, 1)},
+        {"A": 0, "B": datetime.datetime(2023, 5, 4, 10, 0, 0)},
+        {},
+    ])],
+    ["A", "B", "seconds", None, INPUT_DATE_DIFF_DF, DataFrame(data=[
+        {"A": 59, "B": datetime.datetime(2023, 5, 4, 10, 0, 1)},
+        {"A": 0, "B": datetime.datetime(2023, 5, 4, 10, 0, 0)},
+        {},
+    ])],
+    ["A", "B", "total_seconds", None, INPUT_DATE_DIFF_DF, DataFrame(data=[
+        {"A": 86399.0, "B": datetime.datetime(2023, 5, 4, 10, 0, 1)},
+        {"A": 86400.0, "B": datetime.datetime(2023, 5, 4, 10, 0, 0)},
+        {},
+    ])],
+
+    ["A", "Z", "days", None, INPUT_DATE_DIFF_DF, MissingColumnError],
+    ["Z", "B", "days", None, INPUT_DATE_DIFF_DF, MissingColumnError],
+    ["A", "B", "days", "A", INPUT_DATE_DIFF_DF, ColumnAlreadyExistsError],
+])
+def test_date_diff_scenarios(input_column, input_column2, unit, output_column, input_df, expected):
+    with get_test_data(input_df, named_inputs={"input": input_df}, named_output="result") as data:
+        rule = DateTimeDiffRule(
+            input_column, input_column2, unit, output_column,
             named_input="input", named_output="result")
         if isinstance(expected, DataFrame):
             rule.apply(data)
