@@ -8,7 +8,7 @@
 </a>
 
 <a href="https://github.com/ciprianmiclaus/etlrules/actions">
-    <img src="https://github.com/ciprianmiclaus/etlrules/actions/workflows/main.yml/badge.svg?branch=release" alt="CI Status">
+    <img src="https://github.com/ciprianmiclaus/etlrules/actions/workflows/python-package.yml/badge.svg?branch=main" alt="CI Status">
 </a>
 
 <a href="https://ciprianmiclaus.github.io/etlrules/">
