@@ -11,6 +11,10 @@
     <img src="https://github.com/ciprianmiclaus/etlrules/actions/workflows/python-package.yml/badge.svg?branch=main" alt="CI Status">
 </a>
 
+<a href="https://codecov.io/gh/ciprianmiclaus/etlrules" > 
+ <img src="https://codecov.io/gh/ciprianmiclaus/etlrules/graph/badge.svg?token=4N0N8XSVZY"/> 
+ </a>
+
 <a href="https://ciprianmiclaus.github.io/etlrules/">
     <img src="https://img.shields.io/website/https/ciprianmiclaus.github.io/etlrules/index.html.svg?label=docs&down_message=unavailable&up_message=available" alt="Documentation Status">
 </a>
