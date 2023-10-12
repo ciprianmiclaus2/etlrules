@@ -17,7 +17,7 @@ from etlrules.rule import UnaryOpBaseRule
 
 class BaseDateRoundTruncRule(UnaryOpBaseRule, ColumnsInOutMixin):
 
-    GRANULARITIES = {
+    UNITS = {
         "day": "D",
         "hour": "H",
         "minute": "T",
@@ -27,27 +27,20 @@ class BaseDateRoundTruncRule(UnaryOpBaseRule, ColumnsInOutMixin):
         "nanosecond": "N",
     }
 
-    def __init__(self, columns: Iterable[str], granularity: Union[str, Sequence[str]], output_columns:Optional[Iterable[str]]=None, named_input: Optional[str]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
+    def __init__(self, input_column: str, unit: str, output_column:Optional[str]=None, named_input: Optional[str]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
         super().__init__(named_input=named_input, named_output=named_output, name=name, description=description, strict=strict)
-        self.columns = [col for col in columns]
-        self.output_columns = [out_col for out_col in output_columns] if output_columns else None
-        self.granularity = granularity
-        if isinstance(self.granularity, str):
-            self._granularities = [self.granularity] * len(self.columns)
-        elif isinstance(self.granularity, (list, tuple)):
-            assert len(self.granularity) == len(self.columns), "Granularity must have the same len as the columns when passed in as a sequence."
-            self._granularities = self.granularity
-        else:
-            assert False, "granularity must be a str or a sequence of strings."
-        assert all(granularity in self.GRANULARITIES.keys() for granularity in self._granularities)
+        self.input_column = input_column
+        self.output_column = output_column
+        assert isinstance(unit, str) and unit in self.UNITS.keys(), f"unit must be one of {self.UNITS.keys()} and not '{unit}'"
+        self.unit = unit
 
-    def do_apply(self, series, granularity):
+    def do_apply(self, series):
         raise NotImplementedError("Implement in a derived class.")
 
     def apply(self, data):
         df = self._get_input_df(data)
-        columns, output_columns = self.validate_columns_in_out(df, self.columns, self.output_columns, self.strict)
-        df = df.assign(**{output_col: self.do_apply(df[col], self._granularities[idx]) for idx, (col, output_col) in enumerate(zip(columns, output_columns))})
+        input_column, output_column = self.validate_in_out_columns(df, self.input_column, self.output_column, self.strict)
+        df = df.assign(**{output_column: self.do_apply(df[input_column])})
         self._set_output_df(data, df)
 
 
@@ -56,23 +49,20 @@ class DateTimeRoundRule(BaseDateRoundTruncRule):
 
     Basic usage::
 
-        # rounds the A, B and C column to the nearest second
-        rule = DateTimeRoundRule(["A", "B", "C"], "second")
+        # rounds the A column to the nearest second
+        rule = DateTimeRoundRule("A", "second")
         rule.apply(data)
 
-        # rounds A to days, B to hours, C to seconds
-        rule = DateTimeRoundRule(["A", "B", "C"], ["day", "hour", "second"])
+        # rounds the A column to days
+        rule = DateTimeRoundRule("A", "day")
         rule.apply(data)
 
     Args:
-        columns (Iterable[str]): A list of string columns to round according to the granularity specification.
-        granularity (Union[str, Sequence[str]]): Specifies the granularity of rounding.
+        input_column (str): The column name to round according to the unit specified.
+        unit (str): Specifies the unit of rounding.
             That is: rounding to the nearest day, hour, minute, etc.
-            It's either a string value, in which case it is applied to all columns or a
-            list or tuple of different granularity, in which case they need to be the same length
-            as the columns iterable and they applied positionally to the columns.
 
-            The supported granularities are:
+            The supported units are:
                 day: anything up to 12:00:00 rounds down to the current day, after that up to the next day
                 hour: anything up to 30th minute rounds down to the current hour, after that up to the next hour
                 minute: anything up to 30th second rounds down to the current minute, after that up to the next minute
@@ -81,10 +71,11 @@ class DateTimeRoundRule(BaseDateRoundTruncRule):
                 microsecond: rounds to the nearest microsecond
                 nanosecond: rounds to the nearest nanosecond
 
-        output_columns (Optional[Iterable[str]]): A list of new names for the columns with the upper case values.
-            Optional. If provided, if must have the same length as the columns sequence.
-            The existing columns are unchanged, and new columns are created with the upper case values.
+        output_column (Optional[str]): The name of a new column with the result. Optional.
             If not provided, the result is updated in place.
+            In strict mode, if provided, the output_column must not exist in the input dataframe.
+            In non-strict mode, if provided, the output_column with overwrite a column with
+            the same name in the input dataframe (if any).
 
         named_input (Optional[str]): Which dataframe to use as the input. Optional.
             When not set, the input is taken from the main output.
@@ -99,17 +90,16 @@ class DateTimeRoundRule(BaseDateRoundTruncRule):
         strict (bool): When set to True, the rule does a stricter valiation. Default: True
 
     Raises:
-        MissingColumnError: raised in strict mode only if a column doesn't exist in the input dataframe.
-        ColumnAlreadyExistsError: raised in strict mode only if an output_column already exists in the dataframe.
-        ValueError: raised if output_columns is provided and not the same length as the columns parameter.
+        MissingColumnError: raised if the input_column column doesn't exist in the input dataframe.
+        ColumnAlreadyExistsError: raised in strict mode only if the output_column already exists in the dataframe.
 
     Note:
-        In non-strict mode, missing columns or overwriting existing columns are ignored.
+        In non-strict mode, overwriting existing columns is ignored.
     """
 
-    def do_apply(self, series, granularity):
+    def do_apply(self, series):
         return series.dt.round(
-            freq=self.GRANULARITIES[granularity],
+            freq=self.UNITS[self.unit],
             ambiguous='infer',
             nonexistent='shift_forward'
         )
@@ -120,23 +110,20 @@ class DateTimeRoundDownRule(BaseDateRoundTruncRule):
 
     Basic usage::
 
-        # rounds the A, B and C column to the nearest second
-        rule = DateTimeRoundDownRule(["A", "B", "C"], "second")
+        # rounds the A column to the nearest second
+        rule = DateTimeRoundDownRule("A", "second")
         rule.apply(data)
 
-        # rounds A to days, B to hours, C to seconds
-        rule = DateTimeRoundDownRule(["A", "B", "C"], ["day", "hour", "second"])
+        # rounds the A column to days
+        rule = DateTimeRoundDownRule("A", "day")
         rule.apply(data)
 
     Args:
-        columns (Iterable[str]): A list of string columns to round according to the granularity specification.
-        granularity (Union[str, Sequence[str]]): Specifies the granularity of rounding.
+        input_column (str): The column name to round according to the unit specified.
+        unit (str): Specifies the unit of rounding.
             That is: rounding to the nearest day, hour, minute, etc.
-            It's either a string value, in which case it is applied to all columns or a
-            list or tuple of different granularity, in which case they need to be the same length
-            as the columns iterable and they applied positionally to the columns.
 
-            The supported granularities are:
+            The supported units are:
                 day: removes the hours/minutes/etc.
                 hour: removes the minutes/seconds etc.
                 minute: removes the seconds/etc.
@@ -144,10 +131,11 @@ class DateTimeRoundDownRule(BaseDateRoundTruncRule):
                 millisecond: removes the microseconds
                 microsecond: removes nanoseconds (if any)
 
-        output_columns (Optional[Iterable[str]]): A list of new names for the columns with the upper case values.
-            Optional. If provided, if must have the same length as the columns sequence.
-            The existing columns are unchanged, and new columns are created with the upper case values.
+        output_column (Optional[str]): The name of a new column with the result. Optional.
             If not provided, the result is updated in place.
+            In strict mode, if provided, the output_column must not exist in the input dataframe.
+            In non-strict mode, if provided, the output_column with overwrite a column with
+            the same name in the input dataframe (if any).
 
         named_input (Optional[str]): Which dataframe to use as the input. Optional.
             When not set, the input is taken from the main output.
@@ -162,17 +150,16 @@ class DateTimeRoundDownRule(BaseDateRoundTruncRule):
         strict (bool): When set to True, the rule does a stricter valiation. Default: True
 
     Raises:
-        MissingColumnError: raised in strict mode only if a column doesn't exist in the input dataframe.
-        ColumnAlreadyExistsError: raised in strict mode only if an output_column already exists in the dataframe.
-        ValueError: raised if output_columns is provided and not the same length as the columns parameter.
+        MissingColumnError: raised if the input_column column doesn't exist in the input dataframe.
+        ColumnAlreadyExistsError: raised in strict mode only if the output_column already exists in the dataframe.
 
     Note:
-        In non-strict mode, missing columns or overwriting existing columns are ignored.
+        In non-strict mode, overwriting existing columns is ignored.
     """
 
-    def do_apply(self, series, granularity):
+    def do_apply(self, series):
         return series.dt.floor(
-            freq=self.GRANULARITIES[granularity],
+            freq=self.UNITS[self.unit],
             ambiguous='infer',
             nonexistent='shift_forward'
         )
@@ -183,23 +170,20 @@ class DateTimeRoundUpRule(BaseDateRoundTruncRule):
 
     Basic usage::
 
-        # rounds the A, B and C column to the nearest second
-        rule = DateTimeRoundUpRule(["A", "B", "C"], "second")
+        # rounds the A column to the nearest second
+        rule = DateTimeRoundUpRule("A", "second")
         rule.apply(data)
 
-        # rounds A to days, B to hours, C to seconds
-        rule = DateTimeRoundUpRule(["A", "B", "C"], ["day", "hour", "second"])
+        # rounds A column to days
+        rule = DateTimeRoundUpRule("A", "day")
         rule.apply(data)
 
     Args:
-        columns (Iterable[str]): A list of string columns to round according to the granularity specification.
-        granularity (Union[str, Sequence[str]]): Specifies the granularity of rounding.
+        input_column (str): The column name to round according to the unit specified.
+        unit (str): Specifies the unit of rounding.
             That is: rounding to the nearest day, hour, minute, etc.
-            It's either a string value, in which case it is applied to all columns or a
-            list or tuple of different granularity, in which case they need to be the same length
-            as the columns iterable and they applied positionally to the columns.
 
-            The supported granularities are:
+            The supported units are:
                 day: Rounds up to the next day if there are any hours/minutes/etc.
                 hour: Rounds up to the next hour if there are any minutes/etc.
                 minute: Rounds up to the next minute if there are any seconds/etc.
@@ -207,10 +191,11 @@ class DateTimeRoundUpRule(BaseDateRoundTruncRule):
                 millisecond: Rounds up to the next millisecond if there are any microseconds
                 microsecond: Rounds up to the next microsecond if there are any nanoseconds
 
-        output_columns (Optional[Iterable[str]]): A list of new names for the columns with the upper case values.
-            Optional. If provided, if must have the same length as the columns sequence.
-            The existing columns are unchanged, and new columns are created with the upper case values.
+        output_column (Optional[str]): The name of a new column with the result. Optional.
             If not provided, the result is updated in place.
+            In strict mode, if provided, the output_column must not exist in the input dataframe.
+            In non-strict mode, if provided, the output_column with overwrite a column with
+            the same name in the input dataframe (if any).
 
         named_input (Optional[str]): Which dataframe to use as the input. Optional.
             When not set, the input is taken from the main output.
@@ -225,17 +210,16 @@ class DateTimeRoundUpRule(BaseDateRoundTruncRule):
         strict (bool): When set to True, the rule does a stricter valiation. Default: True
 
     Raises:
-        MissingColumnError: raised in strict mode only if a column doesn't exist in the input dataframe.
-        ColumnAlreadyExistsError: raised in strict mode only if an output_column already exists in the dataframe.
-        ValueError: raised if output_columns is provided and not the same length as the columns parameter.
+        MissingColumnError: raised if the input_column column doesn't exist in the input dataframe.
+        ColumnAlreadyExistsError: raised in strict mode only if the output_column already exists in the dataframe.
 
     Note:
-        In non-strict mode, missing columns or overwriting existing columns are ignored.
+        In non-strict mode, overwriting existing columns is ignored.
     """
 
-    def do_apply(self, series, granularity):
+    def do_apply(self, series):
         return series.dt.ceil(
-            freq=self.GRANULARITIES[granularity],
+            freq=self.UNITS[self.unit],
             ambiguous='infer',
             nonexistent='shift_forward'
         )

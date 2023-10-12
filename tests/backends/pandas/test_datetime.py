@@ -140,137 +140,183 @@ def test_str_format(columns, format, output_columns, input_df, expected):
 
 
 INPUT_DF = DataFrame(data=[
-    {"A": datetime.datetime(2023, 5, 15, 9, 15, 45, 9999), "B": datetime.datetime(2023, 7, 15, 9, 45, 15, 99999)},
+    {"A": datetime.datetime(2023, 5, 15, 9, 15, 45, 9999)},
+    {"A": datetime.datetime(2023, 7, 15, 9, 45, 15, 99999)},
     {"A": datetime.datetime(2023, 5, 16, 19, 25)},
-    {"A": datetime.datetime(2023, 5, 15, 12, 0, 0), "B": datetime.datetime(2023, 7, 15, 12, 0, 0, 1)},
+    {"A": datetime.datetime(2023, 5, 15, 12, 0, 0)},
+    {"A": datetime.datetime(2023, 7, 15, 12, 0, 0, 1),}
 ])
 
-@pytest.mark.parametrize("rule_cls,columns,granularity,output_columns,input_df,expected", [
-    [DateTimeRoundRule, ["A", "B"], "day", None, INPUT_DF, DataFrame(data=[
-        {"A": datetime.datetime(2023, 5, 15), "B": datetime.datetime(2023, 7, 15)},
+@pytest.mark.parametrize("rule_cls, input_column, unit, output_column, input_df, expected", [
+    [DateTimeRoundRule, "A", "day", None, INPUT_DF, DataFrame(data=[
+        {"A": datetime.datetime(2023, 5, 15)},
+        {"A": datetime.datetime(2023, 7, 15)},
         {"A": datetime.datetime(2023, 5, 17)},
-        {"A": datetime.datetime(2023, 5, 15), "B": datetime.datetime(2023, 7, 16)},
+        {"A": datetime.datetime(2023, 5, 15)},
+        {"A": datetime.datetime(2023, 7, 16)},
     ])],
-    [DateTimeRoundRule, ["A", "B"], "day", ["E", "F"], INPUT_DF, DataFrame(data=[
-        {"A": datetime.datetime(2023, 5, 15, 9, 15, 45, 9999), "B": datetime.datetime(2023, 7, 15, 9, 45, 15, 99999), "E": datetime.datetime(2023, 5, 15), "F": datetime.datetime(2023, 7, 15)},
+    [DateTimeRoundRule, "A", "day", "E", INPUT_DF, DataFrame(data=[
+        {"A": datetime.datetime(2023, 5, 15, 9, 15, 45, 9999), "E": datetime.datetime(2023, 5, 15)},
+        {"A": datetime.datetime(2023, 7, 15, 9, 45, 15, 99999), "E": datetime.datetime(2023, 7, 15)},
         {"A": datetime.datetime(2023, 5, 16, 19, 25), "E": datetime.datetime(2023, 5, 17)},
-        {"A": datetime.datetime(2023, 5, 15, 12, 0, 0), "B": datetime.datetime(2023, 7, 15, 12, 0, 0, 1), "E": datetime.datetime(2023, 5, 15), "F": datetime.datetime(2023, 7, 16)},
+        {"A": datetime.datetime(2023, 5, 15, 12, 0, 0), "E": datetime.datetime(2023, 5, 15)},
+        {"A": datetime.datetime(2023, 7, 15, 12, 0, 0, 1), "E": datetime.datetime(2023, 7, 16)},
     ])],
-    [DateTimeRoundRule, ["A", "B"], "hour", None, INPUT_DF, DataFrame(data=[
-        {"A": datetime.datetime(2023, 5, 15, 9), "B": datetime.datetime(2023, 7, 15, 10)},
+    [DateTimeRoundRule, "A", "hour", None, INPUT_DF, DataFrame(data=[
+        {"A": datetime.datetime(2023, 5, 15, 9)},
+        {"A": datetime.datetime(2023, 7, 15, 10)},
         {"A": datetime.datetime(2023, 5, 16, 19)},
-        {"A": datetime.datetime(2023, 5, 15, 12), "B": datetime.datetime(2023, 7, 15, 12)},
+        {"A": datetime.datetime(2023, 5, 15, 12)},
+        {"A": datetime.datetime(2023, 7, 15, 12)},
     ])],
-    [DateTimeRoundRule, ["A", "B"], "minute", None, INPUT_DF, DataFrame(data=[
-        {"A": datetime.datetime(2023, 5, 15, 9, 16), "B": datetime.datetime(2023, 7, 15, 9, 45)},
+    [DateTimeRoundRule, "A", "minute", None, INPUT_DF, DataFrame(data=[
+        {"A": datetime.datetime(2023, 5, 15, 9, 16)},
+        {"A": datetime.datetime(2023, 7, 15, 9, 45)},
         {"A": datetime.datetime(2023, 5, 16, 19, 25)},
-        {"A": datetime.datetime(2023, 5, 15, 12, 0), "B": datetime.datetime(2023, 7, 15, 12, 0)},
+        {"A": datetime.datetime(2023, 5, 15, 12, 0)},
+        {"A": datetime.datetime(2023, 7, 15, 12, 0)},
     ])],
-    [DateTimeRoundRule, ["A", "B"], "second", None, INPUT_DF, DataFrame(data=[
-        {"A": datetime.datetime(2023, 5, 15, 9, 15, 45), "B": datetime.datetime(2023, 7, 15, 9, 45, 15)},
+    [DateTimeRoundRule, "A", "second", None, INPUT_DF, DataFrame(data=[
+        {"A": datetime.datetime(2023, 5, 15, 9, 15, 45)},
+        {"A": datetime.datetime(2023, 7, 15, 9, 45, 15)},
         {"A": datetime.datetime(2023, 5, 16, 19, 25)},
-        {"A": datetime.datetime(2023, 5, 15, 12, 0, 0), "B": datetime.datetime(2023, 7, 15, 12, 0, 0)},
+        {"A": datetime.datetime(2023, 5, 15, 12, 0, 0)},
+        {"A": datetime.datetime(2023, 7, 15, 12, 0, 0)},
     ])],
-    [DateTimeRoundRule, ["A", "B"], "millisecond", None, INPUT_DF, DataFrame(data=[
-        {"A": datetime.datetime(2023, 5, 15, 9, 15, 45, 10000), "B": datetime.datetime(2023, 7, 15, 9, 45, 15, 100000)},
+    [DateTimeRoundRule, "A", "millisecond", None, INPUT_DF, DataFrame(data=[
+        {"A": datetime.datetime(2023, 5, 15, 9, 15, 45, 10000)},
+        {"A": datetime.datetime(2023, 7, 15, 9, 45, 15, 100000)},
         {"A": datetime.datetime(2023, 5, 16, 19, 25)},
-        {"A": datetime.datetime(2023, 5, 15, 12, 0, 0), "B": datetime.datetime(2023, 7, 15, 12, 0, 0)},
+        {"A": datetime.datetime(2023, 5, 15, 12, 0, 0)},
+        {"A": datetime.datetime(2023, 7, 15, 12, 0, 0)},
     ])],
-    [DateTimeRoundRule, ["A", "B"], "microsecond", None, INPUT_DF, DataFrame(data=[
-        {"A": datetime.datetime(2023, 5, 15, 9, 15, 45, 9999), "B": datetime.datetime(2023, 7, 15, 9, 45, 15, 99999)},
+    [DateTimeRoundRule, "A", "microsecond", None, INPUT_DF, DataFrame(data=[
+        {"A": datetime.datetime(2023, 5, 15, 9, 15, 45, 9999)},
+        {"A": datetime.datetime(2023, 7, 15, 9, 45, 15, 99999)},
         {"A": datetime.datetime(2023, 5, 16, 19, 25)},
-        {"A": datetime.datetime(2023, 5, 15, 12, 0, 0), "B": datetime.datetime(2023, 7, 15, 12, 0, 0, 1)},
+        {"A": datetime.datetime(2023, 5, 15, 12, 0, 0)},
+        {"A": datetime.datetime(2023, 7, 15, 12, 0, 0, 1)},
     ])],
-    [DateTimeRoundRule, ["A", "B"], "nanosecond", None, INPUT_DF, DataFrame(data=[
-        {"A": datetime.datetime(2023, 5, 15, 9, 15, 45, 9999), "B": datetime.datetime(2023, 7, 15, 9, 45, 15, 99999)},
+    [DateTimeRoundRule, "A", "nanosecond", None, INPUT_DF, DataFrame(data=[
+        {"A": datetime.datetime(2023, 5, 15, 9, 15, 45, 9999)},
+        {"A": datetime.datetime(2023, 7, 15, 9, 45, 15, 99999)},
         {"A": datetime.datetime(2023, 5, 16, 19, 25)},
-        {"A": datetime.datetime(2023, 5, 15, 12, 0, 0), "B": datetime.datetime(2023, 7, 15, 12, 0, 0, 1)},
+        {"A": datetime.datetime(2023, 5, 15, 12, 0, 0)},
+        {"A": datetime.datetime(2023, 7, 15, 12, 0, 0, 1)},
     ])],
 
-    [DateTimeRoundDownRule, ["A", "B"], "day", None, INPUT_DF, DataFrame(data=[
-        {"A": datetime.datetime(2023, 5, 15), "B": datetime.datetime(2023, 7, 15)},
+    [DateTimeRoundDownRule, "A", "day", None, INPUT_DF, DataFrame(data=[
+        {"A": datetime.datetime(2023, 5, 15)},
+        {"A": datetime.datetime(2023, 7, 15)},
         {"A": datetime.datetime(2023, 5, 16)},
-        {"A": datetime.datetime(2023, 5, 15), "B": datetime.datetime(2023, 7, 15)},
+        {"A": datetime.datetime(2023, 5, 15)},
+        {"A": datetime.datetime(2023, 7, 15)},
     ])],
-    [DateTimeRoundDownRule, ["A", "B"], "hour", None, INPUT_DF, DataFrame(data=[
-        {"A": datetime.datetime(2023, 5, 15, 9), "B": datetime.datetime(2023, 7, 15, 9)},
+    [DateTimeRoundDownRule, "A", "hour", None, INPUT_DF, DataFrame(data=[
+        {"A": datetime.datetime(2023, 5, 15, 9)},
+        {"A": datetime.datetime(2023, 7, 15, 9)},
         {"A": datetime.datetime(2023, 5, 16, 19)},
-        {"A": datetime.datetime(2023, 5, 15, 12), "B": datetime.datetime(2023, 7, 15, 12)},
+        {"A": datetime.datetime(2023, 5, 15, 12)},
+        {"A": datetime.datetime(2023, 7, 15, 12)},
     ])],
-    [DateTimeRoundDownRule, ["A", "B"], "minute", None, INPUT_DF, DataFrame(data=[
-        {"A": datetime.datetime(2023, 5, 15, 9, 15), "B": datetime.datetime(2023, 7, 15, 9, 45)},
+    [DateTimeRoundDownRule, "A", "minute", None, INPUT_DF, DataFrame(data=[
+        {"A": datetime.datetime(2023, 5, 15, 9, 15)},
+        {"A": datetime.datetime(2023, 7, 15, 9, 45)},
         {"A": datetime.datetime(2023, 5, 16, 19, 25)},
-        {"A": datetime.datetime(2023, 5, 15, 12), "B": datetime.datetime(2023, 7, 15, 12)},
+        {"A": datetime.datetime(2023, 5, 15, 12)},
+        {"A": datetime.datetime(2023, 7, 15, 12)},
     ])],
-    [DateTimeRoundDownRule, ["A", "B"], "second", None, INPUT_DF, DataFrame(data=[
-        {"A": datetime.datetime(2023, 5, 15, 9, 15, 45), "B": datetime.datetime(2023, 7, 15, 9, 45, 15)},
+    [DateTimeRoundDownRule, "A", "second", None, INPUT_DF, DataFrame(data=[
+        {"A": datetime.datetime(2023, 5, 15, 9, 15, 45)},
+        {"A": datetime.datetime(2023, 7, 15, 9, 45, 15)},
         {"A": datetime.datetime(2023, 5, 16, 19, 25)},
-        {"A": datetime.datetime(2023, 5, 15, 12), "B": datetime.datetime(2023, 7, 15, 12)},
+        {"A": datetime.datetime(2023, 5, 15, 12)},
+        {"A": datetime.datetime(2023, 7, 15, 12)},
     ])],
-    [DateTimeRoundDownRule, ["A", "B"], "millisecond", None, INPUT_DF, DataFrame(data=[
-        {"A": datetime.datetime(2023, 5, 15, 9, 15, 45, 9000), "B": datetime.datetime(2023, 7, 15, 9, 45, 15, 99000)},
+    [DateTimeRoundDownRule, "A", "millisecond", None, INPUT_DF, DataFrame(data=[
+        {"A": datetime.datetime(2023, 5, 15, 9, 15, 45, 9000)},
+        {"A": datetime.datetime(2023, 7, 15, 9, 45, 15, 99000)},
         {"A": datetime.datetime(2023, 5, 16, 19, 25)},
-        {"A": datetime.datetime(2023, 5, 15, 12, 0, 0), "B": datetime.datetime(2023, 7, 15, 12, 0, 0)},
+        {"A": datetime.datetime(2023, 5, 15, 12, 0, 0)},
+        {"A": datetime.datetime(2023, 7, 15, 12, 0, 0)},
     ])],
-    [DateTimeRoundDownRule, ["A", "B"], "microsecond", None, INPUT_DF, DataFrame(data=[
-        {"A": datetime.datetime(2023, 5, 15, 9, 15, 45, 9999), "B": datetime.datetime(2023, 7, 15, 9, 45, 15, 99999)},
+    [DateTimeRoundDownRule, "A", "microsecond", None, INPUT_DF, DataFrame(data=[
+        {"A": datetime.datetime(2023, 5, 15, 9, 15, 45, 9999)},
+        {"A": datetime.datetime(2023, 7, 15, 9, 45, 15, 99999)},
         {"A": datetime.datetime(2023, 5, 16, 19, 25)},
-        {"A": datetime.datetime(2023, 5, 15, 12, 0, 0), "B": datetime.datetime(2023, 7, 15, 12, 0, 0, 1)},
+        {"A": datetime.datetime(2023, 5, 15, 12, 0, 0)},
+        {"A": datetime.datetime(2023, 7, 15, 12, 0, 0, 1)},
     ])],
-    [DateTimeRoundDownRule, ["A", "B"], "nanosecond", None, INPUT_DF, DataFrame(data=[
-        {"A": datetime.datetime(2023, 5, 15, 9, 15, 45, 9999), "B": datetime.datetime(2023, 7, 15, 9, 45, 15, 99999)},
+    [DateTimeRoundDownRule, "A", "nanosecond", None, INPUT_DF, DataFrame(data=[
+        {"A": datetime.datetime(2023, 5, 15, 9, 15, 45, 9999)},
+        {"A": datetime.datetime(2023, 7, 15, 9, 45, 15, 99999)},
         {"A": datetime.datetime(2023, 5, 16, 19, 25)},
-        {"A": datetime.datetime(2023, 5, 15, 12, 0, 0), "B": datetime.datetime(2023, 7, 15, 12, 0, 0, 1)},
+        {"A": datetime.datetime(2023, 5, 15, 12, 0, 0)},
+        {"A": datetime.datetime(2023, 7, 15, 12, 0, 0, 1)},
     ])],
 
-    [DateTimeRoundUpRule, ["A", "B"], "day", None, INPUT_DF, DataFrame(data=[
-        {"A": datetime.datetime(2023, 5, 16), "B": datetime.datetime(2023, 7, 16)},
+    [DateTimeRoundUpRule, "A", "day", None, INPUT_DF, DataFrame(data=[
+        {"A": datetime.datetime(2023, 5, 16)},
+        {"A": datetime.datetime(2023, 7, 16)},
         {"A": datetime.datetime(2023, 5, 17)},
-        {"A": datetime.datetime(2023, 5, 16), "B": datetime.datetime(2023, 7, 16)},
+        {"A": datetime.datetime(2023, 5, 16)},
+        {"A": datetime.datetime(2023, 7, 16)},
     ])],
-    [DateTimeRoundUpRule, ["A", "B"], "hour", None, INPUT_DF, DataFrame(data=[
-        {"A": datetime.datetime(2023, 5, 15, 10), "B": datetime.datetime(2023, 7, 15, 10)},
+    [DateTimeRoundUpRule, "A", "hour", None, INPUT_DF, DataFrame(data=[
+        {"A": datetime.datetime(2023, 5, 15, 10)},
+        {"A": datetime.datetime(2023, 7, 15, 10)},
         {"A": datetime.datetime(2023, 5, 16, 20)},
-        {"A": datetime.datetime(2023, 5, 15, 12), "B": datetime.datetime(2023, 7, 15, 13)},
+        {"A": datetime.datetime(2023, 5, 15, 12)},
+        {"A": datetime.datetime(2023, 7, 15, 13)},
     ])],
-    [DateTimeRoundUpRule, ["A", "B"], "minute", None, INPUT_DF, DataFrame(data=[
-        {"A": datetime.datetime(2023, 5, 15, 9, 16), "B": datetime.datetime(2023, 7, 15, 9, 46)},
+    [DateTimeRoundUpRule, "A", "minute", None, INPUT_DF, DataFrame(data=[
+        {"A": datetime.datetime(2023, 5, 15, 9, 16)},
+        {"A": datetime.datetime(2023, 7, 15, 9, 46)},
         {"A": datetime.datetime(2023, 5, 16, 19, 25)},
-        {"A": datetime.datetime(2023, 5, 15, 12), "B": datetime.datetime(2023, 7, 15, 12, 1)},
+        {"A": datetime.datetime(2023, 5, 15, 12)},
+        {"A": datetime.datetime(2023, 7, 15, 12, 1)},
     ])],
-    [DateTimeRoundUpRule, ["A", "B"], "second", None, INPUT_DF, DataFrame(data=[
-        {"A": datetime.datetime(2023, 5, 15, 9, 15, 46), "B": datetime.datetime(2023, 7, 15, 9, 45, 16)},
+    [DateTimeRoundUpRule, "A", "second", None, INPUT_DF, DataFrame(data=[
+        {"A": datetime.datetime(2023, 5, 15, 9, 15, 46)},
+        {"A": datetime.datetime(2023, 7, 15, 9, 45, 16)},
         {"A": datetime.datetime(2023, 5, 16, 19, 25)},
-        {"A": datetime.datetime(2023, 5, 15, 12, 0, 0), "B": datetime.datetime(2023, 7, 15, 12, 0, 1)},
+        {"A": datetime.datetime(2023, 5, 15, 12, 0, 0)},
+        {"A": datetime.datetime(2023, 7, 15, 12, 0, 1)},
     ])],
-    [DateTimeRoundUpRule, ["A", "B"], "millisecond", None, INPUT_DF, DataFrame(data=[
-        {"A": datetime.datetime(2023, 5, 15, 9, 15, 45, 10000), "B": datetime.datetime(2023, 7, 15, 9, 45, 15, 100000)},
+    [DateTimeRoundUpRule, "A", "millisecond", None, INPUT_DF, DataFrame(data=[
+        {"A": datetime.datetime(2023, 5, 15, 9, 15, 45, 10000)},
+        {"A": datetime.datetime(2023, 7, 15, 9, 45, 15, 100000)},
         {"A": datetime.datetime(2023, 5, 16, 19, 25)},
-        {"A": datetime.datetime(2023, 5, 15, 12, 0, 0), "B": datetime.datetime(2023, 7, 15, 12, 0, 0, 1000)},
+        {"A": datetime.datetime(2023, 5, 15, 12, 0, 0)},
+        {"A": datetime.datetime(2023, 7, 15, 12, 0, 0, 1000)},
     ])],
-    [DateTimeRoundUpRule, ["A", "B"], "microsecond", None, INPUT_DF, DataFrame(data=[
-        {"A": datetime.datetime(2023, 5, 15, 9, 15, 45, 9999), "B": datetime.datetime(2023, 7, 15, 9, 45, 15, 99999)},
+    [DateTimeRoundUpRule, "A", "microsecond", None, INPUT_DF, DataFrame(data=[
+        {"A": datetime.datetime(2023, 5, 15, 9, 15, 45, 9999)},
+        {"A": datetime.datetime(2023, 7, 15, 9, 45, 15, 99999)},
         {"A": datetime.datetime(2023, 5, 16, 19, 25)},
-        {"A": datetime.datetime(2023, 5, 15, 12, 0, 0), "B": datetime.datetime(2023, 7, 15, 12, 0, 0, 1)},
+        {"A": datetime.datetime(2023, 5, 15, 12, 0, 0)},
+        {"A": datetime.datetime(2023, 7, 15, 12, 0, 0, 1)},
     ])],
-    [DateTimeRoundUpRule, ["A", "B"], "nanosecond", None, INPUT_DF, DataFrame(data=[
-        {"A": datetime.datetime(2023, 5, 15, 9, 15, 45, 9999), "B": datetime.datetime(2023, 7, 15, 9, 45, 15, 99999)},
+    [DateTimeRoundUpRule, "A", "nanosecond", None, INPUT_DF, DataFrame(data=[
+        {"A": datetime.datetime(2023, 5, 15, 9, 15, 45, 9999)},
+        {"A": datetime.datetime(2023, 7, 15, 9, 45, 15, 99999)},
         {"A": datetime.datetime(2023, 5, 16, 19, 25)},
-        {"A": datetime.datetime(2023, 5, 15, 12, 0, 0), "B": datetime.datetime(2023, 7, 15, 12, 0, 0, 1)},
+        {"A": datetime.datetime(2023, 5, 15, 12, 0, 0)},
+        {"A": datetime.datetime(2023, 7, 15, 12, 0, 0, 1)},
     ])],
 
-    [DateTimeRoundRule, ["A", "Z"], "day", None, INPUT_DF, MissingColumnError],
-    [DateTimeRoundRule, ["A", "B"], "day", ["B", "A"], INPUT_DF, ColumnAlreadyExistsError],
-    [DateTimeRoundDownRule, ["A", "Z"], "day", None, INPUT_DF, MissingColumnError],
-    [DateTimeRoundDownRule, ["A", "B"], "day", ["B", "A"], INPUT_DF, ColumnAlreadyExistsError],
-    [DateTimeRoundUpRule, ["A", "Z"], "day", None, INPUT_DF, MissingColumnError],
-    [DateTimeRoundUpRule, ["A", "B"], "day", ["B", "A"], INPUT_DF, ColumnAlreadyExistsError],
+    [DateTimeRoundRule, "Z", "day", None, INPUT_DF, MissingColumnError],
+    [DateTimeRoundRule, "A", "day", "A", INPUT_DF, ColumnAlreadyExistsError],
+    [DateTimeRoundDownRule, "Z", "day", None, INPUT_DF, MissingColumnError],
+    [DateTimeRoundDownRule, "A", "day", "A", INPUT_DF, ColumnAlreadyExistsError],
+    [DateTimeRoundUpRule, "Z", "day", None, INPUT_DF, MissingColumnError],
+    [DateTimeRoundUpRule, "A", "day", "A", INPUT_DF, ColumnAlreadyExistsError],
 ])
-def test_round_trunc_rules(rule_cls, columns, granularity, output_columns, input_df, expected):
+def test_round_trunc_rules(rule_cls, input_column, unit, output_column, input_df, expected):
     with get_test_data(input_df, named_inputs={"input": input_df}, named_output="result") as data:
         rule = rule_cls(
-            columns, granularity,
-            output_columns=output_columns, named_input="input", named_output="result")
+            input_column, unit, output_column=output_column,
+            named_input="input", named_output="result")
         if isinstance(expected, DataFrame):
             rule.apply(data)
             assert_frame_equal(data.get_named_output("result"), expected)
