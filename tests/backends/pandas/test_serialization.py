@@ -11,6 +11,7 @@ from etlrules.backends.pandas import (
     DateTimeLocalNowRule, DateTimeUTCNowRule, DateTimeToStrFormatRule,
     DateTimeRoundRule, DateTimeRoundDownRule, DateTimeRoundUpRule, 
     DateTimeAddRule, DateTimeSubstractRule, DateTimeDiffRule,
+    DateTimeExtractComponentRule,
 )
 from etlrules.rule import BaseRule
 
@@ -117,6 +118,8 @@ from etlrules.rule import BaseRule
                   named_output="result", name="BF", description="Some desc2 BF", strict=True),
         DateTimeDiffRule(input_column="A", input_column2="B", unit="days", output_column="E", named_input="input", 
                   named_output="result", name="BF", description="Some desc2 BF", strict=True),
+        DateTimeExtractComponentRule(input_column="A", component="day", locale="C", output_column="E", named_input="input", 
+                  named_output="result", name="BF", description="Some desc2 BF", strict=True)
     ]
 )
 def test_serialize(rule_instance):

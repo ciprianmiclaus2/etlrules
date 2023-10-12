@@ -225,17 +225,17 @@ class DateTimeRoundUpRule(BaseDateRoundTruncRule):
         )
 
 
-class DateTimeExtractComponentRule(BaseAssignRule):
+class DateTimeExtractComponentRule(BaseAssignColumnRule):
     """ Extract an individual component of a date/time (e.g. year, month, day, hour, etc.).
 
     Basic usage::
 
-        # displays the dates in %Y-%m-%d format, e.g. 2023-05-19
-        rule = DateTimeExtractComponentRule(["col_A", "col_B", "col_C"], component="year")
+        # extracts the year component from col_A. E.g. 2023-05-05 10:00:00 will extract 2023
+        rule = DateTimeExtractComponentRule("col_A", component="year")
         rule.apply(data)
 
     Args:
-        columns (Iterable[str]): A list of string columns to convert to upper case.
+        input_column (str): A datetime column to extract the given component from.
         component: The component of the datatime to extract from the datetime.
             When the component is one of (year, month, day, hour, minute, second, microsecond) then
             the extracted component will be an integer with the respective component of the datetime.
@@ -254,9 +254,9 @@ class DateTimeExtractComponentRule(BaseAssignRule):
             Use the command `locale -a` on your terminal on Unix systems to find your locale language code.
             Trying to set the locale to a value that doesn't appear under the `locale -a` output will fail
             with ValueError: Unsupported locale.
-        output_columns (Optional[Iterable[str]]): A list of new names for the columns with the upper case values.
-            Optional. If provided, if must have the same length as the columns sequence.
-            The existing columns are unchanged, and new columns are created with the upper case values.
+        output_column (Optional[str]): An optional column name to contain the result.
+            If provided, if must have the same length as the columns sequence.
+            The existing columns are unchanged, and new columns are created with the component extracted.
             If not provided, the result is updated in place.
 
         named_input (Optional[str]): Which dataframe to use as the input. Optional.
@@ -272,13 +272,12 @@ class DateTimeExtractComponentRule(BaseAssignRule):
         strict (bool): When set to True, the rule does a stricter valiation. Default: True
 
     Raises:
-        MissingColumnError: raised in strict mode only if a column doesn't exist in the input dataframe.
-        ColumnAlreadyExistsError: raised in strict mode only if an output_column already exists in the dataframe.
-        ValueError: raised if output_columns is provided and not the same length as the columns parameter.
+        MissingColumnError: raised if the input_column column doesn't exist in the input dataframe.
+        ColumnAlreadyExistsError: raised in strict mode only if the output_column already exists in the dataframe.
         ValueError: raised if a locale is specified which is not supported or available on the machine running the scripts.
 
     Note:
-        In non-strict mode, missing columns or overwriting existing columns are ignored.
+        In non-strict mode, overwriting existing columns is ignored.
     """
 
     COMPONENTS = {
@@ -295,8 +294,8 @@ class DateTimeExtractComponentRule(BaseAssignRule):
         "month_name": "month_name",
     }
 
-    def __init__(self, columns: Iterable[str], component: str, locale: Optional[str], output_columns:Optional[Iterable[str]]=None, named_input: Optional[str]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
-        super().__init__(columns=columns, output_columns=output_columns, named_input=named_input, named_output=named_output, 
+    def __init__(self, input_column: str, component: str, locale: Optional[str], output_column:Optional[str]=None, named_input: Optional[str]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
+        super().__init__(input_column=input_column, output_column=output_column, named_input=named_input, named_output=named_output, 
                          name=name, description=description, strict=strict)
         self.component = component
         assert self.component in self.COMPONENTS, f"Unsupported component={self.component}. Must be one of: {self.COMPONENTS.keys()}"
@@ -308,7 +307,7 @@ class DateTimeExtractComponentRule(BaseAssignRule):
                 raise ValueError(f"Unsupported locale: {locale}")
             self._locale = None
 
-    def do_apply(self, col):
+    def do_apply(self, df, col):
         res = getattr(col.dt, self._component)
         if self._component in ("day_name", "month_name"):
             try:

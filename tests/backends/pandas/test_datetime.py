@@ -339,84 +339,84 @@ INPUT_COMPONENT_DF2 = DataFrame(data=[
     {},
 ])
 
-@pytest.mark.parametrize("columns,component,locale,output_columns,input_df,expected", [
-    [["A"], "year", None, None, INPUT_COMPONENT_DF, DataFrame(data=[
+@pytest.mark.parametrize("input_column,component,locale,output_column,input_df,expected", [
+    ["A", "year", None, None, INPUT_COMPONENT_DF, DataFrame(data=[
         {"A": 2023},
         {"A": 2023},
         {},
     ])],
-    [["A"], "year", None, ["E"], INPUT_COMPONENT_DF, DataFrame(data=[
+    ["A", "year", None, "E", INPUT_COMPONENT_DF, DataFrame(data=[
         {"A": datetime.datetime(2023, 5, 10, 19, 15, 45, 999), "E": 2023},
         {"A": datetime.datetime(2023, 6, 11, 9, 35, 15, 777), "E": 2023},
         {},
     ])],
-    [["A"], "month", None, None, INPUT_COMPONENT_DF, DataFrame(data=[
+    ["A", "month", None, None, INPUT_COMPONENT_DF, DataFrame(data=[
         {"A": 5},
         {"A": 6},
         {},
     ])],
-    [["A"], "day", None, None, INPUT_COMPONENT_DF, DataFrame(data=[
+    ["A", "day", None, None, INPUT_COMPONENT_DF, DataFrame(data=[
         {"A": 10},
         {"A": 11},
         {},
     ])],
-    [["A"], "hour", None, None, INPUT_COMPONENT_DF, DataFrame(data=[
+    ["A", "hour", None, None, INPUT_COMPONENT_DF, DataFrame(data=[
         {"A": 19},
         {"A": 9},
         {},
     ])],
-    [["A"], "minute", None, None, INPUT_COMPONENT_DF, DataFrame(data=[
+    ["A", "minute", None, None, INPUT_COMPONENT_DF, DataFrame(data=[
         {"A": 15},
         {"A": 35},
         {},
     ])],
-    [["A"], "second", None, None, INPUT_COMPONENT_DF, DataFrame(data=[
+    ["A", "second", None, None, INPUT_COMPONENT_DF, DataFrame(data=[
         {"A": 45},
         {"A": 15},
         {},
     ])],
-    [["A"], "microsecond", None, None, INPUT_COMPONENT_DF, DataFrame(data=[
+    ["A", "microsecond", None, None, INPUT_COMPONENT_DF, DataFrame(data=[
         {"A": 999},
         {"A": 777},
         {},
     ])],
-    [["A"], "weekday", None, None, INPUT_COMPONENT_DF, DataFrame(data=[
+    ["A", "weekday", None, None, INPUT_COMPONENT_DF, DataFrame(data=[
         {"A": 2},
         {"A": 6},
         {},
     ])],
-    [["A"], "weekday_name", None, None, INPUT_COMPONENT_DF, DataFrame(data=[
+    ["A", "weekday_name", None, None, INPUT_COMPONENT_DF, DataFrame(data=[
         {"A": "Wednesday"},
         {"A": "Sunday"},
         {},
     ])],
-    [["A"], "weekday_name", "en_US.utf8", None, INPUT_COMPONENT_DF, DataFrame(data=[
+    ["A", "weekday_name", "en_US.utf8", None, INPUT_COMPONENT_DF, DataFrame(data=[
         {"A": "Wednesday"},
         {"A": "Sunday"},
         {},
     ])],
-    [["A"], "month_name", None, None, INPUT_COMPONENT_DF, DataFrame(data=[
+    ["A", "month_name", None, None, INPUT_COMPONENT_DF, DataFrame(data=[
         {"A": "May"},
         {"A": "June"},
         {},
     ])],
-    [["A"], "weekday_name", "UNKNOWN_LOCALE", None, INPUT_COMPONENT_DF, ValueError],
-    [["Z"], "year", None, None, INPUT_COMPONENT_DF, MissingColumnError],
-    [["A"], "year", None, ["B"], INPUT_COMPONENT_DF2, ColumnAlreadyExistsError],
+    ["A", "weekday_name", "UNKNOWN_LOCALE", None, INPUT_COMPONENT_DF, ValueError],
+    ["Z", "year", None, None, INPUT_COMPONENT_DF, MissingColumnError],
+    ["A", "year", None, "B", INPUT_COMPONENT_DF2, ColumnAlreadyExistsError],
 ])
-def test_extract_component_rules(columns, component, locale, output_columns, input_df, expected):
+def test_extract_component_rules(input_column, component, locale, output_column, input_df, expected):
     with get_test_data(input_df, named_inputs={"input": input_df}, named_output="result") as data:
         if isinstance(expected, DataFrame):
             rule = DateTimeExtractComponentRule(
-                columns, component, locale,
-                output_columns=output_columns, named_input="input", named_output="result")
+                input_column, component, locale,
+                output_column=output_column, named_input="input", named_output="result")
             rule.apply(data)
             assert_frame_equal(data.get_named_output("result"), expected)
         elif issubclass(expected, Exception):
             with pytest.raises(expected):
                 rule = DateTimeExtractComponentRule(
-                    columns, component, locale,
-                    output_columns=output_columns, named_input="input", named_output="result")
+                    input_column, component, locale,
+                    output_column=output_column, named_input="input", named_output="result")
                 rule.apply(data)
         else:
             assert False
