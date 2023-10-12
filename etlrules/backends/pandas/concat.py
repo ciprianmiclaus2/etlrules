@@ -134,7 +134,7 @@ class HConcatRule(BinaryOpBaseRule):
         SchemaError: raised in strict mode only if the two dataframes have different number of rows.
     """
 
-    def __init__(self, named_input_left: Optional[str], named_input_right: Optional[str], subset_columns: Optional[Iterable[str]]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
+    def __init__(self, named_input_left: Optional[str], named_input_right: Optional[str], named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
         # This __init__ not really needed but the type annotations are extracted from it
         super().__init__(named_input_left=named_input_left, named_input_right=named_input_right, named_output=named_output, name=name, description=description, strict=strict)
 
