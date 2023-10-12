@@ -1,30 +1,26 @@
 from typing import Iterable, Optional, Sequence, Union
 
-from etlrules.backends.pandas.validation import ColumnsInOutMixin
-from etlrules.rule import UnaryOpBaseRule
+from etlrules.backends.pandas.base import BaseAssignColumnRule
 
 
-class RoundRule(UnaryOpBaseRule, ColumnsInOutMixin):
+class RoundRule(BaseAssignColumnRule):
     """ Rounds a set of columns to specified decimal places.
 
     Basic usage::
 
-        # rounds Col_A, Col_B and Col_C to 2dps
-        rule = RoundRule(["Col_A", "Col_B", "Col_C"], 2)
+        # rounds Col_A to 2dps
+        rule = RoundRule("Col_A", 2)
         rule.apply(data)
 
-        # rounds Col_A to 2dps, Col_B to 0dps and Col_C to 4dps
-        rule = RoundRule(["Col_A", "Col_B", "Col_C"], [2, 0, 4])
+        # rounds Col_B to 0dps and output the results into Col_C, Col_B remains unchanged
+        rule = RoundRule("Col_B", 0, output_column="Col_C")
         rule.apply(data)
 
     Args:
-        columns: A list of columns to round as per the specified scale.
-        scale: Either an integer specifying a number of decimal places to round to, which applies to all columns,
-            or a list/tuple of integers specifying the number of decimal places to round each column.
-            In the latter case, the length of the scale list/tuple must match the length of the columns list.
-        output_columns (Optional[Iterable[str]]): A list of new names for the columns with the rounded values.
-            Optional. If provided, if must have the same length as the columns sequence.
-            The existing columns are unchanged, and new columns are created with the lower case values.
+        input_column: A column with values to round as per the specified scale.
+        scale: An integer specifying the number of decimal places to round to.
+        output_column (Optional[str]): An optional name for a new column with the rounded values.
+            If provided, the existing column is unchanged and the new column is created with the results.
             If not provided, the result is updated in place.
 
         named_input: Which dataframe to use as the input. Optional.
@@ -40,45 +36,35 @@ class RoundRule(UnaryOpBaseRule, ColumnsInOutMixin):
         strict: When set to True, the rule does a stricter valiation. Default: True
 
     Raises:
-        MissingColumnError: raised in strict mode only if a column in the mapper doesn't exist in the input dataframe.
+        MissingColumnError: raised if a column doesn't exist in the input dataframe.
+        ColumnAlreadyExistsError: raised in strict mode only if the output_column already exists in the dataframe.
 
     Note:
-        In non-strict mode, missing columns are ignored.
+        In non-strict mode, the overwriting of existing columns is ignored.
     """
 
-    def __init__(self, columns: Iterable[str], scale: Union[int, Sequence[int]], output_columns: Optional[Iterable[str]]=None, named_input: Optional[str]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
-        super().__init__(named_input=named_input, named_output=named_output, name=name, description=description, strict=strict)
-        self.columns = [col for col in columns]
-        self.output_columns = [out_col for out_col in output_columns] if output_columns else None
+    def __init__(self, input_column: str, scale: Union[int, Sequence[int]], output_column: Optional[str]=None, named_input: Optional[str]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
+        super().__init__(input_column=input_column, output_column=output_column, named_input=named_input, named_output=named_output, name=name, description=description, strict=strict)
+        assert isinstance(scale, int), "scale must be an integer value"
         self.scale = scale
-        if isinstance(self.scale, int):
-            self._scales = [self.scale] * len(self.columns)
-        elif isinstance(self.scale, (list, tuple)):
-            self._scales = self.scale
-        else:
-            assert False, "The scale parameter must be either an integer or a list/tuple of integers."
 
-    def apply(self, data):
-        df = self._get_input_df(data)
-        columns, output_columns = self.validate_columns_in_out(df, self.columns, self.output_columns, self.strict)
-        res_df = df.round(dict(zip(columns, self._scales)))
-        df = df.assign(**{out_col: res_df[col] for col, out_col in zip(columns, output_columns)})
-        self._set_output_df(data, df)
+    def do_apply(self, df, col):
+        res_df = df.round({self.input_column: self.scale})
+        return res_df[self.input_column]
 
 
-class AbsRule(UnaryOpBaseRule, ColumnsInOutMixin):
+class AbsRule(BaseAssignColumnRule):
     """ Converts numbers to absolute values.
 
     Basic usage::
 
-        rule = AbsRule(["col_A", "col_B", "col_C"])
+        rule = AbsRule("col_A")
         rule.apply(data)
 
     Args:
-        columns: A list of numeric columns to convert to absolute values.
-        output_columns: A list of new names for the columns with the absolute values.
-            Optional. If provided, if must have the same length as the columns sequence.
-            The existing columns are unchanged, and new columns are created with the absolute values.
+        input_column: The name of the column to convert to absolute values.
+        output_column: An optional new column with the absolute values.
+            If provided the existing column is unchanged and a new column is created with the absolute values.
             If not provided, the result is updated in place.
 
         named_input: Which dataframe to use as the input. Optional.
@@ -94,21 +80,12 @@ class AbsRule(UnaryOpBaseRule, ColumnsInOutMixin):
         strict: When set to True, the rule does a stricter valiation. Default: True
 
     Raises:
-        MissingColumnError: raised in strict mode only if a column doesn't exist in the input dataframe.
-        ValueError: raised if output_columns is provided and not the same length as the columns parameter.
+        MissingColumnError: raised if a column doesn't exist in the input dataframe.
+        ColumnAlreadyExistsError: raised in strict mode only if the output_column already exists in the dataframe.
 
     Note:
-        In non-strict mode, missing columns are ignored.
+        In non-strict mode, the overwriting of existing columns is ignored.
     """
 
-    def __init__(self, columns: Iterable[str], output_columns:Optional[Iterable[str]]=None, named_input: Optional[str]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
-        super().__init__(named_input=named_input, named_output=named_output, name=name, description=description, strict=strict)
-        self.columns = [col for col in columns]
-        self.output_columns = [out_col for out_col in output_columns] if output_columns else None
-
-    def apply(self, data):
-        df = self._get_input_df(data)
-        columns, output_columns = self.validate_columns_in_out(df, self.columns, self.output_columns, self.strict)
-        abs_df = df[columns].abs()
-        df = df.assign(**{output_col: abs_df[col] for col, output_col in zip(columns, output_columns)})
-        self._set_output_df(data, df)
+    def do_apply(self, df, col):
+        return col.abs()

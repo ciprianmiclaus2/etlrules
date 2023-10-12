@@ -6,7 +6,7 @@ from etlrules.rule import UnaryOpBaseRule
 
 class BaseAssignColumnRule(UnaryOpBaseRule, ColumnsInOutMixin):
 
-    def __init__(self, input_column: Iterable[str], output_column:Optional[str]=None, named_input: Optional[str]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
+    def __init__(self, input_column: str, output_column:Optional[str]=None, named_input: Optional[str]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
         super().__init__(named_input=named_input, named_output=named_output, name=name, description=description, strict=strict)
         assert input_column and isinstance(input_column, str), "input_column must be a non-empty string."
         assert output_column is None or (output_column and isinstance(output_column, str)), "output_column must be None or a non-empty string."

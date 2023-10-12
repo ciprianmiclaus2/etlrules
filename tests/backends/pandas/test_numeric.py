@@ -63,64 +63,66 @@ EXPECTED3 = DataFrame(data=[
 
 def test_rounding():
     with get_test_data(INPUT_DF, named_inputs={"input": INPUT_DF}, named_output="result") as data:
-        rule = RoundRule(["A", "B", "C"], [2, 0, 3], named_input="input", named_output="result")
+        rule = RoundRule("A", 2, named_input="input", named_output="result2")
+        rule.apply(data)
+        rule = RoundRule("B", 0, named_input="result2", named_output="result1")
+        rule.apply(data)
+        rule = RoundRule("C", 3, named_input="result1", named_output="result")
         rule.apply(data)
         assert_frame_equal(data.get_named_output("result"), EXPECTED)
 
 
 def test_rounding2():
     with get_test_data(INPUT_DF, named_inputs={"input": INPUT_DF}, named_output="result") as data:
-        rule = RoundRule(["A", "B", "C"], 2, named_input="input", named_output="result")
+        rule = RoundRule("A", 2, named_input="input", named_output="result2")
+        rule.apply(data)
+        rule = RoundRule("B", 2, named_input="result2", named_output="result1")
+        rule.apply(data)
+        rule = RoundRule("C", 2, named_input="result1", named_output="result")
         rule.apply(data)
         assert_frame_equal(data.get_named_output("result"), EXPECTED_2)
 
 
 def test_rounding3():
     with get_test_data(INPUT_DF, named_inputs={"input": INPUT_DF}, named_output="result") as data:
-        rule = RoundRule(["A", "B", "C"], 2, output_columns=["E", "F", "G"], named_input="input", named_output="result")
+        rule = RoundRule("A", 2, output_column="E", named_input="input", named_output="result2")
+        rule.apply(data)
+        rule = RoundRule("B", 2, output_column="F", named_input="result2", named_output="result1")
+        rule.apply(data)
+        rule = RoundRule("C", 2, output_column="G", named_input="result1", named_output="result")
         rule.apply(data)
         assert_frame_equal(data.get_named_output("result"), EXPECTED_3)
 
 
-def test_rounding_missing_column_strict():
+def test_rounding_missing_column():
     with get_test_data(INPUT_DF, named_inputs={"input": INPUT_DF}, named_output="result") as data:
-        rule = RoundRule(["A", "B", "Z"], 2, named_input="input", named_output="result")
+        rule = RoundRule("Z", 2, named_input="input", named_output="result")
         with pytest.raises(MissingColumnError) as exc:
             rule.apply(data)
-        assert str(exc.value) == "Column(s) {'Z'} are missing from the input dataframe."
-
-
-def test_rounding_missing_column_non_strict():
-    with get_test_data(INPUT_DF, named_inputs={"input": INPUT_DF}, named_output="result") as data:
-        rule = RoundRule(["A", "B", "C", "Z"], [2, 0, 3, 2], named_input="input", named_output="result", strict=False)
-        rule.apply(data)
-        assert_frame_equal(data.get_named_output("result"), EXPECTED)
+        assert str(exc.value) == "Column 'Z' is missing from the input dataframe."
 
 
 def test_abs():
     with get_test_data(INPUT_DF2, named_inputs={"input": INPUT_DF2}, named_output="result") as data:
-        rule = AbsRule(["B", "D"], named_input="input", named_output="result", strict=False)
+        rule = AbsRule("B", named_input="input", named_output="result2")
+        rule.apply(data)
+        rule = AbsRule("D", named_input="result2", named_output="result")
         rule.apply(data)
         assert_frame_equal(data.get_named_output("result"), EXPECTED2)
 
 
 def test_abs_output_columns():
     with get_test_data(INPUT_DF3, named_inputs={"input": INPUT_DF3}, named_output="result") as data:
-        rule = AbsRule(["B", "D"], output_columns=["E", "F"], named_input="input", named_output="result", strict=False)
+        rule = AbsRule("B", output_column="E", named_input="input", named_output="result2")
+        rule.apply(data)
+        rule = AbsRule("D", output_column="F", named_input="result2", named_output="result")
         rule.apply(data)
         assert_frame_equal(data.get_named_output("result"), EXPECTED3)
 
 
-def test_abs_missing_column_strict():
+def test_abs_missing_column():
     with get_test_data(INPUT_DF2, named_inputs={"input": INPUT_DF2}, named_output="result") as data:
-        rule = AbsRule(["B", "D", "Z"], named_input="input", named_output="result")
+        rule = AbsRule("Z", named_input="input", named_output="result", strict=False)
         with pytest.raises(MissingColumnError) as exc:
             rule.apply(data)
-        assert str(exc.value) == "Column(s) {'Z'} are missing from the input dataframe."
-
-
-def test_abs_missing_column_non_strict():
-    with get_test_data(INPUT_DF2, named_inputs={"input": INPUT_DF2}, named_output="result") as data:
-        rule = AbsRule(["B", "D"], named_input="input", named_output="result", strict=False)
-        rule.apply(data)
-        assert_frame_equal(data.get_named_output("result"), EXPECTED2)
+        assert str(exc.value) == "Column 'Z' is missing from the input dataframe."

@@ -29,11 +29,9 @@ class ColumnsInOutMixin:
 
     def validate_columns_in(self, df: DataFrame, columns: Sequence[str], strict: bool) -> Sequence[str]:
         df_cols_set = set(df.columns)
-        if strict:
-            if not set(columns) <= df_cols_set:
-                raise MissingColumnError(f"Column(s) {set(columns) - df_cols_set} are missing from the input dataframe.")
-            return columns
-        return [col for col in columns if col in df_cols_set]
+        if not set(columns) <= df_cols_set:
+            raise MissingColumnError(f"Column(s) {set(columns) - df_cols_set} are missing from the input dataframe.")
+        return columns
 
     def validate_columns_out(self, df: DataFrame, columns: Sequence[str], output_columns: Optional[Sequence[str]], strict: bool, validate_length: bool=True) -> Sequence[str]:
         if output_columns:

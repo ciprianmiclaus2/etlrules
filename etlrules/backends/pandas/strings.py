@@ -439,7 +439,7 @@ class StrExtractRule(UnaryOpBaseRule, ColumnsInOutMixin):
         ValueError: raised if output_columns is provided and not the same length as the number of groups in the regular expression.
 
     Note:
-        In non-strict mode, missing columns or overwriting existing columns are ignored.
+        In non-strict mode, the overwriting of existing columns is ignored.
     """
 
     def __init__(self, input_column: str, regular_expression: str, keep_original_value: bool=False, output_columns:Optional[Iterable[str]]=None, named_input: Optional[str]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):

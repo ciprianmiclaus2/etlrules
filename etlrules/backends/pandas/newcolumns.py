@@ -26,7 +26,7 @@ class AddNewColumnRule(UnaryOpBaseRule):
         | 3   | 4  | 7   |
 
     Args:
-        column_name: The name of the new column to be added.
+        output_column: The name of the new column to be added.
         column_expression: An expression that gets evaluated and produces the value for the new column.
             The syntax: df["EXISTING_COL"] can be used in the expression to refer to other columns in the dataframe.
 
@@ -62,16 +62,16 @@ class AddNewColumnRule(UnaryOpBaseRule):
 
     EXCLUDE_FROM_COMPARE = ('_column_expression', )
 
-    def __init__(self, column_name: str, column_expression: str, named_input: Optional[str]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
+    def __init__(self, output_column: str, column_expression: str, named_input: Optional[str]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
         super().__init__(named_input=named_input, named_output=named_output, name=name, description=description, strict=strict)
-        self.column_name = column_name
+        self.output_column = output_column
         self.column_expression = column_expression
-        self._column_expression = Expression(self.column_expression, filename=f'{self.column_name}_expression.py')
+        self._column_expression = Expression(self.column_expression, filename=f'{self.output_column}_expression.py')
 
     def apply(self, data):
         df = self._get_input_df(data)
-        if self.strict and self.column_name in df.columns:
-            raise ColumnAlreadyExistsError(f"Column {self.column_name} already exists in the input dataframe.")
+        if self.strict and self.output_column in df.columns:
+            raise ColumnAlreadyExistsError(f"Column {self.output_column} already exists in the input dataframe.")
         result = self._column_expression.eval(df)
-        df = df.assign(**{self.column_name: result})
+        df = df.assign(**{self.output_column: result})
         self._set_output_df(data, df)
