@@ -4,7 +4,7 @@ from etlrules.backends.common.basic import BaseProjectRule
 from etlrules.exceptions import MissingColumnError
 from etlrules.rule import UnaryOpBaseRule
 
-from etlrules.backends.pandas.base import BaseAssignRule
+from etlrules.backends.pandas.base import BaseAssignColumnRule
 from etlrules.backends.pandas.validation import PandasRuleValidationMixin
 
 
@@ -176,21 +176,21 @@ class DedupeRule(UnaryOpBaseRule):
         self._set_output_df(data, df)
 
 
-class ReplaceRule(BaseAssignRule):
-    """ Replaces some some values (or regular expressions) with another set of values (or regular expressions) in a set of columns.
+class ReplaceRule(BaseAssignColumnRule):
+    """ Replaces some some values (or regular expressions) with another set of values (or regular expressions).
 
     Basic usage::
 
-        # replaces A with new_A and b with new_b in col_A, col_B and col_C
-        rule = ReplaceRule(["col_A", "col_B", "col_C"], values=["A", "b"], new_values=["new_A", "new_b"])
+        # replaces A with new_A and b with new_b in col_A
+        rule = ReplaceRule("col_A", values=["A", "b"], new_values=["new_A", "new_b"])
         rule.apply(data)
 
         # replaces 1 with 3 and 2 with 4 in the col_I column
-        rule = ReplaceRule(["col_I"], values=[1, 2], new_values=[3, 4])
+        rule = ReplaceRule("col_I", values=[1, 2], new_values=[3, 4])
         rule.apply(data)
 
     Args:
-        columns (Iterable[str]): A list of string columns to convert to upper case.
+        input_column (str): A column with the input values.
         values: A sequence of values to replace. Regular expressions can be used to match values more widely,
             in which case, the regex parameter must be set to True.
             Values can be any supported types but they should match the type of the columns.
@@ -199,7 +199,7 @@ class ReplaceRule(BaseAssignRule):
             New values can be any supported types but they should match the type of the columns.
         regex: True if all the values and new_values are to be interpreted as regular expressions. Default: False.
             regex=True is only applicable to string columns.
-        output_columns (Optional[Iterable[str]]): A list of new names for the columns with the upper case values.
+        output_column (Optional[str]): An optional column to hold the result with the new values.
             Optional. If provided, if must have the same length as the columns sequence.
             The existing columns are unchanged, and new columns are created with the upper case values.
             If not provided, the result is updated in place.
@@ -217,16 +217,15 @@ class ReplaceRule(BaseAssignRule):
         strict (bool): When set to True, the rule does a stricter valiation. Default: True
 
     Raises:
-        MissingColumnError: raised in strict mode only if a column doesn't exist in the input dataframe.
-        ColumnAlreadyExistsError: raised in strict mode only if an output_column already exists in the dataframe.
-        ValueError: raised if output_columns is provided and not the same length as the columns parameter.
+        MissingColumnError: raised if the input_column column doesn't exist in the input dataframe.
+        ColumnAlreadyExistsError: raised in strict mode only if the output_column already exists in the dataframe.
 
     Note:
-        In non-strict mode, missing columns or overwriting existing columns are ignored.
+        In non-strict mode, overwriting existing columns is ignored.
     """
 
-    def __init__(self, columns: Iterable[str], values: Iterable[Union[int,float,str]], new_values: Iterable[Union[int,float,str]], regex=False, output_columns:Optional[Iterable[str]]=None, named_input: Optional[str]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
-        super().__init__(columns=columns, output_columns=output_columns, named_input=named_input, named_output=named_output, 
+    def __init__(self, input_column: str, values: Iterable[Union[int,float,str]], new_values: Iterable[Union[int,float,str]], regex=False, output_column:Optional[str]=None, named_input: Optional[str]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
+        super().__init__(input_column=input_column, output_column=output_column, named_input=named_input, named_output=named_output, 
                          name=name, description=description, strict=strict)
         self.values = [val for val in values]
         self.new_values = [val for val in new_values]
@@ -234,5 +233,5 @@ class ReplaceRule(BaseAssignRule):
         assert self.values, "values must not be empty."
         self.regex = regex
 
-    def do_apply(self, col):
+    def do_apply(self, df, col):
         return col.replace(to_replace=self.values, value=self.new_values, regex=self.regex)
