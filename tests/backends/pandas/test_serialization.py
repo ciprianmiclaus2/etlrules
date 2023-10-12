@@ -100,7 +100,7 @@ from etlrules.rule import BaseRule
                   named_output="result", name="BF", description="Some desc2 BF", strict=True),
         DateTimeUTCNowRule(output_column="UTCTimeNow", named_input="input", 
                   named_output="result", name="BF", description="Some desc2 BF", strict=True),
-        DateTimeToStrFormatRule(columns=["A", "B"], format="%Y-%m-%d %H:%M:%S", output_columns=["E", "F"], named_input="input", 
+        DateTimeToStrFormatRule(input_column="A", format="%Y-%m-%d %H:%M:%S", output_column="E", named_input="input", 
                   named_output="result", name="BF", description="Some desc2 BF", strict=True),
         DateTimeRoundRule(input_column="A", unit="day", output_column="E", named_input="input", 
                   named_output="result", name="BF", description="Some desc2 BF", strict=True),

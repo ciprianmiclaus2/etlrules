@@ -7,10 +7,10 @@ except:
 from pandas import to_timedelta, isnull, to_datetime
 from pandas.tseries.offsets import DateOffset, BusinessDay
 from pandas.api.types import is_timedelta64_dtype, is_datetime64_any_dtype
-from typing import Iterable, Optional, Literal, Sequence, Union
+from typing import Optional, Literal, Union
 
 from etlrules.exceptions import ColumnAlreadyExistsError, MissingColumnError
-from etlrules.backends.pandas.base import BaseAssignRule, BaseAssignColumnRule
+from etlrules.backends.pandas.base import BaseAssignColumnRule
 from etlrules.backends.pandas.validation import ColumnsInOutMixin
 from etlrules.rule import UnaryOpBaseRule
 
@@ -676,24 +676,24 @@ class DateTimeLocalNowRule(UnaryOpBaseRule):
         self._set_output_df(data, df)
 
 
-class DateTimeToStrFormatRule(BaseAssignRule):
+class DateTimeToStrFormatRule(BaseAssignColumnRule):
     """ Formats a datetime column to a string representation according to a specified format.
 
     Basic usage::
 
-        # displays the dates in %Y-%m-%d format, e.g. 2023-05-19
-        rule = DateTimeToStrFormatRule(["col_A", "col_B", "col_C"], format="%Y-%m-%d")
+        # displays the dates in column col_A in the %Y-%m-%d format, e.g. 2023-05-19
+        rule = DateTimeToStrFormatRule("col_A", format="%Y-%m-%d")
         rule.apply(data)
 
     Args:
-        columns (Iterable[str]): A list of string columns to convert to upper case.
+        input_column (str): The datetime column with the values to format to string.
         format: The format used to display the date/time.
             E.g. %Y-%m-%d
             For the directives accepted in the format, have a look at:
             https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior
-        output_columns (Optional[Iterable[str]]): A list of new names for the columns with the upper case values.
-            Optional. If provided, if must have the same length as the columns sequence.
-            The existing columns are unchanged, and new columns are created with the upper case values.
+        output_column (Optional[str]): An optional column to hold the formatted results.
+            If provided, the existing column is unchanged, and a new column with this new
+            is created.
             If not provided, the result is updated in place.
 
         named_input (Optional[str]): Which dataframe to use as the input. Optional.
@@ -709,18 +709,17 @@ class DateTimeToStrFormatRule(BaseAssignRule):
         strict (bool): When set to True, the rule does a stricter valiation. Default: True
 
     Raises:
-        MissingColumnError: raised in strict mode only if a column doesn't exist in the input dataframe.
-        ColumnAlreadyExistsError: raised in strict mode only if an output_column already exists in the dataframe.
-        ValueError: raised if output_columns is provided and not the same length as the columns parameter.
+        MissingColumnError: raised if the input column doesn't exist in the input dataframe.
+        ColumnAlreadyExistsError: raised in strict mode only if the output_column already exists in the dataframe.
 
     Note:
-        In non-strict mode, missing columns or overwriting existing columns are ignored.
+        In non-strict mode, overwriting existing columns is ignored.
     """
 
-    def __init__(self, columns: Iterable[str], format: str, output_columns:Optional[Iterable[str]]=None, named_input: Optional[str]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
-        super().__init__(columns=columns, output_columns=output_columns, named_input=named_input, named_output=named_output, 
+    def __init__(self, input_column: str, format: str, output_column: Optional[str]=None, named_input: Optional[str]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
+        super().__init__(input_column=input_column, output_column=output_column, named_input=named_input, named_output=named_output, 
                          name=name, description=description, strict=strict)
         self.format = format
 
-    def do_apply(self, col):
+    def do_apply(self, df, col):
         return col.dt.strftime(self.format)
