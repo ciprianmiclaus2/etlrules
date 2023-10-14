@@ -722,4 +722,4 @@ class DateTimeToStrFormatRule(BaseAssignColumnRule):
         self.format = format
 
     def do_apply(self, df, col):
-        return col.dt.strftime(self.format)
+        return col.dt.strftime(self.format).astype('string')

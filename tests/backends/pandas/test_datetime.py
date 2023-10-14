@@ -100,21 +100,22 @@ def test_localnow_existing_column_non_strict():
     ]), DataFrame(data=[
         {"A": "2023-05-15 09:15:45"},
         {"A": "2023-05-16 19:25:00"},
-    ])],
+    ]).astype({"A": "string"})],
+    ["A", "%Y-%m-%d %H:%M:%S", None, DataFrame(data={"A": []}, dtype="datetime64[ns]"), DataFrame(data={"A": []}, dtype="string")],
     ["A", "%Y-%m-%d %H:%M", None, DataFrame(data=[
         {"A": datetime.datetime(2023, 5, 15, 9, 15, 45), "B": datetime.datetime(2023, 7, 15, 9, 15, 45)},
         {"A": datetime.datetime(2023, 5, 16, 19, 25)},
     ]), DataFrame(data=[
         {"A": "2023-05-15 09:15", "B": datetime.datetime(2023, 7, 15, 9, 15, 45)},
         {"A": "2023-05-16 19:25"},
-    ])],
+    ]).astype({"A": "string"})],
     ["A", "%Y-%m-%d %H:%M", "E", DataFrame(data=[
         {"A": datetime.datetime(2023, 5, 15, 9, 15, 45), "B": datetime.datetime(2023, 7, 15, 9, 15, 45)},
         {"A": datetime.datetime(2023, 5, 16, 19, 25)},
     ]), DataFrame(data=[
         {"A": datetime.datetime(2023, 5, 15, 9, 15, 45), "B": datetime.datetime(2023, 7, 15, 9, 15, 45), "E": "2023-05-15 09:15"},
         {"A": datetime.datetime(2023, 5, 16, 19, 25), "E": "2023-05-16 19:25"},
-    ])],
+    ]).astype({"E": "string"})],
     ["Z", "%Y-%m-%d %H:%M", "E", DataFrame(data=[
         {"A": datetime.datetime(2023, 5, 15, 9, 15, 45), "B": datetime.datetime(2023, 7, 15, 9, 15, 45)},
         {"A": datetime.datetime(2023, 5, 16, 19, 25)},
