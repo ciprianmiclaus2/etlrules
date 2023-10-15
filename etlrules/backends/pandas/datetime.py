@@ -290,7 +290,7 @@ class DateTimeExtractComponentRule(BaseAssignColumnRule):
         "microsecond": "microsecond",
         "nanosecond": "nanosecond",
         "weekday": "weekday",
-        "weekday_name": "day_name",
+        "day_name": "day_name",
         "month_name": "month_name",
     }
 
@@ -314,6 +314,10 @@ class DateTimeExtractComponentRule(BaseAssignColumnRule):
                 res = res(locale=self._locale)
             except locale.Error:
                 raise ValueError(f"Unsupported locale: {self._locale}")
+        if self._component in ("day_name", "month_name"):
+            res = res.astype('string')
+        else:
+            res = res.astype('Int64')
         return res
 
 
@@ -373,7 +377,9 @@ class AddSubBaseRule(BaseAssignColumnRule):
                         col2 = col2.apply(lambda x: BusinessDay(sign * (0 if isnull(x) else int(x))))
                     else:
                         col2 = col2.apply(lambda x: DateOffset(**{DT_ARITHMETIC_UNITS[unit]: sign * (0 if isnull(x) else int(x))}))
-                    return to_datetime(col + col2, errors='coerce')
+                    if not col2.empty:
+                        col += col2
+                    return to_datetime(col, errors='coerce')
             return col + self.SIGN * col2
         if self.unit not in DT_ARITHMETIC_UNITS.keys():
             raise ValueError(f"Unsupported unit: '{self.unit}'. It must be one of {DT_ARITHMETIC_UNITS.keys()}")
@@ -581,6 +587,7 @@ class DateTimeDiffRule(AddSubBaseRule):
                 res = res.dt.total_seconds()
             else:
                 res = res.dt.components[self.unit]
+            res = res.astype("Int64")
         return res
 
 
