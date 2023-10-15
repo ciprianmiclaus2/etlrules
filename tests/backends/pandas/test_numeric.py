@@ -102,6 +102,14 @@ def test_rounding_missing_column():
         assert str(exc.value) == "Column 'Z' is missing from the input dataframe."
 
 
+def test_rounding_empty_df():
+    input_df = DataFrame(data={"A": []}, dtype="float64")
+    with get_test_data(input_df, named_inputs={"input": input_df}, named_output="result") as data:
+        rule = RoundRule("A", 2, named_input="input", named_output="result")
+        rule.apply(data)
+        assert_frame_equal(data.get_named_output("result"), input_df)
+
+
 def test_abs():
     with get_test_data(INPUT_DF2, named_inputs={"input": INPUT_DF2}, named_output="result") as data:
         rule = AbsRule("B", named_input="input", named_output="result2")
@@ -126,3 +134,11 @@ def test_abs_missing_column():
         with pytest.raises(MissingColumnError) as exc:
             rule.apply(data)
         assert str(exc.value) == "Column 'Z' is missing from the input dataframe."
+
+
+def test_abs_empty_df():
+    input_df = DataFrame(data={"A": []}, dtype="Int64")
+    with get_test_data(input_df, named_inputs={"input": input_df}, named_output="result") as data:
+        rule = AbsRule("A", named_input="input", named_output="result")
+        rule.apply(data)
+        assert_frame_equal(data.get_named_output("result"), input_df)
