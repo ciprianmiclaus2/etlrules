@@ -100,6 +100,9 @@ class SortRule(UnaryOpBaseRule):
             Together with the name, the description acts as the documentation of the rule.
         strict: When set to True, the rule does a stricter valiation. Default: True
 
+    Raises:
+        MissingColumnError: raised when a column in the sort_by doesn't exist in the input dataframe.
+
     Note:
         When multiple columns are specified, the first column decides the sort order.
         For any rows that have the same value in the first column, the second column is used to decide the sort order within that group and so on.
@@ -107,15 +110,18 @@ class SortRule(UnaryOpBaseRule):
 
     def __init__(self, sort_by: Iterable[str], ascending: Union[bool,Iterable[bool]]=True, named_input: Optional[str]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
         super().__init__(named_input=named_input, named_output=named_output, name=name, description=description, strict=strict)
-        self.sort_by = [col for col in sort_by]
-        if isinstance(self.sort_by, str):
-            self.sort_by = [self.sort_by]
+        if isinstance(sort_by, str):
+            self.sort_by = [sort_by]
+        else:
+            self.sort_by = [s for s in sort_by]
         assert isinstance(ascending, bool) or (isinstance(ascending, (list, tuple)) and all(isinstance(val, bool) for val in ascending) and len(ascending) == len(self.sort_by)), "ascending must be a bool or a list of bool of the same len as sort_by"
         self.ascending = ascending
 
     def apply(self, data):
         super().apply(data)
         df = self._get_input_df(data)
+        if not set(self.sort_by) <= set(df.columns):
+            raise MissingColumnError(f"Column(s) {set(self.sort_by) - set(df.columns)} are missing from the input dataframe.")
         df = df.sort_values(by=self.sort_by, ascending=self.ascending, ignore_index=True)
         self._set_output_df(data, df)
 

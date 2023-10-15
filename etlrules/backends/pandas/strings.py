@@ -268,7 +268,7 @@ class StrSplitRejoinRule(BaseAssignColumnRule):
             func = lambda val: new_separator.join(sorted(val, reverse=reverse)) if val not in (nan, NA, None) else val
         else:
             func = lambda val: new_separator.join(val) if val not in (nan, NA, None) else val
-        return new_col.apply(func)
+        return new_col.apply(func).astype("string")
 
 
 class StrStripRule(BaseAssignColumnRule):

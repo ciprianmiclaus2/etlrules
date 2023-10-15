@@ -37,6 +37,7 @@ INPUT_DF3 = DataFrame(data=[
 
 
 @pytest.mark.parametrize("rule_cls,input_column,output_column,input_df,expected", [
+    [StrLowerRule, "A", None, DataFrame(data={"A": []}, dtype="string"), DataFrame(data={"A": []}, dtype="string")],
     [StrLowerRule, "A", None, INPUT_DF, DataFrame(data=[
         {"A": "abcdefg", "B": 1.456, "C": "cCcc", "D": -100},
         {"A": "baba", "B": -1.677, "C": "dDdd"},
@@ -57,6 +58,7 @@ INPUT_DF3 = DataFrame(data=[
         {"A": "CAAA", "B": 3.87, "D": -499},
         {"A": "DIII", "B": -1.5, "C": "eEee", "D": 1},
     ])],
+    [StrUpperRule, "A", None, DataFrame(data={"A": []}, dtype="string"), DataFrame(data={"A": []}, dtype="string")],
     [StrUpperRule, "A", "E", INPUT_DF, DataFrame(data=[
         {"A": "AbCdEfG", "B": 1.456, "C": "cCcc", "D": -100, "E": "ABCDEFG"},
         {"A": "babA", "B": -1.677, "C": "dDdd", "E": "BABA"},
@@ -65,6 +67,7 @@ INPUT_DF3 = DataFrame(data=[
     ])],
     [StrUpperRule, "Z", None, INPUT_DF, MissingColumnError],
     [StrUpperRule, "A", "A", INPUT_DF, ColumnAlreadyExistsError],
+    [StrCapitalizeRule, "A", None, DataFrame(data={"A": []}, dtype="string"), DataFrame(data={"A": []}, dtype="string")],
     [StrCapitalizeRule, "A", None, INPUT_DF, DataFrame(data=[
         {"A": "Abcdefg", "B": 1.456, "C": "cCcc", "D": -100},
         {"A": "Baba", "B": -1.677, "C": "dDdd"},
@@ -143,6 +146,7 @@ def test_str_scenarios(rule_cls, input_column, output_column, input_df, expected
         {"A": "diiI", "D": 1, "E": "diiI"},
         {},
     ])],
+    [StrStripRule, "A", "left", None, None, DataFrame(data={"A": []}, dtype="string"), DataFrame(data={"A": []}, dtype="string")],
     [StrStripRule, "Z", "left", None, None, INPUT_DF2, MissingColumnError],
     [StrStripRule, "A", "both", None, "D", INPUT_DF2, ColumnAlreadyExistsError],
 ])
@@ -202,6 +206,7 @@ def test_strip_scenarios(rule_cls, input_column, how, characters, output_column,
         {"A": "diiI", "D": 1, "E": ".diiI."},
         {},
     ])],
+    ["A", 6, ".", "both", None, DataFrame(data={"A": []}, dtype="string"), DataFrame(data={"A": []}, dtype="string")],
     ["Z", 6, ".", "left", None, INPUT_DF3, MissingColumnError],
     ["A", 6, ".", "both", "D", INPUT_DF3, ColumnAlreadyExistsError],
 ])
@@ -262,6 +267,7 @@ INPUT_DF4 = DataFrame(data=[
         {"A": "1;2;3;4", "C": " cCcc", "D": -499, "E": ["1;2;3;4"]},
         {"C": " cCcc ", "D": 1},
     ])],
+    ["A", ".", None, None, None, DataFrame(data={"A": []}, dtype="string"), DataFrame(data={"A": []}, dtype="object")],
     ["Z", ",", None, None, None, INPUT_DF4, MissingColumnError],
     ["A", ",", None, None, "C", INPUT_DF4, ColumnAlreadyExistsError],
 ])
@@ -284,49 +290,50 @@ def test_split_scenarios(input_column, separator, separator_regex, limit, output
         {"A": "1|2|3|4"},
         {"A": "1;2;3;4", "C": " cCcc", "D": -499},
         {"C": " cCcc ", "D": 1},
-    ])],
+    ]).astype({"A": "string"})],
     ["A", ",", None, None, "|", "ascending", None, INPUT_DF4, DataFrame(data=[
         {"A": "A|B;C|D;E", "C": "cCcc", "D": -100},
         {"A": "1|2|3|4"},
         {"A": "1;2;3;4", "C": " cCcc", "D": -499},
         {"C": " cCcc ", "D": 1},
-    ])],
+    ]).astype({"A": "string"})],
     ["A", ",", None, None, "|", "descending", None, INPUT_DF4, DataFrame(data=[
         {"A": "D;E|B;C|A", "C": "cCcc", "D": -100},
         {"A": "4|3|2|1"},
         {"A": "1;2;3;4", "C": " cCcc", "D": -499},
         {"C": " cCcc ", "D": 1},
-    ])],
+    ]).astype({"A": "string"})],
     ["A", ",", None, 2, "|", None, None, INPUT_DF4, DataFrame(data=[
         {"A": "A|B;C|D;E", "C": "cCcc", "D": -100},
         {"A": "1|2|3,4"},
         {"A": "1;2;3;4", "C": " cCcc", "D": -499},
         {"C": " cCcc ", "D": 1},
-    ])],
+    ]).astype({"A": "string"})],
     ["A", ";", None, None, "|", None, None, INPUT_DF4, DataFrame(data=[
         {"A": "A,B|C,D|E", "C": "cCcc", "D": -100},
         {"A": "1,2,3,4"},
         {"A": "1|2|3|4", "C": " cCcc", "D": -499},
         {"C": " cCcc ", "D": 1},
-    ])],
+    ]).astype({"A": "string"})],
     ["A", None, ",|;", None, "|", None, None, INPUT_DF4, DataFrame(data=[
         {"A": "A|B|C|D|E", "C": "cCcc", "D": -100},
         {"A": "1|2|3|4"},
         {"A": "1|2|3|4", "C": " cCcc", "D": -499},
         {"C": " cCcc ", "D": 1},
-    ])],
+    ]).astype({"A": "string"})],
     ["A", None, ",|;", 2, "|", None, None, INPUT_DF4, DataFrame(data=[
         {"A": "A|B|C,D;E", "C": "cCcc", "D": -100},
         {"A": "1|2|3,4"},
         {"A": "1|2|3;4", "C": " cCcc", "D": -499},
         {"C": " cCcc ", "D": 1},
-    ])],
+    ]).astype({"A": "string"})],
     ["A", ",", None, None, "|", None, "E", INPUT_DF4, DataFrame(data=[
         {"A": "A,B;C,D;E", "C": "cCcc", "D": -100, "E": "A|B;C|D;E"},
         {"A": "1,2,3,4", "E": "1|2|3|4"},
         {"A": "1;2;3;4", "C": " cCcc", "D": -499, "E": "1;2;3;4"},
         {"C": " cCcc ", "D": 1},
-    ])],
+    ]).astype({"E": "string"})],
+    ["A", ".", None, None, "|", None, None, DataFrame(data={"A": []}, dtype="string"), DataFrame(data={"A": []}, dtype="string")],
     ["Z", ",", None, None, "|", None, None, INPUT_DF4, MissingColumnError],
     ["A", ",", None, None, "|", None, "C", INPUT_DF4, ColumnAlreadyExistsError],
 ])
@@ -378,6 +385,7 @@ def test_split_rejoin_scenarios(input_column, separator, separator_regex, limit,
             {"A": "no_match", "B": "a321f_end"},
         ]),
     ],
+    ["A", r"a([\d]*)((?:f{0,1})_end)", False, ["E", "F"], DataFrame(data={"A": []}, dtype="string"), DataFrame(data={"A": [], "E": [], "F": []}, dtype="string")],
     ["Z", "a(.*)", True, ["C"], INPUT_DF4, MissingColumnError],
     ["A", "a(.*)", True, ["C"], INPUT_DF4, ColumnAlreadyExistsError],
     ["A", "a(.*)-([0-9]*)", True, None, INPUT_DF4, ValueError],
