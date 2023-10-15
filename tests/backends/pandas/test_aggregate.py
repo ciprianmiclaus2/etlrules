@@ -17,6 +17,8 @@ INPUT_DF = DataFrame(data=[
     {"A": 2, "B": "b", "C": 6, "D": "f"},
 ])
 
+INPUT_EMPTY_DF = DataFrame(data={"A": [], "B": [], "C": [], "D": [], "E": [], "F": []}).astype({"A": "Int64", "B": "string", "C": "Int64", "D": "string", "E": "Int64", "F": "string"})
+
 SCENARIOS = [
     [["A", "B"], {"C": "sum", "D": "max", "E": "min", "F": "first"}, None, DataFrame(data=[
         {"A": 1, "B": "b", "C": 4, "D": "c", "E": 1, "F": "a"},
@@ -72,3 +74,14 @@ def test_aggregate_scenarios(group_by, aggregations, aggregation_expressions, ex
         rule = AggregateRule(group_by, aggregations=aggregations, aggregation_expressions=aggregation_expressions, named_input="input", named_output="result")
         rule.apply(data)
         assert_frame_equal(data.get_named_output("result"), expected)
+
+
+@pytest.mark.skip("needs fixing")
+def test_aggregate_empty_df():
+    with get_test_data(INPUT_DF, named_inputs={"input": INPUT_EMPTY_DF}, named_output="result") as data:
+        rule = AggregateRule(
+            ["A", "B"],
+            aggregations={"C": "sum", "D": "max", "E": "min", "F": "first"},
+            aggregation_expressions=None, named_input="input", named_output="result")
+        rule.apply(data)
+        assert_frame_equal(data.get_named_output("result"), INPUT_EMPTY_DF)

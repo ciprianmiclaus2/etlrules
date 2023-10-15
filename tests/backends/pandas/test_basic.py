@@ -14,6 +14,7 @@ from tests.backends.pandas.utils.data import get_test_data
     [["A", "C", "E"], True, DataFrame(data=[{"A": 1, "B": "b", "C": 3, "D": 4, "E": "e", "F": "f"}]), None, None, None, DataFrame(data=[{"B": "b", "D": 4, "F": "f"}])],
     [["A", "C", "E"], True, DataFrame(data=[{"A": 1, "B": "b", "C": 3, "D": 4, "E": "e", "F": "f"}]), None, None, "result", DataFrame(data=[{"B": "b", "D": 4, "F": "f"}])],
     [["A", "C", "E"], False, DataFrame(data=[{"A": 1, "B": "b", "C": 3, "D": 4, "E": "e", "F": "f"}]), {"second_df": DataFrame(data=[{"A": 12, "B": "b2", "C": 32, "D": 42, "E": "e2", "F": "f2"}])}, "second_df", None, DataFrame(data=[{"A": 12, "C": 32, "E": "e2"}])],
+    [["A", "C", "E"], False, DataFrame(data={"A": [], "B": [], "C": [], "D": [], "E": [], "F": []}), None, None, None, DataFrame(data={"A": [], "C": [], "E": []})],
 ])
 def test_project_rule_scenarios(columns, exclude, main_input, named_inputs, named_input, named_output, expected):
     with get_test_data(main_input, named_inputs=named_inputs, named_output=named_output) as data:
@@ -74,6 +75,16 @@ def test_rename_rule():
         rule.apply(data)
         expected = DataFrame(data=[{"AA": 1, "B": "b", "CC": 3, "D": 4, "EE": "e", "F": "f"}])
         assert_frame_equal(data.get_main_output(), expected)
+
+
+def test_rename_rule_empty_df():
+    df = DataFrame(data={"A": [], "B": [], "C": [], "D": [], "E": [], "F": []})
+    with get_test_data(df) as data:
+        rule = RenameRule({'A': 'AA', 'C': 'CC', 'E': 'EE'})
+        rule.apply(data)
+        expected = DataFrame(data={"AA": [], "B": [], "CC": [], "D": [], "EE": [], "F": []})
+        assert_frame_equal(data.get_main_output(), expected)
+
 
 def test_rename_rule_named_input():
     df = DataFrame(data=[{"A": 1, "B": "b", "C": 3, "D": 4, "E": "e", "F": "f"}])
@@ -136,6 +147,7 @@ DEDUPE_KEEP_NONE_INPUT_DF = DataFrame(data=[
 DEDUPE_KEEP_NONE_EXPECTED_DF = DataFrame(data=[
     {"A": 2, "B": 3, "C": 4},
 ])
+DEDUPE_EMPTY_DF = DataFrame(data={"A": [], "B": [], "C": []})
 
 
 @pytest.mark.parametrize("columns,keep,input_df,named_input,named_output,expected", [
@@ -148,6 +160,7 @@ DEDUPE_KEEP_NONE_EXPECTED_DF = DataFrame(data=[
     [["A", "B"], "none", DEDUPE_KEEP_NONE_INPUT_DF, None, None, DEDUPE_KEEP_NONE_EXPECTED_DF],
     [["A", "B"], "none", DEDUPE_KEEP_NONE_INPUT_DF, "input_df", None, DEDUPE_KEEP_NONE_EXPECTED_DF],
     [["A", "B"], "none", DEDUPE_KEEP_NONE_INPUT_DF, "input_df", "result", DEDUPE_KEEP_NONE_EXPECTED_DF],
+    [["A", "B"], "first", DEDUPE_EMPTY_DF, None, None, DEDUPE_EMPTY_DF],
 ])
 def test_dedupe_rule_first(columns,keep,input_df,named_input,named_output,expected):
     with get_test_data(main_input=input_df, named_inputs=named_input and {named_input: input_df}, named_output=named_output) as data:
@@ -197,6 +210,10 @@ def test_dedupe_rule_raises_missing_column():
     ["A", ["a", 1], ["new_a", 2], False, "A", 
         DataFrame(data=[{"A": "a", "B": 3}, {"A": "aa", "B": 1}]),
         ColumnAlreadyExistsError
+    ],
+    ["A", ["a", 1], ["new_a", 2], False, None, 
+        DataFrame(data={"A": [], "B": []}),
+        DataFrame(data={"A": [], "B": []}),
     ],
 ])
 def test_replace_scenarios(input_column, values, new_values, regex, output_column, input_df, expected):

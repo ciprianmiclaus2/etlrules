@@ -30,6 +30,7 @@ INPUT_DF = DataFrame(data=[
         {"A": 3, "C": 2, "D": 1, "O": 1},
         {"B": 4, "C": 2, "D": 1, "O": 1},
     ])],
+    ["df['A'] > df['B']", "O", "A is greater", None, "B is greater", None, DataFrame(data={"A": [], "B": []}, dtype="Int64"), DataFrame(data={"A": [], "B": [], "O": []}).astype({"A": "Int64", "B": "Int64", "O": "object"})],
     ["df['A'] > df['B']", "O", None, "C", None, "E", INPUT_DF, MissingColumnError],
     ["df['A'] > df['B']", "O", None, "E", None, "D", INPUT_DF, MissingColumnError],
     ["df['A'] > df['B']", "B", None, "C", None, "D", INPUT_DF, ColumnAlreadyExistsError],
@@ -69,6 +70,10 @@ def test_if_then_else_scenarios(condition_expression, output_column, then_value,
     ]), DataFrame(data=[
         {"A": 5, "B": 3}
     ])],
+    ["df['A'] > df['B']", True, "discarded", DataFrame(data={"A": [], "B": []}, dtype="Int64"),
+        DataFrame(data={"A": [], "B": []}, dtype="Int64"),
+        DataFrame(data={"A": [], "B": []}, dtype="Int64"),
+    ],
     ["df['A' > df['B']", False, None, INPUT_DF, ExpressionSyntaxError, None],
     ["df['A'] > df['UNKNOWN']", False, None, INPUT_DF, KeyError, None],
 ])
