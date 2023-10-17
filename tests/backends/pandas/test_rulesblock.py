@@ -39,6 +39,6 @@ def test_rules_block(named_input, named_output):
             {"B": 3, "C": 4},
             {"B": 2, "C": 2},
             {"B": 1, "C": 1},
-        ])
+        ]).astype({"B": "Int64"})
         result = data.get_main_output() if named_output is None else data.get_named_output(named_output)
         assert_frame_equal(expected, result)
