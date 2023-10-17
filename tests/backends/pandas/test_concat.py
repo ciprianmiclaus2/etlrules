@@ -32,6 +32,16 @@ def test_vconcat_all_cols():
         assert_frame_equal(data.get_named_output("result"), expected)
 
 
+def test_vconcat_empty_df():
+    left_df = DataFrame(data={"A": [], "B": [], "C": []})
+    right_df = DataFrame(data={"A": [], "B": [], "G": []})
+    expected = DataFrame(data={"A": [], "B": [], "C": [], "G": []})
+    with get_test_data(left_df, named_inputs={"left": left_df, "right": right_df}, named_output="result") as data:
+        rule = VConcatRule(named_input_left="left", named_input_right="right", named_output="result", strict=False)
+        rule.apply(data)
+        assert_frame_equal(data.get_named_output("result"), expected)
+
+
 def test_vconcat_subset_cols():
     left_df = DataFrame(data=[
         {"A": 1, "B": "b", "C": True, "D": "None"},
@@ -152,6 +162,16 @@ def test_hconcat():
         {"A": 2, "B": "c", "C": False, "D": 5, "F": "f", "G": False},
         {"A": 3, "B": "d", "C": True, "D": 6, "F": "g", "G": False},
     ])
+    with get_test_data(left_df, named_inputs={"left": left_df, "right": right_df}, named_output="result") as data:
+        rule = HConcatRule(named_input_left="left", named_input_right="right", named_output="result")
+        rule.apply(data)
+        assert_frame_equal(data.get_named_output("result"), expected)
+
+
+def test_hconcat_empty_df():
+    left_df = DataFrame(data={"A": [], "B": [], "C": []})
+    right_df = DataFrame(data={"D": [], "F": [], "G": []})
+    expected = DataFrame(data={"A": [], "B": [], "C": [], "D": [], "F": [], "G": []})
     with get_test_data(left_df, named_inputs={"left": left_df, "right": right_df}, named_output="result") as data:
         rule = HConcatRule(named_input_left="left", named_input_right="right", named_output="result")
         rule.apply(data)

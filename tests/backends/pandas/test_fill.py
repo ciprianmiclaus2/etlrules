@@ -7,6 +7,8 @@ from etlrules.backends.pandas import ForwardFillRule, BackFillRule
 from tests.backends.pandas.utils.data import get_test_data
 
 
+EMPTY_DF = DataFrame(data={"A": [], "B": [], "C": [], "D": []})
+
 SAMPLE_DF = DataFrame(data=[
     {"A": 10, "B": "a"},
     {"A": 15, "D": 9},
@@ -28,6 +30,7 @@ SAMPLE_GROUPING_DF = DataFrame(data=[
 
 
 @pytest.mark.parametrize("rule_cls,input_sample,columns,sort_by,sort_ascending,group_by,expected", [
+    [ForwardFillRule, EMPTY_DF, ["C", "D"], None, True, None, EMPTY_DF],
     [ForwardFillRule, SAMPLE_DF, ["C", "D"], None, True, None, DataFrame(data=[
         {"A": 10, "B": "a"},
         {"A": 15, "D": 9},
@@ -76,6 +79,7 @@ SAMPLE_GROUPING_DF = DataFrame(data=[
         {"A": 5, "G": 3, "H": "H1", "C": "c", "D": 5},
         {"A": 1, "G": 1, "H": "H2", "B": "e"},
     ])],
+    [BackFillRule, EMPTY_DF, ["C", "D"], None, True, None, EMPTY_DF],
     [BackFillRule, SAMPLE_DF, ["C", "D"], None, True, None, DataFrame(data=[
         {"A": 10, "B": "a",  "C": "e", "D": 9},
         {"A": 15,  "C": "e", "D": 9},

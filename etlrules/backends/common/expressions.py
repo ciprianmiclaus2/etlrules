@@ -1,5 +1,5 @@
 import ast
-
+from pandas import Series
 from typing import Optional
 
 from etlrules.exceptions import ExpressionSyntaxError
@@ -24,5 +24,8 @@ class Expression:
         except TypeError:
             # attempt to run a slower apply
             expr = self._compiled_expr
-            expr_series = df.apply(lambda df: eval(expr, {}, {'df': df}), axis=1)
+            if df.empty:
+                expr_series = Series([], dtype="object")
+            else:
+                expr_series = df.apply(lambda df: eval(expr, {}, {'df': df}), axis=1)
         return expr_series
