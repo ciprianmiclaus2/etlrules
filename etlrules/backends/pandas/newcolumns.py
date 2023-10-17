@@ -1,6 +1,6 @@
 from typing import Optional
 
-from etlrules.backends.common.expressions import Expression
+from etlrules.backends.pandas.expressions import Expression
 from etlrules.exceptions import ColumnAlreadyExistsError
 from etlrules.rule import UnaryOpBaseRule
 

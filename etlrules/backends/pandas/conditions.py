@@ -3,7 +3,7 @@ from typing import Optional, Union
 
 from etlrules.exceptions import ColumnAlreadyExistsError, MissingColumnError
 from etlrules.rule import UnaryOpBaseRule
-from etlrules.backends.common.expressions import Expression
+from etlrules.backends.pandas.expressions import Expression
 
 
 class IfThenElseRule(UnaryOpBaseRule):
