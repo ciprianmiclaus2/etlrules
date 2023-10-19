@@ -74,12 +74,24 @@ def test_invalid_filters(filters):
         ReadParquetFileRule(file_name="tst.parquet", file_dir="/tmp", filters=filters, named_output="result")
 
 
-def test_write_read_parquet_file_columns():
+def test_write_read_parquet_file_invalid_columns():
     try:
         with get_test_data(TEST_DF, named_inputs={"input": TEST_DF}, named_output="result") as data:
             write_rule = WriteParquetFileRule(file_name="tst.parquet", file_dir="/tmp", named_input="input")
             write_rule.apply(data)
             read_rule = ReadParquetFileRule(file_name="tst.parquet", file_dir="/tmp", columns=["A", "M"], named_output="result")
+            with pytest.raises(MissingColumnError):
+                read_rule.apply(data)
+    finally:
+        os.remove(os.path.join("/tmp", "tst.parquet"))
+
+
+def test_write_read_parquet_file_invalid_column_in_filters():
+    try:
+        with get_test_data(TEST_DF, named_inputs={"input": TEST_DF}, named_output="result") as data:
+            write_rule = WriteParquetFileRule(file_name="tst.parquet", file_dir="/tmp", named_input="input")
+            write_rule.apply(data)
+            read_rule = ReadParquetFileRule(file_name="tst.parquet", file_dir="/tmp", filters=[("M", "==", 1)], named_output="result")
             with pytest.raises(MissingColumnError):
                 read_rule.apply(data)
     finally:
