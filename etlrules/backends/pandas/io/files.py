@@ -2,6 +2,7 @@ import os, re
 import pandas as pd
 from typing import List, Optional, Sequence, Tuple, Union
 
+from etlrules.exceptions import MissingColumnError
 from etlrules.rule import BaseRule, UnaryOpBaseRule
 
 
@@ -76,10 +77,18 @@ class ReadParquetFileRule(BaseReadFileRule):
                 return all(self._is_valid_filter_tuple(tpl) for tpl in self.filters)
         return False
 
+    def handle_exc(self, exc):
+        print(exc)
+        breakpoint()
+
     def do_read(self, file_path: str) -> pd.DataFrame:
-        return pd.read_parquet(
-            file_path, engine="pyarrow", columns=self.columns, filters=self.filters
-        )
+        from pyarrow.lib import ArrowInvalid
+        try:
+            return pd.read_parquet(
+                file_path, engine="pyarrow", columns=self.columns, filters=self.filters
+            )
+        except ArrowInvalid as exc:
+            raise MissingColumnError(str(exc))
 
 
 class BaseWriteFileRule(UnaryOpBaseRule):
