@@ -20,6 +20,9 @@ from .types import TypeConversionRule
 
 from etlrules.backends.common.basic import RulesBlock
 
+## IO - extractors and loaders
+from .io.files import ReadCSVFileRule, ReadParquetFileRule, WriteCSVFileRule, WriteParquetFileRule
+
 
 __all__ = [
     'AggregateRule',
@@ -38,4 +41,6 @@ __all__ = [
     'StrStripRule', 'StrPadRule', 'StrExtractRule',
     'TypeConversionRule',
     'RulesBlock',
+    # IO extractors and loaders
+    'ReadCSVFileRule', 'ReadParquetFileRule', 'WriteCSVFileRule', 'WriteParquetFileRule',
 ]
