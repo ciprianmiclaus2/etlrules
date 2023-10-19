@@ -1,4 +1,4 @@
-from typing import Iterable, Optional
+from typing import Optional
 
 from etlrules.backends.pandas.validation import ColumnsInOutMixin
 from etlrules.rule import UnaryOpBaseRule

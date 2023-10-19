@@ -5,7 +5,7 @@ from pandas.testing import assert_frame_equal
 import pytest
 
 from etlrules.exceptions import MissingColumnError
-from etlrules.backends.pandas import ReadCSVFileRule, ReadParquetFileRule, WriteCSVFileRule, WriteParquetFileRule
+from etlrules.backends.pandas import ReadParquetFileRule, WriteParquetFileRule
 from tests.backends.pandas.utils.data import get_test_data
 
 

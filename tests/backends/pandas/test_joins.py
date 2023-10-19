@@ -1,7 +1,6 @@
 from pandas import DataFrame, NA
 from pandas.testing import assert_frame_equal
 import pytest
-import numpy as np
 
 from etlrules.exceptions import MissingColumnError
 from etlrules.backends.pandas import LeftJoinRule, InnerJoinRule, OuterJoinRule, RightJoinRule

@@ -1,4 +1,4 @@
-from typing import Iterable, Optional, Sequence, Union
+from typing import Optional, Sequence, Union
 
 from etlrules.backends.pandas.base import BaseAssignColumnRule
 
