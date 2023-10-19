@@ -28,17 +28,27 @@ class BaseReadFileRule(BaseRule):
     def apply(self, data):
         super().apply(data)
 
-        dfs = []
+        result = None
         for file_path in self._get_full_file_paths():
-            dfs.append(
-                self.do_read(file_path)
-            )
-        result = pd.concat(dfs, axis=0, ignore_index=True)
+            df = self.do_read(file_path)
+            if result is None:
+                result = df
+            else:
+                result = pd.concat([result, df], axis=0, ignore_index=True)
         self._set_output_df(data, result)
 
 
 class ReadCSVFileRule(BaseReadFileRule):
-    ...
+    def __init__(self, file_name, file_dir=".", regex=False, separator=",", header=True, named_output=None, name=None, description=None, strict=True):
+        super().__init__(file_name=file_name, file_dir=file_dir, regex=regex, named_output=named_output, name=name, description=description, strict=strict)
+        self.separator = separator
+        self.header = header
+
+    def do_read(self, file_path: str) -> pd.DataFrame:
+        return pd.read_csv(
+            file_path, sep=self.separator, header='infer' if self.header else None,
+            index_col=False
+        )
 
 
 class ReadParquetFileRule(BaseReadFileRule):
@@ -77,10 +87,6 @@ class ReadParquetFileRule(BaseReadFileRule):
                 return all(self._is_valid_filter_tuple(tpl) for tpl in self.filters)
         return False
 
-    def handle_exc(self, exc):
-        print(exc)
-        breakpoint()
-
     def do_read(self, file_path: str) -> pd.DataFrame:
         from pyarrow.lib import ArrowInvalid
         try:
@@ -107,13 +113,34 @@ class BaseWriteFileRule(UnaryOpBaseRule):
 
 
 class WriteCSVFileRule(BaseWriteFileRule):
-    def __init__(self, file_name, file_dir=".", named_input=None, name=None, description=None, strict=True):
+
+    COMPRESSIONS = {
+        'zip': '.zip',
+        'gzip': '.gz',
+        'bz2': '.bz2',
+        #'zstd': '.zst',
+        'xz': '.xz',
+    }
+
+    def __init__(self, file_name, file_dir=".", separator=",", header=True, compression=None, named_input=None, name=None, description=None, strict=True):
         super().__init__(
             file_name=file_name, file_dir=file_dir, named_input=named_input, 
             name=name, description=description, strict=strict)
+        self.separator = separator
+        self.header = header
+        assert compression is None or compression in self.COMPRESSIONS.keys(), f"Unsupported compression '{compression}'. It must be one of: {self.COMPRESSIONS.keys()}."
+        if compression:
+            assert file_name.endswith(self.COMPRESSIONS[compression]), f"The file name {file_name} must have the extension {self.COMPRESSIONS[compression]} when the compression is set to {compression}."
+        self.compression = compression
 
     def do_write(self, df: pd.DataFrame) -> None:
-        ...
+        df.to_csv(
+            os.path.join(self.file_dir, self.file_name),
+            sep=self.separator,
+            header=self.header,
+            compression=self.compression,
+            index=False,
+        )
 
 
 class WriteParquetFileRule(BaseWriteFileRule):
