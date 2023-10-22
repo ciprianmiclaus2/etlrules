@@ -62,22 +62,22 @@ class AbsRule(BaseAssignColumnRule):
         rule.apply(data)
 
     Args:
-        input_column: The name of the column to convert to absolute values.
-        output_column: An optional new column with the absolute values.
+        input_column (str): The name of the column to convert to absolute values.
+        output_column (Optional[str]): An optional new column with the absolute values.
             If provided the existing column is unchanged and a new column is created with the absolute values.
             If not provided, the result is updated in place.
 
-        named_input: Which dataframe to use as the input. Optional.
+        named_input (Optional[str]): Which dataframe to use as the input. Optional.
             When not set, the input is taken from the main output.
             Set it to a string value, the name of an output dataframe of a previous rule.
-        named_output: Give the output of this rule a name so it can be used by another rule as a named input. Optional.
+        named_output (Optional[str]): Give the output of this rule a name so it can be used by another rule as a named input. Optional.
             When not set, the result of this rule will be available as the main output.
             When set to a name (string), the result will be available as that named output.
-        name: Give the rule a name. Optional.
+        name (Optional[str]): Give the rule a name. Optional.
             Named rules are more descriptive as to what they're trying to do/the intent.
-        description: Describe in detail what the rules does, how it does it. Optional.
+        description (Optional[str]): Describe in detail what the rules does, how it does it. Optional.
             Together with the name, the description acts as the documentation of the rule.
-        strict: When set to True, the rule does a stricter valiation. Default: True
+        strict (bool): When set to True, the rule does a stricter valiation. Default: True
 
     Raises:
         MissingColumnError: raised if a column doesn't exist in the input dataframe.
