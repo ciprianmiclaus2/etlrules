@@ -1,6 +1,6 @@
 import os, re
 import pandas as pd
-from typing import List, Optional, Sequence, Tuple, Union
+from typing import List, NoReturn, Optional, Sequence, Tuple, Union
 
 from etlrules.exceptions import MissingColumnError
 from etlrules.rule import BaseRule, UnaryOpBaseRule
@@ -115,6 +115,19 @@ class ReadParquetFileRule(BaseReadFileRule):
         rule = ReadParquetFileRule("test_data.parquet", "/home/myuser/", named_output="input_data")
         rule.apply(data)
 
+        # reads all the files with the .parquet extension from the home dir of myuser and
+        # concatenates them into a single dataframe
+        rule = ReadParquetFileRule(".*\.parquet", "/home/myuser/", named_output="input_data")
+        rule.apply(data)
+
+        # reads only the A,B,C columns from the file data.csv file
+        rule = ReadParquetFileRule("data.parquet", "/home/myuser/", columns=["A", "B", "C"])
+        rule.apply(data)
+
+        # reads only those rows where column A is greater than 10 and column B is True
+        rule = ReadParquetFileRule("data.parquet", "/home/myuser/", filters=[["A", ">=", 10], ["B", "==", True]])
+        rule.apply(data)
+
     Args:
         file_name: The name of the parquet file to load. The format will be inferred from the extension of the file.
             file_name can also be a regular expression (specify regex=True in that case).
@@ -164,32 +177,50 @@ class ReadParquetFileRule(BaseReadFileRule):
             file_name=file_name, file_dir=file_dir, regex=regex, named_output=named_output,
             name=name, description=description, strict=strict)
         self.columns = columns
-        self.filters = filters
-        if self.filters is not None and not self._is_valid_filters():
-            raise ValueError("Invalid filters. It must be a List[Tuple] or List[List[Tuple]] with each Tuple being (column, op, value).")
+        self.filters = self._get_filters(filters) if filters is not None else None
 
-    def _is_valid_filter_tuple(self, tpl):
-        valid = (
-            isinstance(tpl, tuple) and len(tpl) == 3 and tpl[0] and isinstance(tpl[0], str) and
-                tpl[1] in self.SUPPORTED_FILTERS_OPS
-        )
-        if valid and tpl[1] in ('in', 'not in'):
-            valid = isinstance(tpl[2], (list, tuple, set))
-        return valid
+    def _raise_filters_invalid(self, error: str) -> NoReturn:
+        raise ValueError(f"Invalid filters. It must be a List[Tuple] or List[List[Tuple]] with each Tuple being (column, op, value): {error}")
 
-    def _is_valid_filters(self):
-        if isinstance(self.filters, list):
-            if all(isinstance(elem, list) for elem in self.filters):
-                # List[List[Tuple]]
-                return all(
-                    self._is_valid_filter_tuple(tpl)
-                    for elem in self.filters
-                    for tpl in elem
-                )
-            elif all(isinstance(elem, tuple) for elem in self.filters):
-                # List[Tuple]
-                return all(self._is_valid_filter_tuple(tpl) for tpl in self.filters)
-        return False
+    def _validate_tuple(self, tpl):
+        if len(tpl) != 3 or not isinstance(tpl[0], str) or not isinstance(tpl[1], str):
+            self._raise_filters_invalid(f"Third level expected a list/tuple (cond, op, value), got: {tpl}.")
+        op = tpl[1]
+        if op not in self.SUPPORTED_FILTERS_OPS:
+            self._raise_filters_invalid(f"Invalid operator {op} in {tpl}. Must be one of: {self.SUPPORTED_FILTERS_OPS}.")
+        value = tpl[2]
+        if op in ("in", "not in"):
+            if not isinstance(value, (list, tuple, set)):
+                self._raise_filters_invalid(f"Invalid value type for {value} for {op} operand in {tpl}. Must be list/tuple/set.")
+            else:
+                value = list(value)
+        return (tpl[0], op, value)
+
+    def _get_filters(self, filters):
+        lst = []
+        if isinstance(filters, (list, tuple)):
+            if not filters:
+                return None
+            for filter2 in filters:
+                if isinstance(filter2, (list, tuple)) and filter2:
+                    if len(filter2) == 3 and isinstance(filter2[0], str):
+                        # List[Tuple] form
+                        tpl = self._validate_tuple(filter2)
+                        lst.append(tpl)
+                    else:
+                        lst2 = []
+                        for filter3 in filter2:
+                            if isinstance(filter3, (list, tuple)) and filter3:
+                                tpl = self._validate_tuple(filter3)
+                                lst2.append(tpl)
+                            else:
+                                self._raise_filters_invalid(f"Third level expected a list/tuple, got: {filter3}.")
+                        lst.append(lst2)
+                else:
+                    self._raise_filters_invalid(f"Second level expected a list/tuple, got: {filter2}.")
+        else:
+           self._raise_filters_invalid(f"Top level expected a list/tuple, got: {filters}")
+        return lst
 
     def do_read(self, file_path: str) -> pd.DataFrame:
         from pyarrow.lib import ArrowInvalid
@@ -202,6 +233,9 @@ class ReadParquetFileRule(BaseReadFileRule):
 
 
 class BaseWriteFileRule(UnaryOpBaseRule):
+
+    EXCLUDE_FROM_SERIALIZE = ("named_output", )
+
     def __init__(self, file_name, file_dir=".", named_input=None, name=None, description=None, strict=True):
         super().__init__(named_input=named_input, named_output=None, name=name, description=description, strict=strict)
         self.file_name = file_name

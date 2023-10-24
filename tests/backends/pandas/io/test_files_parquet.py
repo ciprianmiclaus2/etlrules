@@ -63,8 +63,8 @@ def test_write_read_parquet_file(compression):
 
 
 
-@pytest.mark.parametrize("filters",
-    ["invalid", [1, 2, 3], ["col", "==", 1], [("col", "==")], [("col", "==", 1, 2)],
+@pytest.mark.parametrize("filters", [
+    "invalid", [1, 2, 3], ["col", "==", 1], [("col", "==")], [("col", "==", 1, 2)],
     [[("col", "==", 1, 5)]], [[("col", "==", 1), ("col", ">", 2)], [("col", "<=")]],
     [("col", "!==", 1)], [("col", "in", 3)],
     ]
