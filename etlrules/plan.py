@@ -1,7 +1,18 @@
 import yaml
-from typing import Optional
+from typing import Literal, Optional
 
+from .exceptions import InvalidPlanError
 from .rule import BaseRule
+
+
+class PlanMode:
+    PIPELINE = "pipeline"
+    GRAPH = "graph"
+
+
+def plan_type_from_rule(rule: BaseRule) -> Optional[Literal[PlanMode.PIPELINE, PlanMode.GRAPH]]:
+    if rule and rule.has_output():
+        return PlanMode.GRAPH if rule.has_named_output() else PlanMode.PIPELINE
 
 
 class Plan:
@@ -12,6 +23,33 @@ class Plan:
     different dataframe, aggregating, sorting, etc. and ultimately how to load that into a data store
     (files or other data stores).
 
+    A plan can operate in two modes: pipeline or graph. A pipeline graph is a simple type of plan where
+    each rule take its input from the previous rule's output. A graph plan is more complex as it allows
+    rules to produce named outputs which can then be used by other rules. This ultimately builds a dag
+    (directed acyclic graph) of rule dependencies. A graph allows branching and joining back allowing
+    complex logic. Rules are executed in the order of dependency and not in the order they are added to
+    the plan. By comparison, pipelines implement a single input/single output mode where rules are
+    executed in the order they are added to the plan.
+
+    Pipeline example::
+
+        plan = Plan()
+        plan.add_rule(SortRule(['A']))
+        plan.add_rule(ProjectRule(['A', 'B']))
+        plan.add_rule(RenameRule({'A': 'AA', 'B': 'BB'}))
+    
+    Graph example::
+
+        plan = Plan()
+        plan.add_rule(SortRule(['A'], named_input="input", named_output="sorted_data"))
+        plan.add_rule(ProjectRule(['A', 'B'], named_input="sorted_data", named_output="projected_data"))
+        plan.add_rule(RenameRule({'A': 'AA', 'B': 'BB'}, named_input="projected_data", named_output="renamed_data"))
+
+    Note:
+        Rules that are used in graph mode should take a named_input and produce a named_output. Rules
+        that use the pipeline mode must not used named inputs/outputs. The two type of rules cannot be
+        used in the same plan as that leads to ambiguity.
+
     Args:
         name: A name for the plan. Optional.
         description: An optional documentation for the plan.
@@ -19,6 +57,9 @@ class Plan:
         strict: A hint about how the plan should be executed.
             When None, then the plan has no hint to provide and its the caller deciding whether to run it
             in a strict mode or not.
+
+    Raises:
+        InvalidPlanError: if pipeline mode rules are mixed with graph mode rules
     """
 
     def __init__(self, name: Optional[str]=None, description: Optional[str]=None, strict: Optional[bool]=None):
@@ -27,8 +68,20 @@ class Plan:
         self.strict = strict
         self.rules = []
 
+    def _check_plan_type(self, rule):
+        _plan_type = None
+        for r in self.rules:
+            _plan_type = plan_type_from_rule(r)
+            if _plan_type is not None:
+                break
+        if _plan_type is not None:
+            _new_plan_type = plan_type_from_rule(rule)
+            if _new_plan_type is not None and _plan_type != _new_plan_type:
+                raise InvalidPlanError(f"Mixing of rules taking named inputs and rules with no named inputs is not supported. ({self.rules[0].__class__} vs. {rule.__class__})")
+
     def add_rule(self, rule):
         assert isinstance(rule, BaseRule)
+        self._check_plan_type(rule)
         self.rules.append(rule)
 
     def __iter__(self):

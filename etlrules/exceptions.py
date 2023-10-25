@@ -18,3 +18,7 @@ class ExpressionSyntaxError(SyntaxError):
 
 class SchemaError(Exception):
     """ An operation needs a certain schema for the dataframe which is not present. """
+
+
+class InvalidPlanError(Exception):
+    """ The plan failed validation. """

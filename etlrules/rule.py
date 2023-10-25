@@ -22,6 +22,12 @@ class BaseRule:
     def rule_description(self):
         return self.description
 
+    def has_output(self):
+        return True
+
+    def has_named_output(self):
+        return bool(self.named_output)
+
     def _set_output_df(self, data, df):
         if self.named_output is None:
             data.set_main_output(df)

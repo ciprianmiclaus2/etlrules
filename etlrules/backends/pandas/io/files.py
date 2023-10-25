@@ -241,6 +241,9 @@ class BaseWriteFileRule(UnaryOpBaseRule):
         self.file_name = file_name
         self.file_dir = file_dir
 
+    def has_output(self):
+        return False
+
     def do_write(self, df: pd.DataFrame) -> None:
         raise NotImplementedError()
 
