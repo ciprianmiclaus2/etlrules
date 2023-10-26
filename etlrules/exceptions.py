@@ -22,3 +22,7 @@ class SchemaError(Exception):
 
 class InvalidPlanError(Exception):
     """ The plan failed validation. """
+
+
+class GraphRuntimeError(RuntimeError):
+    """ There was an error when running a graph-mode plan. """

@@ -64,8 +64,8 @@ def test_project_rule_unknown_column_exclude_not_strict():
 
 def test_project_rule_name_description():
     rule = ProjectRule(["A", "C", "E"], name="Rule 1", description="This is the documentation for the rule")
-    assert rule.rule_name() == "Rule 1"
-    assert rule.rule_description() == "This is the documentation for the rule"
+    assert rule.get_name() == "Rule 1"
+    assert rule.get_description() == "This is the documentation for the rule"
 
 
 def test_rename_rule():
@@ -114,8 +114,8 @@ def test_rename_rule_non_strict_unknown_column():
 
 def test_rename_rule_name_description():
     rule = RenameRule({'A': 'AA', 'C': 'CC', 'E': 'EE', 'UNKNOWN': 'NEW'}, name="Rule 1", description="This is the documentation for the rule")
-    assert rule.rule_name() == "Rule 1"
-    assert rule.rule_description() == "This is the documentation for the rule"
+    assert rule.get_name() == "Rule 1"
+    assert rule.get_description() == "This is the documentation for the rule"
 
 
 DEDUPE_KEEP_FIRST_INPUT_DF = DataFrame(data=[

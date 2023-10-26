@@ -13,6 +13,9 @@ class BaseReadFileRule(BaseRule):
         self.file_dir = file_dir
         self.regex = bool(regex)
 
+    def has_input(self):
+        return False
+
     def _get_full_file_paths(self):
         if self.regex:
             pattern = re.compile(self.file_name)

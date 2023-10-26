@@ -77,12 +77,16 @@ class Plan:
         self.rules = []
 
     def _check_plan_mode(self, rule):
+        mode = self.get_mode()
+        if mode is not None:
+            _new_rule_mode = plan_mode_from_rule(rule)
+            if _new_rule_mode is not None and mode != _new_rule_mode:
+                raise InvalidPlanError(f"Mixing of rules taking named inputs and rules with no named inputs is not supported. ({mode} vs. {rule.__class__}'s mode {_new_rule_mode})")
+
+    def get_mode(self):
         if self.mode is None:
             self.mode = plan_mode_from_rules(self.rules)
-        if self.mode is not None:
-            _new_rule_mode = plan_mode_from_rule(rule)
-            if _new_rule_mode is not None and self.mode != _new_rule_mode:
-                raise InvalidPlanError(f"Mixing of rules taking named inputs and rules with no named inputs is not supported. ({self.mode} vs. {rule.__class__}'s mode {_new_rule_mode})")
+        return self.mode
 
     def add_rule(self, rule):
         assert isinstance(rule, BaseRule)
@@ -91,6 +95,12 @@ class Plan:
 
     def __iter__(self):
         yield from self.rules
+
+    def get_rule(self, idx):
+        return self.rules[idx]
+
+    def is_empty(self):
+        return not self.rules
 
     def to_dict(self):
         rules = [rule.to_dict() for rule in self.rules]

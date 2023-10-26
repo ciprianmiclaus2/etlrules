@@ -61,5 +61,5 @@ def test_sort_rule_empty_df():
 
 def test_name_description():
     rule = SortRule(["A", "B", "C"], name="Rule 1", description="This is the documentation for the rule")
-    assert rule.rule_name() == "Rule 1"
-    assert rule.rule_description() == "This is the documentation for the rule"
+    assert rule.get_name() == "Rule 1"
+    assert rule.get_description() == "This is the documentation for the rule"

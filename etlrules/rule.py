@@ -16,17 +16,26 @@ class BaseRule:
         self.description = description
         self.strict = strict
 
-    def rule_name(self):
+    def get_name(self):
         return self.name
 
-    def rule_description(self):
+    def get_description(self):
         return self.description
+
+    def has_input(self):
+        return True
 
     def has_output(self):
         return True
 
     def has_named_output(self):
         return bool(self.named_output)
+
+    def get_all_named_inputs(self):
+        yield from ()
+
+    def get_all_named_outputs(self):
+        yield self.named_output
 
     def _set_output_df(self, data, df):
         if self.named_output is None:
@@ -77,7 +86,7 @@ class BaseRule:
         )
 
     def __hash__(self):
-        return hash(v for k, v in self.__dict__.items() if k not in self.EXCLUDE_FROM_COMPARE)
+        return hash(v for k, v in sorted(self.__dict__.items()) if k not in self.EXCLUDE_FROM_COMPARE)
 
 
 class UnaryOpBaseRule(BaseRule):
@@ -93,6 +102,9 @@ class UnaryOpBaseRule(BaseRule):
             return data.get_main_output()
         return data.get_named_output(self.named_input)
 
+    def get_all_named_inputs(self):
+        yield self.named_input
+
 
 class BinaryOpBaseRule(BaseRule):
     """ Base class for binary operation rules (ie operations taking two data frames as input). """
@@ -101,7 +113,6 @@ class BinaryOpBaseRule(BaseRule):
         super().__init__(named_output=named_output, name=name, description=description, strict=strict)
         assert named_input_left is None or isinstance(named_input_left, str) and named_input_left
         assert named_input_right is None or isinstance(named_input_right, str) and named_input_right
-        assert named_input_left != named_input_right
         self.named_input_left = named_input_left
         self.named_input_right = named_input_right
 
@@ -114,3 +125,7 @@ class BinaryOpBaseRule(BaseRule):
         if self.named_input_right is None:
             return data.get_main_output()
         return data.get_named_output(self.named_input_right)
+
+    def get_all_named_inputs(self):
+        yield self.named_input_left
+        yield self.named_input_right
