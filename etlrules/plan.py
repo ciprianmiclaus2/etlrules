@@ -1,5 +1,5 @@
 import yaml
-from typing import Literal, Optional
+from typing import Literal, Optional, Sequence
 
 from .exceptions import InvalidPlanError
 from .rule import BaseRule
@@ -10,9 +10,16 @@ class PlanMode:
     GRAPH = "graph"
 
 
-def plan_type_from_rule(rule: BaseRule) -> Optional[Literal[PlanMode.PIPELINE, PlanMode.GRAPH]]:
+def plan_mode_from_rule(rule: BaseRule) -> Optional[Literal[PlanMode.PIPELINE, PlanMode.GRAPH]]:
     if rule and rule.has_output():
         return PlanMode.GRAPH if rule.has_named_output() else PlanMode.PIPELINE
+
+
+def plan_mode_from_rules(rules: Sequence[BaseRule]) -> Optional[Literal[PlanMode.PIPELINE, PlanMode.GRAPH]]:
+    for rule in rules:
+        mode = plan_mode_from_rule(rule)
+        if mode is not None:
+            return mode
 
 
 class Plan:
@@ -62,26 +69,24 @@ class Plan:
         InvalidPlanError: if pipeline mode rules are mixed with graph mode rules
     """
 
-    def __init__(self, name: Optional[str]=None, description: Optional[str]=None, strict: Optional[bool]=None):
+    def __init__(self, mode: Optional[Literal[PlanMode.PIPELINE, PlanMode.GRAPH]]=None, name: Optional[str]=None, description: Optional[str]=None, strict: Optional[bool]=None):
+        self.mode = mode
         self.name = name
         self.description = description
         self.strict = strict
         self.rules = []
 
-    def _check_plan_type(self, rule):
-        _plan_type = None
-        for r in self.rules:
-            _plan_type = plan_type_from_rule(r)
-            if _plan_type is not None:
-                break
-        if _plan_type is not None:
-            _new_plan_type = plan_type_from_rule(rule)
-            if _new_plan_type is not None and _plan_type != _new_plan_type:
-                raise InvalidPlanError(f"Mixing of rules taking named inputs and rules with no named inputs is not supported. ({self.rules[0].__class__} vs. {rule.__class__})")
+    def _check_plan_mode(self, rule):
+        if self.mode is None:
+            self.mode = plan_mode_from_rules(self.rules)
+        if self.mode is not None:
+            _new_rule_mode = plan_mode_from_rule(rule)
+            if _new_rule_mode is not None and self.mode != _new_rule_mode:
+                raise InvalidPlanError(f"Mixing of rules taking named inputs and rules with no named inputs is not supported. ({self.mode} vs. {rule.__class__}'s mode {_new_rule_mode})")
 
     def add_rule(self, rule):
         assert isinstance(rule, BaseRule)
-        self._check_plan_type(rule)
+        self._check_plan_mode(rule)
         self.rules.append(rule)
 
     def __iter__(self):
