@@ -85,9 +85,6 @@ class BaseRule:
             {k: v for k, v in other.__dict__.items() if k not in self.EXCLUDE_FROM_COMPARE}
         )
 
-    def __hash__(self):
-        return hash(v for k, v in sorted(self.__dict__.items()) if k not in self.EXCLUDE_FROM_COMPARE)
-
 
 class UnaryOpBaseRule(BaseRule):
     """ Base class for unary operation rules (ie operations taking a single data frame as input). """
