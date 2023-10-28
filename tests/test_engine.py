@@ -148,3 +148,15 @@ def test_run_missing_named_output_clashes():
     with pytest.raises(InvalidPlanError) as exc:
         rule_engine.run(data)
     assert "Named output 'projected_data' is produced by multiple rules" in str(exc.value)
+
+
+def test_run_produces_output_already_exists_in_input_data():
+    data = RuleData(named_inputs={"input": DataFrame()})
+    plan = Plan()
+    plan.add_rule(SortRule(['A'], named_input="input", named_output="sorted_data"))
+    plan.add_rule(ProjectRule(['A', 'B'], named_input="sorted_data", named_output="projected_data"))
+    plan.add_rule(RenameRule({'A': 'AA', 'B': 'BB'}, named_input="projected_data", named_output="input"))
+    rule_engine = RuleEngine(plan)
+    with pytest.raises(GraphRuntimeError) as exc:
+        rule_engine.run(data)
+    assert "Named output clashes. The following named outputs are produced by rules in the plan but they also exist in the input data, leading to ambiguity: {'input'}" in str(exc.value)
