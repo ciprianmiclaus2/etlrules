@@ -21,6 +21,9 @@ def test_run_simple_plan():
     plan.add_rule(ProjectRule(['A', 'B']))
     plan.add_rule(RenameRule({'A': 'AA', 'B': 'BB'}))
     rule_engine = RuleEngine(plan)
+    valid, err = rule_engine.validate(data)
+    assert valid is True
+    assert err is None
     rule_engine.run(data)
     result = data.get_main_output()
     expected = DataFrame(data=[
@@ -43,6 +46,9 @@ def test_run_simple_plan_named_inputs():
     plan.add_rule(ProjectRule(['A', 'B'], named_input="sorted_data", named_output="projected_data"))
     plan.add_rule(RenameRule({'A': 'AA', 'B': 'BB'}, named_input="projected_data", named_output="renamed_data"))
     rule_engine = RuleEngine(plan)
+    valid, err = rule_engine.validate(data)
+    assert valid is True
+    assert err is None
     rule_engine.run(data)
     result = data.get_named_output("renamed_data")
     expected = DataFrame(data=[
@@ -74,6 +80,10 @@ def test_run_empty_plan():
     with pytest.raises(InvalidPlanError) as exc:
         rule_engine.run(data)
     assert str(exc.value) == "An empty plan cannot be run."
+    valid, err = rule_engine.validate(data)
+    assert err is not None
+    assert "An empty plan cannot be run." in err
+    assert valid is False
 
 
 def test_run_unknown_mode_plan():
@@ -85,6 +95,10 @@ def test_run_unknown_mode_plan():
     with pytest.raises(InvalidPlanError) as exc:
         rule_engine.run(data)
     assert str(exc.value) == "Plan's mode cannot be determined."
+    valid, err = rule_engine.validate(data)
+    assert err is not None
+    assert "Plan's mode cannot be determined." in err
+    assert valid is False
 
 
 def test_run_simple_plan_named_inputs_different_order():
@@ -99,6 +113,9 @@ def test_run_simple_plan_named_inputs_different_order():
     plan.add_rule(RenameRule({'A': 'AA', 'B': 'BB'}, named_input="projected_data", named_output="renamed_data"))
     plan.add_rule(SortRule(['A'], named_input="input", named_output="sorted_data"))
     rule_engine = RuleEngine(plan)
+    valid, err = rule_engine.validate(data)
+    assert valid is True
+    assert err is None
     rule_engine.run(data)
     result = data.get_named_output("renamed_data")
     expected = DataFrame(data=[
@@ -122,6 +139,10 @@ def test_run_missing_named_input():
     with pytest.raises(GraphRuntimeError) as exc:
         rule_engine.run(data)
     assert "requires a named_input=input which doesn't exist in the input data and it's not produced as a named output" in str(exc.value)
+    valid, err = rule_engine.validate(data)
+    assert err is not None
+    assert "requires a named_input=input which doesn't exist in the input data and it's not produced as a named output" in err
+    assert valid is False
 
 
 def test_run_missing_named_input_in_rule():
@@ -135,6 +156,11 @@ def test_run_missing_named_input_in_rule():
         rule_engine.run(data)
     assert "RenameRule" in str(exc.value)
     assert "has empty named input." in str(exc.value)
+    valid, err = rule_engine.validate(data)
+    assert err is not None
+    assert "RenameRule" in err
+    assert "has empty named input." in err
+    assert valid is False
 
 
 def test_run_missing_named_output_clashes():
@@ -148,7 +174,10 @@ def test_run_missing_named_output_clashes():
     with pytest.raises(InvalidPlanError) as exc:
         rule_engine.run(data)
     assert "Named output 'projected_data' is produced by multiple rules" in str(exc.value)
-
+    valid, err = rule_engine.validate(data)
+    assert err is not None
+    assert "Named output 'projected_data' is produced by multiple rules" in err
+    assert valid is False
 
 def test_run_produces_output_already_exists_in_input_data():
     data = RuleData(named_inputs={"input": DataFrame()})
@@ -160,3 +189,7 @@ def test_run_produces_output_already_exists_in_input_data():
     with pytest.raises(GraphRuntimeError) as exc:
         rule_engine.run(data)
     assert "Named output clashes. The following named outputs are produced by rules in the plan but they also exist in the input data, leading to ambiguity: {'input'}" in str(exc.value)
+    valid, err = rule_engine.validate(data)
+    assert err is not None
+    assert "Named output clashes. The following named outputs are produced by rules in the plan but they also exist in the input data, leading to ambiguity: {'input'}" in err
+    assert valid is False

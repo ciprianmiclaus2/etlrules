@@ -79,12 +79,26 @@ class RuleEngine:
                 g.done(rule_idx)
         return data
 
-    def validate(self, data: RuleData) -> Tuple[bool, Optional[str]]:
+    def validate_pipeline(self, data: RuleData) -> Tuple[bool, Optional[str]]:
+        return True, None
+
+    def validate_graph(self, data: RuleData) -> Tuple[bool, Optional[str]]:
         try:
             self._get_topological_sorter(data)
         except (InvalidPlanError, GraphRuntimeError) as exc:
             return False, str(exc)
         return True, None
+
+    def validate(self, data: RuleData) -> Tuple[bool, Optional[str]]:
+        assert isinstance(data, RuleData)
+        if self.plan.is_empty():
+            return False, "An empty plan cannot be run."
+        mode = self.plan.get_mode()
+        if mode == PlanMode.PIPELINE:
+            return self.validate_pipeline(data)
+        elif mode == PlanMode.GRAPH:
+            return self.validate_graph(data)
+        return False, "Plan's mode cannot be determined."
 
     def run(self, data: RuleData) -> RuleData:
         assert isinstance(data, RuleData)

@@ -1,5 +1,10 @@
 # History
 
+## UNRELEASED
+
+* Fix bug in RuleEngine validate affecting pipeline mode
+* Export the main classes from etlrules __init__
+
 ## 0.1.0 (2023-10-28)
 
 * First release on PyPI.

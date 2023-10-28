@@ -137,6 +137,3 @@ class Plan:
             self.name == other.name and self.description == other.description and
             self.strict == other.strict and self.rules == other.rules
         )
-
-    def __hash__(self):
-        return hash((self.name, self.description, self.strict, self.rules))
