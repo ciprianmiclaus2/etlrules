@@ -17,19 +17,19 @@ class BaseRule:
         self.description = description
         self.strict = strict
 
-    def get_name(self):
+    def get_name(self) -> Optional[str]:
         return self.name
 
-    def get_description(self):
+    def get_description(self) -> Optional[str]:
         return self.description
 
-    def has_input(self):
+    def has_input(self) -> bool:
         return True
 
-    def has_output(self):
+    def has_output(self) -> bool:
         return True
 
-    def has_named_output(self):
+    def has_named_output(self) -> bool:
         return bool(self.named_output)
 
     def get_all_named_inputs(self):
@@ -44,10 +44,10 @@ class BaseRule:
         else:
             data.set_named_output(self.named_output, df)
 
-    def apply(self, data: RuleData):
+    def apply(self, data: RuleData) -> None:
         assert isinstance(data, RuleData)
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         dct = {
             "name": self.name,
             "description": self.description,
@@ -62,7 +62,7 @@ class BaseRule:
         }
 
     @classmethod
-    def from_dict(cls, dct: dict, backend: str):
+    def from_dict(cls, dct: dict, backend: str) -> 'BaseRule':
         assert backend and isinstance(backend, str)
         keys = tuple(dct.keys())
         assert len(keys) == 1
@@ -79,11 +79,11 @@ class BaseRule:
         return yaml.safe_dump(self.to_dict())
 
     @classmethod
-    def from_yaml(cls, yml: str, backend: str):
+    def from_yaml(cls, yml: str, backend: str) -> 'BaseRule':
         dct = yaml.safe_load(yml)
         return cls.from_dict(dct, backend)
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         return (
             type(self) == type(other) and 
             {k: v for k, v in self.__dict__.items() if k not in self.EXCLUDE_FROM_COMPARE} == 

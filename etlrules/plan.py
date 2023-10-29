@@ -10,12 +10,12 @@ class PlanMode:
     GRAPH = "graph"
 
 
-def plan_mode_from_rule(rule: BaseRule) -> Optional[Literal[PlanMode.PIPELINE, PlanMode.GRAPH]]:
+def plan_mode_from_rule(rule: BaseRule) -> Optional[Literal['pipeline', 'graph']]:
     if rule and rule.has_output():
         return PlanMode.GRAPH if rule.has_named_output() else PlanMode.PIPELINE
 
 
-def plan_mode_from_rules(rules: Sequence[BaseRule]) -> Optional[Literal[PlanMode.PIPELINE, PlanMode.GRAPH]]:
+def plan_mode_from_rules(rules: Sequence[BaseRule]) -> Optional[Literal['pipeline', 'graph']]:
     for rule in rules:
         mode = plan_mode_from_rule(rule)
         if mode is not None:
@@ -58,6 +58,13 @@ class Plan:
         used in the same plan as that leads to ambiguity.
 
     Args:
+        mode: One of pipeline or graph, the type of the graph. Optional.
+            In pipeline mode, rules don't use named inputs/outputs and they are run in the same order they are
+            added to the plan, with each rule taking the input from the previous rule.
+            In graph mode, rules use named inputs/outputs which create a directed acyclical graph of
+            dependency. The rules are run in the order of dependency.
+
+            When not specified, it is inferred from the first rule in the plan.
         name: A name for the plan. Optional.
         description: An optional documentation for the plan.
             This can include what the plan does, its purpose and detailed information about how it works.
@@ -69,7 +76,7 @@ class Plan:
         InvalidPlanError: if pipeline mode rules are mixed with graph mode rules
     """
 
-    def __init__(self, mode: Optional[Literal[PlanMode.PIPELINE, PlanMode.GRAPH]]=None, name: Optional[str]=None, description: Optional[str]=None, strict: Optional[bool]=None):
+    def __init__(self, mode: Optional[Literal['pipeline', 'graph']]=None, name: Optional[str]=None, description: Optional[str]=None, strict: Optional[bool]=None):
         self.mode = mode
         self.name = name
         self.description = description
@@ -83,12 +90,21 @@ class Plan:
             if _new_rule_mode is not None and mode != _new_rule_mode:
                 raise InvalidPlanError(f"Mixing of rules taking named inputs and rules with no named inputs is not supported. ({mode} vs. {rule.__class__}'s mode {_new_rule_mode})")
 
-    def get_mode(self):
+    def get_mode(self) -> Optional[Literal['pipeline', 'graph']]:
+        """ Return the mode (pipeline or graph) of the plan. """
         if self.mode is None:
             self.mode = plan_mode_from_rules(self.rules)
         return self.mode
 
-    def add_rule(self, rule: BaseRule):
+    def add_rule(self, rule: BaseRule) -> None:
+        """ Add a new rule to the plan.
+
+        Args:
+            rule: A rule instance to add to the plan
+        
+        Raises:
+            InvalidPlanError: if the rules are mixed (pipeline vs. graph - ie. mixing use of named inputs/outputs and not using them)
+        """
         assert isinstance(rule, BaseRule)
         self._check_plan_mode(rule)
         self.rules.append(rule)
@@ -96,13 +112,24 @@ class Plan:
     def __iter__(self):
         yield from self.rules
 
-    def get_rule(self, idx: int):
+    def get_rule(self, idx: int) -> BaseRule:
+        """ Return the rule at a certain index as per order of addition to the plan. """
         return self.rules[idx]
 
-    def is_empty(self):
+    def is_empty(self) -> bool:
+        """ Return True if the plan has no rules, False otherwise.
+        
+        Returns:
+            A boolean to indicate if the plan is empty.
+        """
         return not self.rules
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
+        """ Serialize the plan to a dict.
+        
+        Returns:
+            A dictionary with the plan representation.
+        """
         rules = [rule.to_dict() for rule in self.rules]
         return {
             "name": self.name,
@@ -112,7 +139,15 @@ class Plan:
         }
 
     @classmethod
-    def from_dict(cls, dct: dict, backend: str):
+    def from_dict(cls, dct: dict, backend: str) -> 'Plan':
+        """ Deserialize a plan from a dict.
+
+        Args:
+            dct: A dictionary to create the plan from
+            backend: One of the supported backends (ie pandas)
+        Returns:
+            A new instance of a Plan.
+        """
         instance = Plan(
             name=dct.get("name"),
             description=dct.get("description"),
@@ -123,15 +158,25 @@ class Plan:
             instance.add_rule(BaseRule.from_dict(rule, backend))
         return instance
 
-    def to_yaml(self):
+    def to_yaml(self) -> str:
+        """ Serialize the plan to yaml. """
         return yaml.safe_dump(self.to_dict())
 
     @classmethod
-    def from_yaml(cls, yml: str, backend: str):
+    def from_yaml(cls, yml: str, backend: str) -> 'Plan':
+        """ Deserialize a plan from yaml.
+
+        Args:
+            yml: The yaml string to create the plan from
+            backend: A supported backend (ie pandas)
+        
+        Returns:
+            A new instance of a Plan.
+        """
         dct = yaml.safe_load(yml)
         return cls.from_dict(dct, backend)
 
-    def __eq__(self, other: 'Plan'):
+    def __eq__(self, other: 'Plan') -> bool:
         return (
             type(self) == type(other) and 
             self.name == other.name and self.description == other.description and
