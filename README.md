@@ -44,6 +44,41 @@ automate various problems without the need to code. Workflows for managing chang
 around the plans, allowing technical and non-technical users to collaborate on data transformations that can be scheduled to
 run periodically for solving real business problems.
 
+## High level concepts
+
+### Plan
+
+A plan is a blueprint of how to perform extractions of tabular data, transformations of the data and how to load (ie write)
+the transformed data to its final destination.
+
+A plan is a collection of rules, each of which operate on a dataframe (tabular data).
+
+### Rule
+
+A rule is an operation performed on a dataframe. There are three types of rules:
+    * Extract rules (aka read rules)
+        - They will read an external data source (ie files, DBs, APIs endpoints) and bring the data into memory for processing
+    * Transform rules
+        - They will perform a transformation of the data (ie add a new column, modify an existing column, join columns, aggregate)
+    * Load rules (aka write rules)
+        - They will write the output into an external storage (ie files, DBs, APIs endpoints)
+
+### Rule engine
+
+The component that takes a plan and executes it (rule by rule) based on an input.
+
+
+### Rule data
+
+The structure that holds together any input dataframes, temporary results and the final output of a rule engine execution of a plan.
+The rule data can have some input dataframes or they can start as empty canvases, with the plan performing extractions/reading of data that it needs.
+
+### Backend
+
+The underlying dataframe library to use for executing the plan. For example: pandas, vaex, polars, etc.
+At the moment, only pandas is supported.
+
+
 ## Documentation
 
 <https://ciprianmiclaus.github.io/etlrules/>
