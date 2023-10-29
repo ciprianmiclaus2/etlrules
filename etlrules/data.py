@@ -13,7 +13,7 @@ class RuleData:
     def set_main_output(self, df):
         self.main_output = df
 
-    def get_named_output(self, name):
+    def get_named_output(self, name: str):
         assert name in self.named_outputs, f"No such named output {name}"
         return self.named_outputs[name]
 

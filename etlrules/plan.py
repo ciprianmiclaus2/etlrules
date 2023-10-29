@@ -76,7 +76,7 @@ class Plan:
         self.strict = strict
         self.rules = []
 
-    def _check_plan_mode(self, rule):
+    def _check_plan_mode(self, rule: BaseRule):
         mode = self.get_mode()
         if mode is not None:
             _new_rule_mode = plan_mode_from_rule(rule)
@@ -88,7 +88,7 @@ class Plan:
             self.mode = plan_mode_from_rules(self.rules)
         return self.mode
 
-    def add_rule(self, rule):
+    def add_rule(self, rule: BaseRule):
         assert isinstance(rule, BaseRule)
         self._check_plan_mode(rule)
         self.rules.append(rule)
@@ -96,7 +96,7 @@ class Plan:
     def __iter__(self):
         yield from self.rules
 
-    def get_rule(self, idx):
+    def get_rule(self, idx: int):
         return self.rules[idx]
 
     def is_empty(self):
@@ -112,7 +112,7 @@ class Plan:
         }
 
     @classmethod
-    def from_dict(cls, dct, backend):
+    def from_dict(cls, dct: dict, backend: str):
         instance = Plan(
             name=dct.get("name"),
             description=dct.get("description"),
@@ -127,11 +127,11 @@ class Plan:
         return yaml.safe_dump(self.to_dict())
 
     @classmethod
-    def from_yaml(cls, yml, backend):
+    def from_yaml(cls, yml: str, backend: str):
         dct = yaml.safe_load(yml)
         return cls.from_dict(dct, backend)
 
-    def __eq__(self, other):
+    def __eq__(self, other: 'Plan'):
         return (
             type(self) == type(other) and 
             self.name == other.name and self.description == other.description and

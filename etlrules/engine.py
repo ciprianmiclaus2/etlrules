@@ -23,7 +23,7 @@ class RuleEngine:
     rule engine.
     """
 
-    def __init__(self, plan):
+    def __init__(self, plan: Plan):
         assert isinstance(plan, Plan)
         self.plan = plan
 

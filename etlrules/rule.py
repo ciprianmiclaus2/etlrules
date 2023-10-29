@@ -1,5 +1,6 @@
 import importlib
 import yaml
+from typing import Optional
 
 from .data import RuleData
 
@@ -9,7 +10,7 @@ class BaseRule:
     EXCLUDE_FROM_COMPARE = ()
     EXCLUDE_FROM_SERIALIZE = ()
 
-    def __init__(self, named_output=None, name=None, description=None, strict=True):
+    def __init__(self, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
         assert named_output is None or isinstance(named_output, str) and named_output
         self.named_output = named_output
         self.name = name
@@ -46,7 +47,7 @@ class BaseRule:
     def assert_is_dataframe(self, df, context):
         ...
 
-    def apply(self, data):
+    def apply(self, data: RuleData):
         assert isinstance(data, RuleData)
 
     def to_dict(self):
@@ -57,7 +58,7 @@ class BaseRule:
         }
 
     @classmethod
-    def from_dict(cls, dct, backend):
+    def from_dict(cls, dct: dict, backend: str):
         assert backend and isinstance(backend, str)
         keys = tuple(dct.keys())
         assert len(keys) == 1
@@ -74,7 +75,7 @@ class BaseRule:
         return yaml.safe_dump(self.to_dict())
 
     @classmethod
-    def from_yaml(cls, yml, backend):
+    def from_yaml(cls, yml: str, backend: str):
         dct = yaml.safe_load(yml)
         return cls.from_dict(dct, backend)
 
@@ -89,12 +90,12 @@ class BaseRule:
 class UnaryOpBaseRule(BaseRule):
     """ Base class for unary operation rules (ie operations taking a single data frame as input). """
 
-    def __init__(self, named_input=None, named_output=None, name=None, description=None, strict=True):
+    def __init__(self, named_input: Optional[str]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
         super().__init__(named_output=named_output, name=name, description=description, strict=strict)
         assert named_input is None or isinstance(named_input, str) and named_input
         self.named_input = named_input
 
-    def _get_input_df(self, data):
+    def _get_input_df(self, data: RuleData):
         if self.named_input is None:
             return data.get_main_output()
         return data.get_named_output(self.named_input)
@@ -106,19 +107,19 @@ class UnaryOpBaseRule(BaseRule):
 class BinaryOpBaseRule(BaseRule):
     """ Base class for binary operation rules (ie operations taking two data frames as input). """
 
-    def __init__(self, named_input_left, named_input_right, named_output=None, name=None, description=None, strict=True):
+    def __init__(self, named_input_left: Optional[str], named_input_right: Optional[str], named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
         super().__init__(named_output=named_output, name=name, description=description, strict=strict)
         assert named_input_left is None or isinstance(named_input_left, str) and named_input_left
         assert named_input_right is None or isinstance(named_input_right, str) and named_input_right
         self.named_input_left = named_input_left
         self.named_input_right = named_input_right
 
-    def _get_input_df_left(self, data):
+    def _get_input_df_left(self, data: RuleData):
         if self.named_input_left is None:
             return data.get_main_output()
         return data.get_named_output(self.named_input_left)
 
-    def _get_input_df_right(self, data):
+    def _get_input_df_right(self, data: RuleData):
         if self.named_input_right is None:
             return data.get_main_output()
         return data.get_named_output(self.named_input_right)
