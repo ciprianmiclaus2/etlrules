@@ -1,9 +1,11 @@
 # History
 
-## UNRELEASED
+## 0.1.1 (2023-10-29)
 
 * Fix bug in RuleEngine validate affecting pipeline mode
 * Export the main classes from etlrules __init__
+* More typing annotations
+* More documentation
 
 ## 0.1.0 (2023-10-28)
 

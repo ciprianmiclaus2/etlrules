@@ -24,8 +24,8 @@ Below, we're going to create a plan with 3 rules:
 
 ``` console
 
-from etlrules.plan import Plan
-from etlrules.backends.pandas import 
+from etlrules import Plan
+from etlrules.backends.pandas import ProjectRule, RenameRule, SortRule
 
 plan = Plan()
 plan.add_rule(SortRule(['A']))
@@ -57,7 +57,7 @@ We're going to work with the following input dataframe:
 ``` console
 
 from pandas import DataFrame
-from etlrules.data import RuleData
+from etlrules import RuleData
 
 input_df = DataFrame(data=[
     {'A': 2, 'B': 'n', 'C': True},
@@ -75,7 +75,7 @@ We will need to instantiate a RuleEngine and run the plan.
 
 ``` console
 
-from etlrules.engine import RuleEngine
+from etlrules import RuleEngine
 
 rule_engine = RuleEngine(plan)
 rule_engine.run(data)
@@ -104,3 +104,97 @@ The example should produce the following transformed dataframe:
 We've just completed our first etlrules application.
 We can also serialize our plan to yaml, save it to a file, a repo for version control or a database.
 We can add names and extensive descriptions to all the rules as a form of documentation for the plan.
+
+
+## Basic graph mode example
+
+### Step 1 - Create a plan
+
+We'll use the same plan from the pipeline example; the only difference being the named inputs/outputs are used.
+
+``` console
+
+from etlrules import Plan
+from etlrules.backends.pandas import ProjectRule, RenameRule, SortRule
+
+plan = Plan()
+plan.add_rule(SortRule(['A'], named_input="input", named_output="sorted_data"))
+plan.add_rule(ProjectRule(['A', 'B']), named_input="sorted_data", named_output="projected_data")
+plan.add_rule(RenameRule({'A': 'AA', 'B': 'BB'}), named_input="projected_data", named_output="result")
+
+```
+
+Note::
+    Because the rules specify what inputs they need and what outputs they produce, the order they are
+    added to the plan is irrelevant. They will be executed in the order of dependency.
+
+As such, we can also add the rules to the plan in a different order, e.g.:
+
+``` console
+
+plan.add_rule(RenameRule({'A': 'AA', 'B': 'BB'}), named_input="projected_data", named_output="result")
+plan.add_rule(SortRule(['A'], named_input="input", named_output="sorted_data"))
+plan.add_rule(ProjectRule(['A', 'B']), named_input="sorted_data", named_output="projected_data")
+
+```
+
+### Step 2 - Prepare an input dataframe
+
+In the plan above, the single input is a named input called "input".
+We will use the same dataframe as in the pipeline example, but name it as "input" in the RuleData.
+
+``` console
+
+from pandas import DataFrame
+from etlrules import RuleData
+
+input_df = DataFrame(data=[
+    {'A': 2, 'B': 'n', 'C': True},
+    {'A': 1, 'B': 'm', 'C': False},
+    {'A': 3, 'B': 'p', 'C': True},
+])
+data = RuleData(named_inputs={"input": input_df})
+
+```
+
+### Step 3 - Run the plan
+
+Running the plan is no different in graph mode to the pipeline mode.
+
+``` console
+
+from etlrules import RuleEngine
+
+rule_engine = RuleEngine(plan)
+rule_engine.run(data)
+
+```
+
+### Step 4 - Inspect the result
+
+The RuleData will contain the result, named as "result" since the last rule, the RenameRule
+produces a named output called "result".
+
+``` console
+
+result = data.get_named_output("result")
+print(result)
+
+```
+
+The example should produce the following transformed dataframe:
+
+| AA  | BB  |
+|-----|-----|
+| 2   | n   |
+| 1   | m   |
+| 3   | p   |
+
+The other intermediary dataframe can also be inspected.
+
+``` console
+
+sorted_data = data.get_named_output("sorted_data")
+print(sorted_data)
+
+```
