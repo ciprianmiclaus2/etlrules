@@ -51,10 +51,17 @@ class BaseRule:
         assert isinstance(data, RuleData)
 
     def to_dict(self):
+        dct = {
+            "name": self.name,
+            "description": self.description,
+        }
+        dct.update({
+            attr: value for attr, value in self.__dict__.items() 
+                if not attr.startswith("_") and attr not in self.EXCLUDE_FROM_SERIALIZE
+                and attr not in dct.keys()
+        })
         return {
-            self.__class__.__name__: {
-                attr: value for attr, value in self.__dict__.items() if not attr.startswith("_") and attr not in self.EXCLUDE_FROM_SERIALIZE
-            }
+            self.__class__.__name__: dct
         }
 
     @classmethod
