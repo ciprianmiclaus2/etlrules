@@ -98,6 +98,32 @@ def test_empty_df_join_scenarios(rule_cls, key_columns_left, key_columns_right, 
         assert_frame_equal(data.get_named_output("result"), expected)
 
 
+LEFT_DF_JOIN_TO_SELF_RESULT = DataFrame(data=[
+    {"A": 1, "B": "b", "C_x": 10, "D_x": "test", "E_x": 3, "C_y": 10, "D_y": "test", "E_y": 3},
+    {"A": 2, "B": "b", "C_x": 10, "D_x": "test", "E_x": 4, "C_y": 10, "D_y": "test", "E_y": 4},
+    {"A": 3, "B": "b", "C_x": 10, "D_x": "test", "E_x": 5, "C_y": 10, "D_y": "test", "E_y": 5},
+    {"A": 4, "B": "b", "C_x": 10, "D_x": "test", "E_x": 6, "C_y": 10, "D_y": "test", "E_y": 6},
+])
+
+@pytest.mark.parametrize("rule_cls,key_columns_left,key_columns_right,named_input_left,named_input_right,named_output,expected", [
+    [LeftJoinRule, ["A", "B"], None, "input", "input", "result", LEFT_DF_JOIN_TO_SELF_RESULT],
+    [LeftJoinRule, ["A", "B"], None, None, None, None, LEFT_DF_JOIN_TO_SELF_RESULT],
+    [RightJoinRule, ["A", "B"], None, "input", "input", "result", LEFT_DF_JOIN_TO_SELF_RESULT],
+    [RightJoinRule, ["A", "B"], None, None, None, None, LEFT_DF_JOIN_TO_SELF_RESULT],
+    [InnerJoinRule, ["A", "B"], None, "input", "input", "result", LEFT_DF_JOIN_TO_SELF_RESULT],
+    [InnerJoinRule, ["A", "B"], None, None, None, None, LEFT_DF_JOIN_TO_SELF_RESULT],
+    [OuterJoinRule, ["A", "B"], None, "input", "input", "result", LEFT_DF_JOIN_TO_SELF_RESULT],
+    [OuterJoinRule, ["A", "B"], None, None, None, None, LEFT_DF_JOIN_TO_SELF_RESULT],
+])
+def test_join_to_itself(rule_cls, key_columns_left, key_columns_right, named_input_left, named_input_right, named_output, expected):
+    with get_test_data(LEFT_DF, named_inputs={"input": LEFT_DF}, named_output=named_output) as data:
+        rule = rule_cls(named_input_left=named_input_left, named_input_right=named_input_right, key_columns_left=key_columns_left, 
+                        key_columns_right=key_columns_right, suffixes=["_x", "_y"], named_output=named_output)
+        rule.apply(data)
+        result = data.get_named_output(named_output) if named_output is not None else data.get_main_output()
+        assert_frame_equal(result, expected)
+
+
 def test_raises_missing_column_left():
     with get_test_data(named_inputs={"left": LEFT_DF, "right": RIGHT_DF}) as data:
         rule = LeftJoinRule(named_input_left="left", named_input_right="right",

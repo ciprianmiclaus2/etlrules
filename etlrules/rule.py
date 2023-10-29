@@ -44,9 +44,6 @@ class BaseRule:
         else:
             data.set_named_output(self.named_output, df)
 
-    def assert_is_dataframe(self, df, context):
-        ...
-
     def apply(self, data: RuleData):
         assert isinstance(data, RuleData)
 
