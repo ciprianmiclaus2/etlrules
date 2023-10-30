@@ -1,10 +1,9 @@
 from pandas import DataFrame, NA
-from pandas.testing import assert_frame_equal
 import pytest
 
 from etlrules.exceptions import MissingColumnError
 from etlrules.backends.pandas import LeftJoinRule, InnerJoinRule, OuterJoinRule, RightJoinRule
-from tests.backends.pandas.utils.data import get_test_data
+from tests.utils.data import assert_frame_equal, get_test_data
 
 
 LEFT_DF = DataFrame(data=[

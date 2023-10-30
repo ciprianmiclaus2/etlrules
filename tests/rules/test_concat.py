@@ -1,10 +1,9 @@
 from pandas import DataFrame
-from pandas.testing import assert_frame_equal
 import pytest
 
 from etlrules.backends.pandas import VConcatRule, HConcatRule
 from etlrules.exceptions import ColumnAlreadyExistsError, MissingColumnError, SchemaError
-from tests.backends.pandas.utils.data import get_test_data
+from tests.utils.data import assert_frame_equal, get_test_data
 
 
 def test_vconcat_all_cols():

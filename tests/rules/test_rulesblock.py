@@ -1,11 +1,10 @@
 from pandas import DataFrame
-from pandas.testing import assert_frame_equal
 import pytest
 
 from etlrules.backends.pandas import (
     DedupeRule, ProjectRule, RenameRule, RulesBlock, SortRule, TypeConversionRule
 )
-from tests.backends.pandas.utils.data import get_test_data
+from tests.utils.data import assert_frame_equal, get_test_data
 
 
 @pytest.mark.parametrize("named_input,named_output", [

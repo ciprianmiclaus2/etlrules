@@ -1,10 +1,9 @@
 from pandas import DataFrame
-from pandas.testing import assert_frame_equal
 import pytest
 
 from etlrules.exceptions import MissingColumnError
 from etlrules.backends.pandas import ForwardFillRule, BackFillRule
-from tests.backends.pandas.utils.data import get_test_data
+from tests.utils.data import assert_frame_equal, get_test_data
 
 
 EMPTY_DF = DataFrame(data={"A": [], "B": [], "C": [], "D": []})

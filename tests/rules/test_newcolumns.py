@@ -1,11 +1,10 @@
 import numpy as np
 from pandas import DataFrame, concat
-from pandas.testing import assert_frame_equal
 import pytest
 
 from etlrules.exceptions import ExpressionSyntaxError, ColumnAlreadyExistsError
 from etlrules.backends.pandas import AddNewColumnRule
-from tests.backends.pandas.utils.data import get_test_data
+from tests.utils.data import assert_frame_equal, get_test_data
 
 
 INPUT_DF = DataFrame(data=[

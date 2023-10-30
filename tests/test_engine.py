@@ -1,5 +1,4 @@
 from pandas import DataFrame
-from pandas.testing import assert_frame_equal
 import pytest
 
 from etlrules.data import RuleData
@@ -7,6 +6,8 @@ from etlrules.engine import RuleEngine
 from etlrules.exceptions import GraphRuntimeError, InvalidPlanError
 from etlrules.plan import Plan
 from etlrules.backends.pandas import ProjectRule, RenameRule, SortRule, ReadCSVFileRule, WriteCSVFileRule
+
+from tests.utils.data import assert_frame_equal
 
 
 def test_run_simple_plan():

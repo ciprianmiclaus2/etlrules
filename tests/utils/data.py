@@ -1,9 +1,32 @@
 
 from contextlib import contextmanager
 from copy import deepcopy
-from pandas.testing import assert_frame_equal
+
+try:
+    from pandas import DataFrame as pandas_DataFrame
+    from pandas.testing import assert_frame_equal as pandas_assert_frame_equal
+except:
+    pandas_DataFrame = None
+    pandas_assert_frame_equal = None
+try:
+    from polars import DataFrame as polars_DataFrame
+    from polars.testing import assert_frame_equal as polars_assert_frame_equal
+except:
+    polars_DataFrame = None
+    polars_assert_frame_equal = None
 
 from etlrules.data import RuleData
+
+
+def assert_frame_equal(df, df2):
+    if pandas_DataFrame is not None and isinstance(df, pandas_DataFrame) and isinstance(df2, pandas_DataFrame):
+        assert pandas_assert_frame_equal is not None
+        pandas_assert_frame_equal(df, df2)
+    elif polars_DataFrame is not None and isinstance(df, polars_DataFrame) and isinstance(df2, polars_DataFrame):
+        assert polars_assert_frame_equal is not None
+        polars_assert_frame_equal(df, df2)
+    else:
+        assert False
 
 
 @contextmanager
