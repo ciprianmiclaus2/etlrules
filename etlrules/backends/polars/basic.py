@@ -1,14 +1,11 @@
 import polars as pl
 import re
-from typing import Iterable, Optional, Union
-
-from etlrules.exceptions import MissingColumnError
-from etlrules.rule import UnaryOpBaseRule
 
 from etlrules.backends.common.basic import (
     DedupeRule as DedupeRuleBase,
     RenameRule as RenameRuleBase,
     ReplaceRule as ReplaceRuleBase,
+    SortRule as SortRuleBase,
 )
 
 
@@ -22,49 +19,13 @@ class RenameRule(RenameRuleBase):
         return df.rename(mapper)
 
 
-class SortRule(UnaryOpBaseRule):
-    """ Sort the input dataframe by the given columns, either ascending or descending.
-
-    Args:
-        sort_by: Either a single column speified as a string or a list or tuple of columns to sort by
-        ascending: Whether to sort ascending or descending. Boolean. Default: True
-
-        named_input: Which dataframe to use as the input. Optional.
-            When not set, the input is taken from the main output.
-            Set it to a string value, the name of an output dataframe of a previous rule.
-        named_output: Give the output of this rule a name so it can be used by another rule as a named input. Optional.
-            When not set, the result of this rule will be available as the main output.
-            When set to a name (string), the result will be available as that named output.
-        name: Give the rule a name. Optional.
-            Named rules are more descriptive as to what they're trying to do/the intent.
-        description: Describe in detail what the rules does, how it does it. Optional.
-            Together with the name, the description acts as the documentation of the rule.
-        strict: When set to True, the rule does a stricter valiation. Default: True
-
-    Raises:
-        MissingColumnError: raised when a column in the sort_by doesn't exist in the input dataframe.
-
-    Note:
-        When multiple columns are specified, the first column decides the sort order.
-        For any rows that have the same value in the first column, the second column is used to decide the sort order within that group and so on.
-    """
-
-    def __init__(self, sort_by: Iterable[str], ascending: Union[bool,Iterable[bool]]=True, named_input: Optional[str]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
-        super().__init__(named_input=named_input, named_output=named_output, name=name, description=description, strict=strict)
-        if isinstance(sort_by, str):
-            self.sort_by = [sort_by]
+class SortRule(SortRuleBase):
+    def do_sort(self, df):
+        if isinstance(self.ascending, bool):
+            descending = not self.ascending
         else:
-            self.sort_by = [s for s in sort_by]
-        assert isinstance(ascending, bool) or (isinstance(ascending, (list, tuple)) and all(isinstance(val, bool) for val in ascending) and len(ascending) == len(self.sort_by)), "ascending must be a bool or a list of bool of the same len as sort_by"
-        self.ascending = ascending
-
-    def apply(self, data):
-        super().apply(data)
-        df = self._get_input_df(data)
-        if not set(self.sort_by) <= set(df.columns):
-            raise MissingColumnError(f"Column(s) {set(self.sort_by) - set(df.columns)} are missing from the input dataframe.")
-        df = df.sort_values(by=self.sort_by, ascending=self.ascending, ignore_index=True)
-        self._set_output_df(data, df)
+            descending = [not asc for asc in self.ascending]
+        return df.sort(by=self.sort_by, descending=descending)
 
 
 class ReplaceRule(ReplaceRuleBase):
