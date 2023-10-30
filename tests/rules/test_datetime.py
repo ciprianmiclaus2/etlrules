@@ -1,6 +1,5 @@
 import datetime
 from pandas import DataFrame, Timestamp
-from pandas.testing import assert_frame_equal
 import pytest
 
 from etlrules.exceptions import ColumnAlreadyExistsError, MissingColumnError
@@ -10,7 +9,7 @@ from etlrules.backends.pandas import (
     DateTimeExtractComponentRule, DateTimeAddRule, DateTimeSubstractRule,
     DateTimeDiffRule,
 )
-from tests.backends.pandas.utils.data import get_test_data
+from tests.utils.data import assert_frame_equal, get_test_data
 
 
 def test_utcnow_rule():

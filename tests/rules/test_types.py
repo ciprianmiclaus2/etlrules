@@ -1,10 +1,9 @@
 from pandas import DataFrame
-from pandas.testing import assert_frame_equal
 import pytest
 
 from etlrules.backends.pandas import TypeConversionRule
 from etlrules.exceptions import MissingColumnError, UnsupportedTypeError
-from tests.backends.pandas.utils.data import get_test_data
+from tests.utils.data import assert_frame_equal, get_test_data
 
 
 @pytest.mark.parametrize("input_df,conversion_dict,expected_df", [
