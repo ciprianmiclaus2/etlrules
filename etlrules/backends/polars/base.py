@@ -19,7 +19,7 @@ class BaseAssignColumnRule(UnaryOpBaseRule, ColumnsInOutMixin):
     def apply(self, data: RuleData):
         df = self._get_input_df(data)
         input_column, output_column = self.validate_in_out_columns(df.columns, self.input_column, self.output_column, self.strict)
-        df = df.with_columns(
+        df = df.with_columns_seq(
             self.do_apply(df, df[input_column]).alias(output_column)
         )
         self._set_output_df(data, df)

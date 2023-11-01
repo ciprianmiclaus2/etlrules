@@ -49,6 +49,6 @@ class ReplaceRule(ReplaceRuleBase):
                 col = col.str.replace(old_val, new_val)
         else:
             col = col.map_dict(dict(zip(self.values, self.new_values)), default=pl.first())
-        return df.with_columns(
+        return df.with_columns_seq(
             col.alias(output_column)
         )
