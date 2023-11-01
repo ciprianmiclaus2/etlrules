@@ -1,5 +1,9 @@
 # History
 
+## 0.2.0 (XXXX-XX-XX)
+
+* Add support for polars as a backend
+
 ## 0.1.1 (2023-10-29)
 
 * Fix bug in RuleEngine validate affecting pipeline mode

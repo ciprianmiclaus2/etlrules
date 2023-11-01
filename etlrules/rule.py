@@ -1,8 +1,9 @@
 import importlib
 import yaml
-from typing import Optional
+from typing import Optional, Sequence
 
-from .data import RuleData
+from etlrules.data import RuleData
+from etlrules.exceptions import ColumnAlreadyExistsError, MissingColumnError
 
 
 class BaseRule:
@@ -106,6 +107,64 @@ class UnaryOpBaseRule(BaseRule):
 
     def get_all_named_inputs(self):
         yield self.named_input
+
+
+class ColumnsInOutMixin:
+    def validate_input_column(self, df_columns: Sequence[str], input_column: str, strict: bool):
+        if input_column not in df_columns:
+            raise MissingColumnError(f"Column '{input_column}' is missing from the input dataframe.")
+        return input_column
+
+    def validate_output_column(self, df_columns: Sequence[str], input_column: str, output_column: Optional[str], strict: bool):
+        if output_column is not None:
+            if strict and output_column in df_columns:
+                raise ColumnAlreadyExistsError(f"Column '{output_column}' already exists in the input dataframe.")
+            return output_column
+        return input_column
+
+    def validate_in_out_columns(self, df_columns: Sequence[str], input_column: str, output_column: Optional[str], strict: bool):
+        input_column = self.validate_input_column(df_columns, input_column, strict)
+        output_column = self.validate_output_column(df_columns, input_column, output_column, strict)
+        return input_column, output_column
+
+    def validate_columns_in(self, df_columns: Sequence[str], columns: Sequence[str], strict: bool) -> Sequence[str]:
+        if not set(columns) <= set(df_columns):
+            raise MissingColumnError(f"Column(s) {set(columns) - set(df_columns)} are missing from the input dataframe.")
+        return columns
+
+    def validate_columns_out(self, df_columns: Sequence[str], columns: Sequence[str], output_columns: Optional[Sequence[str]], strict: bool, validate_length: bool=True) -> Sequence[str]:
+        if output_columns:
+            if strict:
+                existing_columns = set(output_columns) & set(df_columns)
+                if existing_columns:
+                    raise ColumnAlreadyExistsError(f"Column(s) already exist: {existing_columns}")
+            if validate_length and len(output_columns) != len(columns):
+                raise ValueError(f"output_columns must be of the same length as the columns: {columns}")
+        else:
+            output_columns = columns
+        return output_columns
+
+    def validate_columns_in_out(self, df_columns: Sequence[str], columns: Sequence[str], output_columns: Optional[Sequence[str]], strict: bool, validate_length: bool=True) -> tuple[Sequence[str], Sequence[str]]:
+        columns = self.validate_columns_in(df_columns, columns, strict)
+        output_columns = self.validate_columns_out(df_columns, columns, output_columns, strict, validate_length=validate_length)
+        return columns, output_columns
+
+
+class ColumnsInOutUnaryOpBaseRule(UnaryOpBaseRule, ColumnsInOutMixin):
+    def __init__(self, input_column: str, output_column:Optional[str]=None, named_input: Optional[str]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
+        super().__init__(named_input=named_input, named_output=named_output, name=name, description=description, strict=strict)
+        assert input_column and isinstance(input_column, str), "input_column must be a non-empty string."
+        assert output_column is None or (output_column and isinstance(output_column, str)), "output_column must be None or a non-empty string."
+        self.input_column = input_column
+        self.output_column = output_column
+
+    def do_df_apply(self, df):
+        raise NotImplementedError("Should be implemented in derived classes")
+
+    def apply(self, data: RuleData):
+        df = self._get_input_df(data)
+        df = self.do_df_apply(df)
+        self._set_output_df(data, df)
 
 
 class BinaryOpBaseRule(BaseRule):

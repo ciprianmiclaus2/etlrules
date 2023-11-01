@@ -11,8 +11,7 @@ from typing import Optional, Literal, Union
 
 from etlrules.exceptions import ColumnAlreadyExistsError, MissingColumnError
 from etlrules.backends.pandas.base import BaseAssignColumnRule
-from etlrules.backends.pandas.validation import ColumnsInOutMixin
-from etlrules.rule import UnaryOpBaseRule
+from etlrules.rule import ColumnsInOutMixin, UnaryOpBaseRule
 
 
 class BaseDateRoundTruncRule(UnaryOpBaseRule, ColumnsInOutMixin):
@@ -39,7 +38,7 @@ class BaseDateRoundTruncRule(UnaryOpBaseRule, ColumnsInOutMixin):
 
     def apply(self, data):
         df = self._get_input_df(data)
-        input_column, output_column = self.validate_in_out_columns(df, self.input_column, self.output_column, self.strict)
+        input_column, output_column = self.validate_in_out_columns(df.columns, self.input_column, self.output_column, self.strict)
         df = df.assign(**{output_column: self.do_apply(df[input_column])})
         self._set_output_df(data, df)
 

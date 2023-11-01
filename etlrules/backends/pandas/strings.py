@@ -4,8 +4,7 @@ from numpy import nan
 from typing import Iterable, Optional, Literal
 
 from etlrules.backends.pandas.base import BaseAssignColumnRule
-from etlrules.backends.pandas.validation import ColumnsInOutMixin
-from etlrules.rule import UnaryOpBaseRule
+from etlrules.rule import ColumnsInOutMixin, UnaryOpBaseRule
 
 
 class StrLowerRule(BaseAssignColumnRule):
@@ -460,7 +459,7 @@ class StrExtractRule(UnaryOpBaseRule, ColumnsInOutMixin):
 
     def apply(self, data):
         df = self._get_input_df(data)
-        columns, output_columns = self.validate_columns_in_out(df, [self.input_column], self.output_columns, self.strict, validate_length=False)
+        columns, output_columns = self.validate_columns_in_out(df.columns, [self.input_column], self.output_columns, self.strict, validate_length=False)
         new_cols_dict = {}
         groups = self._compiled_expr.groups
         for idx, col in enumerate(columns):

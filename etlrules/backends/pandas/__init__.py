@@ -1,5 +1,6 @@
 from .aggregate import AggregateRule
-from .basic import DedupeRule, ProjectRule, RenameRule, ReplaceRule, SortRule
+from etlrules.backends.common.basic import ProjectRule
+from .basic import DedupeRule, RenameRule, ReplaceRule, SortRule
 from .concat import VConcatRule, HConcatRule
 from .conditions import IfThenElseRule, FilterRule
 from .datetime import (

@@ -11,7 +11,7 @@ from .plan import Plan, PlanMode
 
 __author__ = """Ciprian Miclaus"""
 __email__ = "ciprianm@gmail.com"
-__version__ = "0.1.1"
+__version__ = "0.2.0"
 
 
 __all__ = [
