@@ -23,6 +23,17 @@ class BackendFixture:
     def __str__(self):
         return self.name
 
+    def DataFrame(self, data, dtype=None, astype=None):
+        if self.impl_pckg == pd:
+            df = pd.DataFrame(data, dtype=dtype)
+            if astype is not None:
+                df = df.astype(astype)
+        elif self.impl_pckg == pl:
+            df = pl.DataFrame(data)
+        else:
+            assert False, f"unknown impl_pckg: {self.impl_pckg}"
+        return df
+
 
 @pytest.fixture(params=[('pandas', pd, pd_rules), ('polars', pl, pl_rules)])
 def backend(request):
