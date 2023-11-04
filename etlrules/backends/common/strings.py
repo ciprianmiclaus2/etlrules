@@ -227,16 +227,6 @@ class StrSplitRejoinRule(BaseAssignColumnRule):
         assert sort in (None, self.SORT_ASCENDING, self.SORT_DESCENDING)
         self.sort = sort
 
-    def do_apply(self, df, col):
-        new_col = col.str.split(pat=self.separator, n=self.limit, regex=False)
-        new_separator = self.new_separator
-        if self.sort is not None:
-            reverse = self.sort==self.SORT_DESCENDING
-            func = lambda val: new_separator.join(sorted(val, reverse=reverse)) if val not in (nan, NA, None) else val
-        else:
-            func = lambda val: new_separator.join(val) if val not in (nan, NA, None) else val
-        return new_col.apply(func).astype("string")
-
 
 class StrStripRule(BaseAssignColumnRule):
     """ Strips leading, trailing or both whitespaces or other characters from the values in the input column.
@@ -286,13 +276,6 @@ class StrStripRule(BaseAssignColumnRule):
         assert how in (self.STRIP_BOTH, self.STRIP_LEFT, self.STRIP_RIGHT), f"Unknown how parameter {how}. It must be one of: {(self.STRIP_BOTH, self.STRIP_LEFT, self.STRIP_RIGHT)}"
         self.how = how
         self.characters = characters or None
-
-    def do_apply(self, df, col):
-        if self.how == self.STRIP_BOTH:
-            return col.str.strip(to_strip=self.characters)
-        elif self.how == self.STRIP_RIGHT:
-            return col.str.rstrip(to_strip=self.characters)
-        return col.str.lstrip(to_strip=self.characters)
 
 
 class StrPadRule(BaseAssignColumnRule):
@@ -344,11 +327,6 @@ class StrPadRule(BaseAssignColumnRule):
         self.how = how
         self.width = width
         self.fill_character = fill_character
-
-    def do_apply(self, df, col):
-        if self.how == self.PAD_LEFT:
-            return col.str.rjust(self.width, fillchar=self.fill_character)
-        return col.str.ljust(self.width, fillchar=self.fill_character)
 
 
 class StrExtractRule(UnaryOpBaseRule, ColumnsInOutMixin):
@@ -421,18 +399,3 @@ class StrExtractRule(UnaryOpBaseRule, ColumnsInOutMixin):
         if groups > 1 and self.output_columns is None:
             raise ValueError(f"The regular expression has more than 1 groups in which case output_columns must be specified (one per group).")
         self.keep_original_value = keep_original_value
-
-    def apply(self, data):
-        df = self._get_input_df(data)
-        columns, output_columns = self.validate_columns_in_out(df.columns, [self.input_column], self.output_columns, self.strict, validate_length=False)
-        new_cols_dict = {}
-        groups = self._compiled_expr.groups
-        for idx, col in enumerate(columns):
-            new_col = df[col].str.extract(self._compiled_expr, expand=True)
-            if self.keep_original_value:
-                # only the first new column keeps the value (in case of multiple groups)
-                new_col[0].fillna(value=df[col], inplace=True)
-            for group in range(groups):
-                new_cols_dict[output_columns[idx * groups + group]] = new_col[group]
-        df = df.assign(**new_cols_dict)
-        self._set_output_df(data, df)
