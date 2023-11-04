@@ -1,35 +1,119 @@
 import re
-from pandas import NA
-from numpy import nan
 from typing import Iterable, Optional, Literal
 
-from etlrules.backends.common.strings import (
-    StrLowerRule as StrLowerRuleBase,
-    StrUpperRule as StrUpperRuleBase,
-    StrCapitalizeRule as StrCapitalizeRuleBase,
-)
-
-from .base import PandasMixin
 from etlrules.backends.common.base import BaseAssignColumnRule
 from etlrules.rule import ColumnsInOutMixin, UnaryOpBaseRule
 
 
-class StrLowerRule(StrLowerRuleBase, PandasMixin):
-    def do_apply(self, df, col):
-        return col.str.lower()
+class StrLowerRule(BaseAssignColumnRule):
+    """ Converts the values in a string column to lower case.
+
+    Basic usage::
+
+        rule = StrLowerRule("col_A")
+        rule.apply(data)
+
+    Args:
+        input_column (str): A string column to convert to lower case.
+        output_column (Optional[str]): An optional new names for the column with the lower case values.
+            If provided, the existing column is unchanged, and a new column is created with the lower case values.
+            If not provided, the result is updated in place.
+
+        named_input (Optional[str]): Which dataframe to use as the input. Optional.
+            When not set, the input is taken from the main output.
+            Set it to a string value, the name of an output dataframe of a previous rule.
+        named_output (Optional[str]): Give the output of this rule a name so it can be used by another rule as a named input. Optional.
+            When not set, the result of this rule will be available as the main output.
+            When set to a name (string), the result will be available as that named output.
+        name (Optional[str]): Give the rule a name. Optional.
+            Named rules are more descriptive as to what they're trying to do/the intent.
+        description (Optional[str]): Describe in detail what the rules does, how it does it. Optional.
+            Together with the name, the description acts as the documentation of the rule.
+        strict (bool): When set to True, the rule does a stricter valiation. Default: True
+
+    Raises:
+        MissingColumnError: raised if a column doesn't exist in the input dataframe.
+        ColumnAlreadyExistsError: raised in strict mode only if the output_column already exists in the dataframe.
+
+    Note:
+        In non-strict mode, the overwriting of existing columns is ignored.
+    """
 
 
-class StrUpperRule(StrUpperRuleBase, PandasMixin):
-    def do_apply(self, df, col):
-        return col.str.upper()
+class StrUpperRule(BaseAssignColumnRule):
+    """ Converts the values in a string columns to upper case.
+
+    Basic usage::
+
+        rule = StrUpperRule("col_A")
+        rule.apply(data)
+
+    Args:
+        input_column (str): A string column to convert to upper case.
+        output_column (Optional[str]): An optional new names for the column with the upper case values.
+            If provided, the existing column is unchanged, and a new column is created with the upper case values.
+            If not provided, the result is updated in place.
+
+        named_input (Optional[str]): Which dataframe to use as the input. Optional.
+            When not set, the input is taken from the main output.
+            Set it to a string value, the name of an output dataframe of a previous rule.
+        named_output (Optional[str]): Give the output of this rule a name so it can be used by another rule as a named input. Optional.
+            When not set, the result of this rule will be available as the main output.
+            When set to a name (string), the result will be available as that named output.
+        name (Optional[str]): Give the rule a name. Optional.
+            Named rules are more descriptive as to what they're trying to do/the intent.
+        description (Optional[str]): Describe in detail what the rules does, how it does it. Optional.
+            Together with the name, the description acts as the documentation of the rule.
+        strict (bool): When set to True, the rule does a stricter valiation. Default: True
+
+    Raises:
+        MissingColumnError: raised if a column doesn't exist in the input dataframe.
+        ColumnAlreadyExistsError: raised in strict mode only if the output_column already exists in the dataframe.
+
+    Note:
+        In non-strict mode, the overwriting of existing columns is ignored.
+    """
 
 
-class StrCapitalizeRule(StrCapitalizeRuleBase, PandasMixin):
-    def do_apply(self, df, col):
-        return col.str.capitalize()
+class StrCapitalizeRule(BaseAssignColumnRule):
+    """ Converts the values in a string column to capitalized values.
+
+    Capitalization will convert the first letter in the string to upper case and the rest of the letters
+    to lower case.
+
+    Basic usage::
+
+        rule = StrCapitalizeRule("col_A")
+        rule.apply(data)
+
+    Args:
+        input_column (str): A string column with the values to capitalize.
+        output_column (Optional[str]): An optional new names for the column with the capitalized values.
+            If provided, the existing column is unchanged, and a new column is created with the capitalized values.
+            If not provided, the result is updated in place.
+
+        named_input (Optional[str]): Which dataframe to use as the input. Optional.
+            When not set, the input is taken from the main output.
+            Set it to a string value, the name of an output dataframe of a previous rule.
+        named_output (Optional[str]): Give the output of this rule a name so it can be used by another rule as a named input. Optional.
+            When not set, the result of this rule will be available as the main output.
+            When set to a name (string), the result will be available as that named output.
+        name (Optional[str]): Give the rule a name. Optional.
+            Named rules are more descriptive as to what they're trying to do/the intent.
+        description (Optional[str]): Describe in detail what the rules does, how it does it. Optional.
+            Together with the name, the description acts as the documentation of the rule.
+        strict (bool): When set to True, the rule does a stricter valiation. Default: True
+
+    Raises:
+        MissingColumnError: raised if a column doesn't exist in the input dataframe.
+        ColumnAlreadyExistsError: raised in strict mode only if the output_column already exists in the dataframe.
+
+    Note:
+        In non-strict mode, the overwriting of existing columns is ignored.
+    """
 
 
-class StrSplitRule(BaseAssignColumnRule, PandasMixin):
+class StrSplitRule(BaseAssignColumnRule):
     """ Splits a string into an array of substrings based on a string separator.
 
     Note:
@@ -81,11 +165,8 @@ class StrSplitRule(BaseAssignColumnRule, PandasMixin):
         self.separator = separator
         self.limit = limit
 
-    def do_apply(self, df, col):
-        return col.str.split(pat=self.separator, n=self.limit, regex=False)
 
-
-class StrSplitRejoinRule(BaseAssignColumnRule, PandasMixin):
+class StrSplitRejoinRule(BaseAssignColumnRule):
     """ Splits the values in a string column into an array of substrings based on a string separator then rejoin with a new separator, optionally sorting the substrings.
 
     Note:
@@ -157,7 +238,7 @@ class StrSplitRejoinRule(BaseAssignColumnRule, PandasMixin):
         return new_col.apply(func).astype("string")
 
 
-class StrStripRule(BaseAssignColumnRule, PandasMixin):
+class StrStripRule(BaseAssignColumnRule):
     """ Strips leading, trailing or both whitespaces or other characters from the values in the input column.
 
     Basic usage::
@@ -214,7 +295,7 @@ class StrStripRule(BaseAssignColumnRule, PandasMixin):
         return col.str.lstrip(to_strip=self.characters)
 
 
-class StrPadRule(BaseAssignColumnRule, PandasMixin):
+class StrPadRule(BaseAssignColumnRule):
     """ Makes strings of a given width (justifies) by padding left or right with a fill character.
 
     Basic usage::
@@ -270,7 +351,7 @@ class StrPadRule(BaseAssignColumnRule, PandasMixin):
         return col.str.ljust(self.width, fillchar=self.fill_character)
 
 
-class StrExtractRule(UnaryOpBaseRule, ColumnsInOutMixin, PandasMixin):
+class StrExtractRule(UnaryOpBaseRule, ColumnsInOutMixin):
     r""" Extract substrings from strings columns using regular expressions.
 
     Basic usage::

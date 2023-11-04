@@ -150,23 +150,6 @@ class ColumnsInOutMixin:
         return columns, output_columns
 
 
-class ColumnsInOutUnaryOpBaseRule(UnaryOpBaseRule, ColumnsInOutMixin):
-    def __init__(self, input_column: str, output_column:Optional[str]=None, named_input: Optional[str]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
-        super().__init__(named_input=named_input, named_output=named_output, name=name, description=description, strict=strict)
-        assert input_column and isinstance(input_column, str), "input_column must be a non-empty string."
-        assert output_column is None or (output_column and isinstance(output_column, str)), "output_column must be None or a non-empty string."
-        self.input_column = input_column
-        self.output_column = output_column
-
-    def do_df_apply(self, df):
-        raise NotImplementedError("Should be implemented in derived classes")
-
-    def apply(self, data: RuleData):
-        df = self._get_input_df(data)
-        df = self.do_df_apply(df)
-        self._set_output_df(data, df)
-
-
 class BinaryOpBaseRule(BaseRule):
     """ Base class for binary operation rules (ie operations taking two data frames as input). """
 

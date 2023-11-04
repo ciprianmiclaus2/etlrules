@@ -1,10 +1,9 @@
 from typing import Optional, Sequence, Union
 
-from etlrules.rule import ColumnsInOutUnaryOpBaseRule
-from etlrules.rule import ColumnsInOutMixin
+from etlrules.backends.common.base import BaseAssignColumnRule
 
 
-class RoundRule(ColumnsInOutUnaryOpBaseRule, ColumnsInOutMixin):
+class RoundRule(BaseAssignColumnRule):
     """ Rounds a set of columns to specified decimal places.
 
     Basic usage::
@@ -50,7 +49,7 @@ class RoundRule(ColumnsInOutUnaryOpBaseRule, ColumnsInOutMixin):
         self.scale = scale
 
 
-class AbsRule(ColumnsInOutUnaryOpBaseRule, ColumnsInOutMixin):
+class AbsRule(BaseAssignColumnRule):
     """ Converts numbers to absolute values.
 
     Basic usage::
@@ -83,6 +82,3 @@ class AbsRule(ColumnsInOutUnaryOpBaseRule, ColumnsInOutMixin):
     Note:
         In non-strict mode, the overwriting of existing columns is ignored.
     """
-
-    def do_df_apply(self, df, col):
-        return col.abs()

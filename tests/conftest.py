@@ -6,6 +6,20 @@ from etlrules.backends import pandas as pd_rules
 from etlrules.backends import polars as pl_rules
 
 
+TYPE_MAPPING = {
+    "pl": {
+        "string": pl.Utf8,
+        "int64": pl.Int64,
+        "Int64": pl.Int64,
+        "object": pl.Object,
+        "float64": pl.Float64,
+        "list_strings": pl.List(pl.Utf8),
+    },
+    "pd": {
+        "list_strings": "object",
+    }
+}
+
 class BackendFixture:
     def __init__(self, name, impl_pckg, rules_pckgs):
         self.name = name
@@ -25,11 +39,15 @@ class BackendFixture:
 
     def DataFrame(self, data, dtype=None, astype=None):
         if self.impl_pckg == pd:
-            df = pd.DataFrame(data, dtype=dtype)
+            df = pd.DataFrame(data, dtype=TYPE_MAPPING["pd"].get(dtype, dtype))
             if astype is not None:
-                df = df.astype(astype)
+                df = df.astype({k: TYPE_MAPPING["pd"].get(v, v) for k, v in astype.items()})
         elif self.impl_pckg == pl:
-            df = pl.DataFrame(data)
+            schema = None
+            if dtype is not None:
+                if isinstance(data, dict):
+                    schema = {k: TYPE_MAPPING["pl"].get(dtype, dtype) for k in data.keys()}
+            df = pl.DataFrame(data, schema)
         else:
             assert False, f"unknown impl_pckg: {self.impl_pckg}"
         return df

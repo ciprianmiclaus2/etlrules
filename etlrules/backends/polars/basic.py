@@ -8,6 +8,8 @@ from etlrules.backends.common.basic import (
     SortRule as SortRuleBase,
 )
 
+from .base import PolarsMixin
+
 
 class DedupeRule(DedupeRuleBase):
     def do_dedupe(self, df):
@@ -28,7 +30,7 @@ class SortRule(SortRuleBase):
         return df.sort(by=self.sort_by, descending=descending)
 
 
-class ReplaceRule(ReplaceRuleBase):
+class ReplaceRule(ReplaceRuleBase, PolarsMixin):
 
     def _get_old_new_regex(self, old_val, new_val):
         compiled = re.compile(old_val)
@@ -41,14 +43,11 @@ class ReplaceRule(ReplaceRuleBase):
             new_val = new_val.replace(f"\\{group_idx}", f"${{{group_idx}}}")
         return old_val, new_val
 
-    def do_replace(self, df, input_column, output_column):
-        col = df[input_column]
+    def do_apply(self, df, col):
         if self.regex:
             for old_val, new_val in zip(self.values, self.new_values):
                 old_val, new_val = self._get_old_new_regex(old_val, new_val)
                 col = col.str.replace(old_val, new_val)
         else:
             col = col.map_dict(dict(zip(self.values, self.new_values)), default=pl.first())
-        return df.with_columns_seq(
-            col.alias(output_column)
-        )
+        return col
