@@ -38,6 +38,19 @@ class BackendFixture:
         return self.name
 
     def DataFrame(self, data, dtype=None, astype=None):
+
+        def get_data_keys(ddata):
+            keys = []
+            if isinstance(ddata, list):
+                for elem in ddata:
+                    assert isinstance(elem, dict)
+                    for k in elem.keys():
+                        if k not in keys:
+                            keys.append(k)
+            elif isinstance(ddata, dict):
+                keys = list(ddata.keys())
+            return keys
+
         if self.impl_pckg == pd:
             df = pd.DataFrame(data, dtype=TYPE_MAPPING["pd"].get(dtype, dtype))
             if astype is not None:
@@ -45,8 +58,15 @@ class BackendFixture:
         elif self.impl_pckg == pl:
             schema = None
             if dtype is not None:
-                if isinstance(data, dict):
-                    schema = {k: TYPE_MAPPING["pl"].get(dtype, dtype) for k in data.keys()}
+                keys = get_data_keys(data)
+                if keys:
+                    schema = {k: TYPE_MAPPING["pl"][dtype] for k in keys}
+            elif astype is not None:
+                assert isinstance(astype, dict)
+                keys = get_data_keys(data)
+                schema = {
+                    col: TYPE_MAPPING["pl"][astype[col]] if col in astype else None for col in keys
+                }
             df = pl.DataFrame(data, schema)
         else:
             assert False, f"unknown impl_pckg: {self.impl_pckg}"

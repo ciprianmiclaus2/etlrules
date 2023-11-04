@@ -17,7 +17,7 @@ from .strings import (
     StrLowerRule, StrUpperRule, StrCapitalizeRule, StrSplitRule, StrSplitRejoinRule,
     StrStripRule, StrPadRule, StrExtractRule,
 )
-#from .types import TypeConversionRule
+from .types import TypeConversionRule
 
 from etlrules.backends.common.basic import RulesBlock
 
@@ -40,7 +40,7 @@ __all__ = [
     'AbsRule', 'RoundRule',
     'StrLowerRule', 'StrUpperRule', 'StrCapitalizeRule', 'StrSplitRule', 'StrSplitRejoinRule',
     'StrStripRule', 'StrPadRule', 'StrExtractRule',
-    #'TypeConversionRule',
+    'TypeConversionRule',
     'RulesBlock',
     # IO extractors and loaders
     #'ReadCSVFileRule', 'ReadParquetFileRule', 'WriteCSVFileRule', 'WriteParquetFileRule',
