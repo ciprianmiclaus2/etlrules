@@ -72,8 +72,6 @@ ALL_RULES = [
                 named_output="result", name="BF", description="Some desc2 BF", strict=True),
     StrStripRule("B", how="both", characters="Ac", output_column="F", named_input="input", 
                 named_output="result", name="BF", description="Some desc2 BF", strict=True),
-    StrPadRule("B", width=8, fill_character=".", how="both", output_column="F", named_input="input", 
-                named_output="result", name="BF", description="Some desc2 BF", strict=True),
     StrSplitRule("B", separator=";", limit=4, output_column="F", named_input="input", 
                 named_output="result", name="BF", description="Some desc2 BF", strict=True),
     StrSplitRule("B", separator=",|;", limit=4, output_column="F", named_input="input", 

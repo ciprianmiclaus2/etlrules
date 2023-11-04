@@ -9,8 +9,9 @@ from pandas.tseries.offsets import DateOffset, BusinessDay
 from pandas.api.types import is_timedelta64_dtype, is_datetime64_any_dtype
 from typing import Optional, Literal, Union
 
+from .base import PandasMixin
 from etlrules.exceptions import ColumnAlreadyExistsError, MissingColumnError
-from etlrules.backends.pandas.base import BaseAssignColumnRule
+from etlrules.backends.common.base import BaseAssignColumnRule
 from etlrules.rule import ColumnsInOutMixin, UnaryOpBaseRule
 
 
@@ -224,7 +225,7 @@ class DateTimeRoundUpRule(BaseDateRoundTruncRule):
         )
 
 
-class DateTimeExtractComponentRule(BaseAssignColumnRule):
+class DateTimeExtractComponentRule(BaseAssignColumnRule, PandasMixin):
     """ Extract an individual component of a date/time (e.g. year, month, day, hour, etc.).
 
     Basic usage::
@@ -338,7 +339,7 @@ DT_ARITHMETIC_UNITS = {
 DT_TIMEDELTA_UNITS = set(["days", "hours", "minutes", "seconds", "milliseconds", "microseconds", "nanoseconds"])
 
 
-class AddSubBaseRule(BaseAssignColumnRule):
+class AddSubBaseRule(BaseAssignColumnRule, PandasMixin):
 
     SIGN = 0
 
@@ -682,7 +683,7 @@ class DateTimeLocalNowRule(UnaryOpBaseRule):
         self._set_output_df(data, df)
 
 
-class DateTimeToStrFormatRule(BaseAssignColumnRule):
+class DateTimeToStrFormatRule(BaseAssignColumnRule, PandasMixin):
     """ Formats a datetime column to a string representation according to a specified format.
 
     Basic usage::

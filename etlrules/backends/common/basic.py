@@ -1,9 +1,9 @@
 from typing import Literal, Iterable, Mapping, Optional, Union
 
 from etlrules.data import RuleData
-from etlrules.rule import BaseRule, UnaryOpBaseRule, ColumnsInOutUnaryOpBaseRule
+from etlrules.rule import BaseRule, UnaryOpBaseRule
 from etlrules.exceptions import MissingColumnError
-from etlrules.rule import ColumnsInOutMixin
+from etlrules.backends.common.base import BaseAssignColumnRule
 
 
 class DedupeRule(UnaryOpBaseRule):
@@ -169,7 +169,7 @@ class RenameRule(UnaryOpBaseRule):
         self._set_output_df(data, df)
 
 
-class ReplaceRule(ColumnsInOutUnaryOpBaseRule, ColumnsInOutMixin):
+class ReplaceRule(BaseAssignColumnRule):
     """ Replaces some some values (or regular expressions) with another set of values (or regular expressions).
 
     Basic usage::
@@ -229,12 +229,8 @@ class ReplaceRule(ColumnsInOutUnaryOpBaseRule, ColumnsInOutMixin):
             assert all(isinstance(val, str) for val in self.values)
             assert all(isinstance(val, str) for val in self.new_values)
 
-    def do_replace(self, df, input_column, output_column):
+    def do_apply(self, df, col):
         raise NotImplementedError("Have you imported the rules from etlrules.backends.<your_backend> and not common?")
-
-    def do_df_apply(self, df):
-        input_column, output_column = self.validate_in_out_columns(df.columns, self.input_column, self.output_column, self.strict)
-        return self.do_replace(df, input_column, output_column)
 
 
 class SortRule(UnaryOpBaseRule):
