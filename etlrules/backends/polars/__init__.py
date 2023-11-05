@@ -43,5 +43,5 @@ __all__ = [
     'TypeConversionRule',
     'RulesBlock',
     # IO extractors and loaders
-    #'ReadCSVFileRule', 'ReadParquetFileRule', 'WriteCSVFileRule', 'WriteParquetFileRule',
+    'ReadCSVFileRule', 'ReadParquetFileRule', 'WriteCSVFileRule', 'WriteParquetFileRule',
 ]
