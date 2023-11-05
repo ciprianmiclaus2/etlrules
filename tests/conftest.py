@@ -14,8 +14,10 @@ TYPE_MAPPING = {
         "object": pl.Object,
         "float64": pl.Float64,
         "list_strings": pl.List(pl.Utf8),
+        "datetime": pl.Datetime,
     },
     "pd": {
+        "datetime": "datetime64[ns]",
         "list_strings": "object",
     }
 }
@@ -72,6 +74,29 @@ class BackendFixture:
             assert False, f"unknown impl_pckg: {self.impl_pckg}"
         return df
 
+    def astype(self, df, astype):
+        if self.impl_pckg == pd:
+            astype = {
+                col: TYPE_MAPPING["pd"][dtype] for col, dtype in astype.items()
+            }
+            return df.astype(astype)
+        elif self.impl_pckg == pl:
+            return df.with_columns(
+                *[pl.col(col).cast(TYPE_MAPPING["pl"][dtype]) for col, dtype in astype.items()]
+            )
+        assert False, f"unknown impl_pckg: {self.impl_pckg}"
+
+    def rename(self, df, rename_dict):
+        if self.impl_pckg == pd:
+            return df.rename(columns=rename_dict)
+        elif self.impl_pckg == pl:
+            columns = list(df.columns)
+            if all(isinstance(key, int) and 0 <= key < len(columns) for key in rename_dict.keys()):
+                rename_dict = {
+                    columns[key]: val for key, val in rename_dict.items()
+                }
+            return df.rename(rename_dict)
+        assert False, f"unknown impl_pckg: {self.impl_pckg}"
 
 @pytest.fixture(params=[('pandas', pd, pd_rules), ('polars', pl, pl_rules)])
 def backend(request):

@@ -22,7 +22,7 @@ from .types import TypeConversionRule
 from etlrules.backends.common.basic import RulesBlock
 
 ## IO - extractors and loaders
-#from .io.files import ReadCSVFileRule, ReadParquetFileRule, WriteCSVFileRule, WriteParquetFileRule
+from .io.files import ReadCSVFileRule, ReadParquetFileRule, WriteCSVFileRule, WriteParquetFileRule
 
 
 __all__ = [
