@@ -18,19 +18,25 @@ except:
 from etlrules.data import RuleData
 
 
-def assert_frame_equal(df, df2, ignore_row_ordering=False):
+def assert_frame_equal(df, df2, ignore_row_ordering=False, ignore_column_ordering=False):
     if pandas_DataFrame is not None and isinstance(df, pandas_DataFrame) and isinstance(df2, pandas_DataFrame):
         assert pandas_assert_frame_equal is not None
         if ignore_row_ordering:
-            pandas_assert_frame_equal(df.sort_values(list(df.columns)), df2.sort_values(list(df2.columns)))
-        else:
-            pandas_assert_frame_equal(df, df2)
+            df = df.sort_values(list(df.columns))
+            df2 = df2.sort_values(list(df2.columns))
+        if ignore_column_ordering:
+            df = df[sorted(df.columns)]
+            df2 = df2[sorted(df2.columns)]
+        pandas_assert_frame_equal(df, df2)
     elif polars_DataFrame is not None and isinstance(df, polars_DataFrame) and isinstance(df2, polars_DataFrame):
         assert polars_assert_frame_equal is not None
         if ignore_row_ordering:
-            polars_assert_frame_equal(df.sort(df.columns), df2.sort(df2.columns))
-        else:
-            polars_assert_frame_equal(df, df2)
+            df = df.sort(df.columns)
+            df2 = df2.sort(df2.columns)
+        if ignore_column_ordering:
+            df = df[sorted(df.columns)]
+            df2 = df2[sorted(df2.columns)]
+        polars_assert_frame_equal(df, df2)
     else:
         assert False
 

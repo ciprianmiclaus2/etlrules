@@ -10,7 +10,7 @@ from .concat import VConcatRule, HConcatRule
 #    DateTimeDiffRule,
 #)
 from .fill import ForwardFillRule, BackFillRule
-#from .joins import LeftJoinRule, InnerJoinRule, OuterJoinRule, RightJoinRule
+from .joins import LeftJoinRule, InnerJoinRule, OuterJoinRule, RightJoinRule
 #from .newcolumns import AddNewColumnRule
 from .numeric import AbsRule, RoundRule
 from .strings import (
@@ -35,7 +35,7 @@ __all__ = [
     #'DateTimeExtractComponentRule', 'DateTimeAddRule', 'DateTimeSubstractRule',
     #'DateTimeDiffRule',
     'ForwardFillRule', 'BackFillRule',
-    #'LeftJoinRule', 'InnerJoinRule', 'OuterJoinRule', 'RightJoinRule',
+    'LeftJoinRule', 'InnerJoinRule', 'OuterJoinRule', 'RightJoinRule',
     #'AddNewColumnRule',
     'AbsRule', 'RoundRule',
     'StrLowerRule', 'StrUpperRule', 'StrCapitalizeRule', 'StrSplitRule', 'StrSplitRejoinRule',
