@@ -12,10 +12,10 @@ from typing import Optional, Literal, Union
 from .base import PandasMixin
 from etlrules.exceptions import ColumnAlreadyExistsError, MissingColumnError
 from etlrules.backends.common.base import BaseAssignColumnRule
-from etlrules.rule import ColumnsInOutMixin, UnaryOpBaseRule
+from etlrules.rule import UnaryOpBaseRule
 
 
-class BaseDateRoundTruncRule(UnaryOpBaseRule, ColumnsInOutMixin):
+class BaseDateRoundTruncRule(PandasMixin, BaseAssignColumnRule):
 
     UNITS = {
         "day": "D",
@@ -28,20 +28,9 @@ class BaseDateRoundTruncRule(UnaryOpBaseRule, ColumnsInOutMixin):
     }
 
     def __init__(self, input_column: str, unit: str, output_column:Optional[str]=None, named_input: Optional[str]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
-        super().__init__(named_input=named_input, named_output=named_output, name=name, description=description, strict=strict)
-        self.input_column = input_column
-        self.output_column = output_column
+        super().__init__(input_column=input_column, output_column=output_column, named_input=named_input, named_output=named_output, name=name, description=description, strict=strict)
         assert isinstance(unit, str) and unit in self.UNITS.keys(), f"unit must be one of {self.UNITS.keys()} and not '{unit}'"
         self.unit = unit
-
-    def do_apply(self, series):
-        raise NotImplementedError("Implement in a derived class.")
-
-    def apply(self, data):
-        df = self._get_input_df(data)
-        input_column, output_column = self.validate_in_out_columns(df.columns, self.input_column, self.output_column, self.strict)
-        df = df.assign(**{output_column: self.do_apply(df[input_column])})
-        self._set_output_df(data, df)
 
 
 class DateTimeRoundRule(BaseDateRoundTruncRule):
@@ -97,7 +86,7 @@ class DateTimeRoundRule(BaseDateRoundTruncRule):
         In non-strict mode, overwriting existing columns is ignored.
     """
 
-    def do_apply(self, series):
+    def do_apply(self, df, series):
         return series.dt.round(
             freq=self.UNITS[self.unit],
             ambiguous='infer',
@@ -157,7 +146,7 @@ class DateTimeRoundDownRule(BaseDateRoundTruncRule):
         In non-strict mode, overwriting existing columns is ignored.
     """
 
-    def do_apply(self, series):
+    def do_apply(self, df, series):
         return series.dt.floor(
             freq=self.UNITS[self.unit],
             ambiguous='infer',
@@ -217,7 +206,7 @@ class DateTimeRoundUpRule(BaseDateRoundTruncRule):
         In non-strict mode, overwriting existing columns is ignored.
     """
 
-    def do_apply(self, series):
+    def do_apply(self, df, series):
         return series.dt.ceil(
             freq=self.UNITS[self.unit],
             ambiguous='infer',
@@ -225,7 +214,7 @@ class DateTimeRoundUpRule(BaseDateRoundTruncRule):
         )
 
 
-class DateTimeExtractComponentRule(BaseAssignColumnRule, PandasMixin):
+class DateTimeExtractComponentRule(PandasMixin, BaseAssignColumnRule):
     """ Extract an individual component of a date/time (e.g. year, month, day, hour, etc.).
 
     Basic usage::
@@ -339,7 +328,7 @@ DT_ARITHMETIC_UNITS = {
 DT_TIMEDELTA_UNITS = set(["days", "hours", "minutes", "seconds", "milliseconds", "microseconds", "nanoseconds"])
 
 
-class AddSubBaseRule(BaseAssignColumnRule, PandasMixin):
+class AddSubBaseRule(PandasMixin, BaseAssignColumnRule):
 
     SIGN = 0
 
@@ -683,7 +672,7 @@ class DateTimeLocalNowRule(UnaryOpBaseRule):
         self._set_output_df(data, df)
 
 
-class DateTimeToStrFormatRule(BaseAssignColumnRule, PandasMixin):
+class DateTimeToStrFormatRule(PandasMixin, BaseAssignColumnRule):
     """ Formats a datetime column to a string representation according to a specified format.
 
     Basic usage::
