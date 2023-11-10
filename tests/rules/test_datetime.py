@@ -1,5 +1,7 @@
 import datetime
+import polars as pl
 import pytest
+import sys
 
 from etlrules.exceptions import ColumnAlreadyExistsError, MissingColumnError
 from tests.utils.data import assert_frame_equal, get_test_data
@@ -665,6 +667,8 @@ INPUT_ADD_SUB_DF4 = [
     ["DateTimeSubstractRule", "A", 10, "days", "B", INPUT_ADD_SUB_DF2, None, ColumnAlreadyExistsError, None],
     ["DateTimeSubstractRule", "A", "C", "days", None, INPUT_ADD_SUB_DF2, None, MissingColumnError, None],])
 def test_add_sub_rules(rule_cls_str, input_column, unit_value, unit, output_column, input_df, input_astype, expected, expected_astype, backend):
+    if backend.impl == pl and unit_value == "weekdays" and sys.version_info <= (3, 10):
+        pytest.skip()
     input_df = backend.DataFrame(input_df, astype=input_astype)
     if isinstance(expected, (list, dict)):
         expected = backend.DataFrame(expected, astype=expected_astype)
