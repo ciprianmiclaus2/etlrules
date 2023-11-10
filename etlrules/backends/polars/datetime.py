@@ -170,7 +170,7 @@ def add_sub_col(df, col, unit_value, unit, sign, input_column):
                     )
                 offset_unit = OFFSETS[unit]
                 return col.dt.offset_by(
-                    col2.map_elements(lambda x: f"{sign*x}{offset_unit}_saturating" if x else x, return_dtype=pl.Utf8)
+                    col2.map_elements(lambda x: f"{sign*x}{offset_unit}" if x else x, return_dtype=pl.Utf8)
                 )
         if sign == -1:
             return col - col2
@@ -181,7 +181,7 @@ def add_sub_col(df, col, unit_value, unit, sign, input_column):
         if plb is None:
             raise RuntimeError("Calculation requires polars_business. pip install polars_business.")
         return plb.col(input_column).bdt.offset_by(f"{sign * unit_value}{OFFSETS[unit]}", weekend=('Sat', 'Sun'), roll="forward" if sign == -1 else "backward")
-    return col.dt.offset_by(f"{sign * unit_value}{OFFSETS[unit]}_saturating")
+    return col.dt.offset_by(f"{sign * unit_value}{OFFSETS[unit]}")
 
 
 class DateTimeAddRule(PolarsMixin, DateTimeAddRuleBase):
