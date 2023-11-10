@@ -1177,6 +1177,120 @@ dev = ["pre-commit", "tox"]
 testing = ["pytest", "pytest-benchmark"]
 
 [[package]]
+name = "polars-business"
+version = "0.3.11"
+description = "Business day utilities for Polars"
+optional = true
+python-versions = ">=3.8"
+files = [
+    {file = "polars_business-0.3.11-cp310-cp310-macosx_10_12_x86_64.whl", hash = "sha256:1f21ca6ab9faab49b651fae46570cb6e408f56c140697139505aa831a43e5e5e"},
+    {file = "polars_business-0.3.11-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:ada9ad1b4833849ecea296c0fdb942e26e34ff40f4714651b4f2399b95336acf"},
+    {file = "polars_business-0.3.11-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:c06b2246dac3b4977aaeb15f36d1a658acb5bc5c1de9caeb28de3d0a0f16e1f8"},
+    {file = "polars_business-0.3.11-cp310-cp310-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:5eea94a8d4a474b1beb7abd369fc6afa642dab32afda01cae2784ae6fcb48b66"},
+    {file = "polars_business-0.3.11-cp310-cp310-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:75273c5c4aa447e02e653e9afa4956cfb9a7d2b902ae93965902a99e030a594e"},
+    {file = "polars_business-0.3.11-cp310-cp310-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:02948a5e63a00793da5b1149d7f63d8c962a0c4168ec763b3e232e54129c1f30"},
+    {file = "polars_business-0.3.11-cp310-cp310-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:41eea53c1222fb611bcfad3f6f2289122a14e9c613cabe2f767255d4eb0b5f98"},
+    {file = "polars_business-0.3.11-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:9d3f455811c20e475c7472dde77c61107ffafbe4f3da3f387fea6031c82d7757"},
+    {file = "polars_business-0.3.11-cp310-none-win32.whl", hash = "sha256:0d24609c851d011e5a5897fc0c848253ecc7cc75501f2ab149d86f871b52674d"},
+    {file = "polars_business-0.3.11-cp310-none-win_amd64.whl", hash = "sha256:0bd316a0dfc3a28b2560bbf2a0c999e18008c0542f4232e132f3e9b6d419a326"},
+    {file = "polars_business-0.3.11-cp311-cp311-macosx_10_12_x86_64.whl", hash = "sha256:77a91c3539d84d93dc89cb3711cc610f504131f0825b3d4456128b149db02621"},
+    {file = "polars_business-0.3.11-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:45a4a4efc6793e4d9fd28bed98364bf7124f965d4158243b4de6908fc3d2e743"},
+    {file = "polars_business-0.3.11-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:3e0504f650a1ccc0f4fcf2c41cbc7088a49ecbbf70b070e412b25da70c848516"},
+    {file = "polars_business-0.3.11-cp311-cp311-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:6cd17f5ecf0188a78b705d2e607c7721d8988d90c067825b58424512fc0c6ea8"},
+    {file = "polars_business-0.3.11-cp311-cp311-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:4ee29ea6092e5719c0df42acc2a7e9cc8a2bfbe185a303d6b4d23577dd51bff7"},
+    {file = "polars_business-0.3.11-cp311-cp311-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:00dd2cd4269e10a4816c6107fe7219d2168dd151dc93c3a0b1e26a78d368e8bd"},
+    {file = "polars_business-0.3.11-cp311-cp311-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:9bdea7e5b53d3dde868b54a6db5b148b56f3f4ab5139816afd4a73c4d37dad12"},
+    {file = "polars_business-0.3.11-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:e7fac7ed7e401e02a245185db2e054a25ced09e7c63ac91d08dbaf0b8a871897"},
+    {file = "polars_business-0.3.11-cp311-none-win32.whl", hash = "sha256:857ac40a8f4bffd1159f7790c905e4235432c0cfccf1689eae159cf5ed0eafce"},
+    {file = "polars_business-0.3.11-cp311-none-win_amd64.whl", hash = "sha256:1ab32949b2fa8907fae3ae4d3b43ae30dec4bea616905b0bb5a818af59238092"},
+    {file = "polars_business-0.3.11-cp312-cp312-macosx_10_12_x86_64.whl", hash = "sha256:f3ab160cfb67e88de1084560d51c791c82065283e548e015247fce1dabf54df1"},
+    {file = "polars_business-0.3.11-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:acef858855aaac6e868454a4dd3090818e5ec1b4a2d19615463cb778d63560f8"},
+    {file = "polars_business-0.3.11-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:54ea5a054cb28adae8c48136ee283cd418495b2c3c821f6526e0af3c8de9415f"},
+    {file = "polars_business-0.3.11-cp312-cp312-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:c17700e231ea1eb2b54bf07e91a5d9012623ad1581bc0421168076da885a6bd6"},
+    {file = "polars_business-0.3.11-cp312-cp312-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:3ecb2d0026398cdf3258f195d85b68c3cb0b29edd73bbca575e79e9ce7b5b755"},
+    {file = "polars_business-0.3.11-cp312-cp312-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:efd2fe29fcfe3f6a6f5485ba110dc2f323238ae8276abb10a990e7a9c163ce4c"},
+    {file = "polars_business-0.3.11-cp312-cp312-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:3154c51b03c2350eaf22eb7e78f001e6643dbb5d47290c3e546e5fda095a716f"},
+    {file = "polars_business-0.3.11-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:a7de5617181e7631efe9c8888f34aeccb6e5a9ee6f7f9ff59f0e1459ab7d660a"},
+    {file = "polars_business-0.3.11-cp312-none-win32.whl", hash = "sha256:d96662ab427d6790b9fa910c40bbded7875ac90a0b9502cc1eedea256c15e078"},
+    {file = "polars_business-0.3.11-cp312-none-win_amd64.whl", hash = "sha256:5dd2fd743a6045871286a12aea44ffd6f86f59d786b51772ad2df260b415bcda"},
+    {file = "polars_business-0.3.11-cp313-cp313-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:39ce2e33954592344496bb86ec9ff056b4143dbde0e93cf92dfdb2187ceb5993"},
+    {file = "polars_business-0.3.11-cp313-cp313-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:0342c2b21e5ed49f55430ef15cb038d0dc0a9c0019572e71b82df9adeb02ff53"},
+    {file = "polars_business-0.3.11-cp313-cp313-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:cbf26264eded6f9e6fd55ff05d28c7cb221ab07ec7a668b2e178fffe7ca75461"},
+    {file = "polars_business-0.3.11-cp313-cp313-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:09bda2c27fd73811c557dfc3eb4c0b5063207d6d12872dd65dbb8a433beca6ce"},
+    {file = "polars_business-0.3.11-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:1bf7c345456715229d7892316f02b11a4833b2d81b4831bc2213513b46cab79c"},
+    {file = "polars_business-0.3.11-cp38-cp38-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:8d7d06a8531ed501847ea19abea5a7922b92e95f4433aea8c589e45391de638e"},
+    {file = "polars_business-0.3.11-cp38-cp38-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:b251fe89eadd1b8d524852808fe6fbe67e63abf60d04067d6c82dbdad9764fce"},
+    {file = "polars_business-0.3.11-cp38-cp38-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:a2a27a5e1a81f5686817ffe8b9c15af6d405417359263d10f2536ceaf95546eb"},
+    {file = "polars_business-0.3.11-cp38-cp38-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:b6f1a4ce72772fda1b1c8e55ffc78de97114d613d88efa69807ab47ab7f6486b"},
+    {file = "polars_business-0.3.11-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:06ea5ff09816598f5b61c9052a56d210cf2f9b73b9edcc247d30d4342eb770ec"},
+    {file = "polars_business-0.3.11-cp38-none-win32.whl", hash = "sha256:b5c13905c394ca929beaadc8633b416f0404221265c79b4a2ebdfb3129556adc"},
+    {file = "polars_business-0.3.11-cp38-none-win_amd64.whl", hash = "sha256:40312da04b00cffdf5ed6cdcb47d7effdca687bef5380aba51aa71a98772c405"},
+    {file = "polars_business-0.3.11-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:295bd3eb03dd825e3ea8e2a5a04cc4cf7174a57ba71e5ce6fcc2f93090a5219d"},
+    {file = "polars_business-0.3.11-cp39-cp39-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:3d342a4c298ecf5c400a6fed068456fa030dbcda18e7e5274e67d9c6c254c879"},
+    {file = "polars_business-0.3.11-cp39-cp39-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:d7fcbdbc7fe556e20295b62ea86504fd1cbcdab3283d32ac69a35b8a697378a4"},
+    {file = "polars_business-0.3.11-cp39-cp39-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:8fdabd610d5a34c00ae5fd3f44d087113707e900199f21b1f3a466da48fd0230"},
+    {file = "polars_business-0.3.11-cp39-cp39-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:94995ac6a5aa37a54428e6c2976afdef4c21a51ee75f1a421cbdaf6a5bf5522b"},
+    {file = "polars_business-0.3.11-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:4daa38b5c3fd6a768803dfe6fad60d622271b60e925247d7eb0e80595363d223"},
+    {file = "polars_business-0.3.11-cp39-none-win32.whl", hash = "sha256:9702044279f68a44c0e4920ec5fc980acebe9058cba97f2cdd5d0325fc676219"},
+    {file = "polars_business-0.3.11-cp39-none-win_amd64.whl", hash = "sha256:80de12cef28de83d55c1134a91c4c426ea9fd7cca86dd62a5a756f07ae9d269f"},
+    {file = "polars_business-0.3.11-pp310-pypy310_pp73-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:05736dfbb46939cb7620e5423d07dc4a93781ef8bb572737f25cce1f299a0a5d"},
+    {file = "polars_business-0.3.11-pp310-pypy310_pp73-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:c6d0011add38c79bc901b7c23e71986a062a1e64e925be6c71a21d7a4c66898e"},
+    {file = "polars_business-0.3.11-pp310-pypy310_pp73-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:17414f37ddbbd300662c2ed99c7ab2cae448d3d0a8db0ee0818c0121d0f4f10e"},
+    {file = "polars_business-0.3.11-pp310-pypy310_pp73-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:cc0777ccf385330da6ec00e3049bc2c2dca9c7e0b8906697673be516178a17ed"},
+    {file = "polars_business-0.3.11-pp310-pypy310_pp73-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:9c3a09a625030f39028c9a8fbc86f52a9da2659b3b1734dec72b4bc601899c30"},
+    {file = "polars_business-0.3.11-pp310-pypy310_pp73-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:b170b0d4c825aa1f31ff9a9a3ba7346109ae557704a4714b171eb4443b8d2a40"},
+    {file = "polars_business-0.3.11-pp38-pypy38_pp73-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:ec44ab8dc3c5e84e74ddae6bc9ba248956c33e505d4ebfdb050de884a95b8bbf"},
+    {file = "polars_business-0.3.11-pp38-pypy38_pp73-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:8eccfc9772be9e425b92db240a5968ae864d99e4e2a9b4acb633b14cd0a6f89c"},
+    {file = "polars_business-0.3.11-pp38-pypy38_pp73-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:7b6a46909c6fd3ddade60c6e1b5c788306c37b00c8d0d53262eb0354b799b4e2"},
+    {file = "polars_business-0.3.11-pp38-pypy38_pp73-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:709d29db61c7a419cccf94463913e9e6f08be34c3feba1a24537a772be10324f"},
+    {file = "polars_business-0.3.11-pp38-pypy38_pp73-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:de3fbbea9687f2fed187011f1de586dd1929a348ab8fbd85aa5bfbbf04970327"},
+    {file = "polars_business-0.3.11-pp38-pypy38_pp73-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:63122705b80b0d897540b19a946ea12ac6a99c0f72b56617159eb5a30e4d3df1"},
+    {file = "polars_business-0.3.11-pp39-pypy39_pp73-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:ed91d82eab761130c2001a1cc0a25059bc9b8e04293e8bfc5b203757280420f6"},
+    {file = "polars_business-0.3.11-pp39-pypy39_pp73-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:db0813654f8c27e9a0d13341b7e58d817ade297a847afa149a028d4561b958cd"},
+    {file = "polars_business-0.3.11-pp39-pypy39_pp73-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:b3d083fabce509d1044ec87dfd8f16f0ae14acc7f129ae0791179cf8a2863dc8"},
+    {file = "polars_business-0.3.11-pp39-pypy39_pp73-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:74afed8b9288c6185f2704726516c16861e8775a74477f73efb739b06eba74e6"},
+    {file = "polars_business-0.3.11-pp39-pypy39_pp73-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:9dff91d521a7cd8fbf7bf444c8b3185277eecb5f40d7d33c0987d8177bdad874"},
+    {file = "polars_business-0.3.11-pp39-pypy39_pp73-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:5e5389eae9b970bba819425b29a54dbbe3912bfb85eb932d6d150bdeedd19da1"},
+    {file = "polars_business-0.3.11.tar.gz", hash = "sha256:6539f9bb4bd747d91e2bb1ef58489b93d635f464f113139bb1860987389b5e21"},
+]
+
+[[package]]
+name = "polars-lts-cpu"
+version = "0.19.13"
+description = "Blazingly fast DataFrame library"
+optional = true
+python-versions = ">=3.8"
+files = [
+    {file = "polars_lts_cpu-0.19.13-cp38-abi3-macosx_10_12_x86_64.whl", hash = "sha256:c5c74b01641f6d1c5837d6b324d61df173646588fefe8cc9f58306a283f9a11e"},
+    {file = "polars_lts_cpu-0.19.13-cp38-abi3-macosx_11_0_arm64.whl", hash = "sha256:23745965cfc425821718f31f8c70193fd1b1488456a391a93865c3eec3f01bca"},
+    {file = "polars_lts_cpu-0.19.13-cp38-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:b94fd93b0fe37ff2514bf0e3aeba84fc4d51d11acedbc2752eb3fda0445e20fb"},
+    {file = "polars_lts_cpu-0.19.13-cp38-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:ce9357d6762ecd2569d4d88596d347216ce551b673ed394f8d4e5a1e701ee2f3"},
+    {file = "polars_lts_cpu-0.19.13-cp38-abi3-win_amd64.whl", hash = "sha256:62b5bd79eb7c2feab94dd2125c04a00ac9e6c8fa652d7a70d4f923beb87c89d4"},
+    {file = "polars_lts_cpu-0.19.13.tar.gz", hash = "sha256:b539035ed378934c73353df4fe6fd9b908a4ceb0836a0287584e2023e01e04fb"},
+]
+
+[package.extras]
+adbc = ["adbc_driver_sqlite"]
+all = ["polars[adbc,cloudpickle,connectorx,deltalake,fsspec,gevent,matplotlib,numpy,pandas,pyarrow,pydantic,pyiceberg,sqlalchemy,timezone,xlsx2csv,xlsxwriter]"]
+cloudpickle = ["cloudpickle"]
+connectorx = ["connectorx (>=0.3.2)"]
+deltalake = ["deltalake (>=0.13.0)"]
+fsspec = ["fsspec"]
+gevent = ["gevent"]
+matplotlib = ["matplotlib"]
+numpy = ["numpy (>=1.16.0)"]
+openpyxl = ["openpyxl (>=3.0.0)"]
+pandas = ["pandas", "pyarrow (>=7.0.0)"]
+pyarrow = ["pyarrow (>=7.0.0)"]
+pydantic = ["pydantic"]
+pyiceberg = ["pyiceberg (>=0.5.0)"]
+pyxlsb = ["pyxlsb (>=1.0)"]
+sqlalchemy = ["pandas", "sqlalchemy"]
+timezone = ["backports.zoneinfo", "tzdata"]
+xlsx2csv = ["xlsx2csv (>=0.8.0)"]
+xlsxwriter = ["xlsxwriter"]
+
+[[package]]
 name = "pre-commit"
 version = "2.21.0"
 description = "A framework for managing and maintaining multi-language pre-commit hooks."
@@ -1867,4 +1981,4 @@ test = ["black", "flake8", "flake8-docstrings", "isort", "pytest", "pytest-cov"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<4.0"
-content-hash = "83c18cb1868737e0a4fe37a7578567f0de206d4afb4c2801bf4ee6c79775e2fd"
+content-hash = "0ea485f0bed2c7b37c4ee65553483bf6106e20f0abff361aa60326dc23a7d58e"
