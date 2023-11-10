@@ -15,10 +15,12 @@ TYPE_MAPPING = {
         "float64": pl.Float64,
         "list_strings": pl.List(pl.Utf8),
         "datetime": pl.Datetime,
+        "timedelta": pl.Duration,
     },
     "pd": {
         "datetime": "datetime64[ns]",
         "list_strings": "object",
+        "timedelta": "timedelta64[ns]",
     }
 }
 

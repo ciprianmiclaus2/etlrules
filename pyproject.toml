@@ -52,6 +52,8 @@ pyyaml = "^6.0.1"
 pyarrow = {version = "^13.0.0", optional = true}
 
 polars = {version = "^0.19.12", optional = true}
+#polars-lts-cpu = {version = "^0.19.12", optional = true}
+polars_business = {version = "^0.3.10", optional = true}
 
 [tool.poetry.extras]
 test = [
