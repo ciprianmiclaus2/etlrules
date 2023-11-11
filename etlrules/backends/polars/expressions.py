@@ -1,4 +1,4 @@
-from pandas import Series
+import polars as pl
 
 from etlrules.backends.common.expressions import Expression as ExpressionBase
 
@@ -12,7 +12,7 @@ class Expression(ExpressionBase):
             # attempt to run a slower apply
             expr = self._compiled_expr
             if df.empty:
-                expr_series = Series([], dtype="string")
+                expr_series = pl.Series([], dtype=pl.Utf8)
             else:
-                expr_series = df.apply(lambda df: eval(expr, {}, {'df': df}), axis=1)
+                expr_series = df.map_elements(lambda df: eval(expr, {}, {'df': df}))
         return expr_series

@@ -2,7 +2,7 @@
 from etlrules.backends.common.basic import ProjectRule
 from .basic import DedupeRule, RenameRule, ReplaceRule, SortRule
 from .concat import VConcatRule, HConcatRule
-#from .conditions import IfThenElseRule, FilterRule
+from .conditions import IfThenElseRule, FilterRule
 from .datetime import (
     DateTimeLocalNowRule, DateTimeUTCNowRule, DateTimeToStrFormatRule,
     DateTimeRoundRule, DateTimeRoundDownRule, DateTimeRoundUpRule,
@@ -29,7 +29,7 @@ __all__ = [
     #'AggregateRule',
     'DedupeRule', 'ProjectRule', 'RenameRule', 'ReplaceRule', 'SortRule',
     'VConcatRule', 'HConcatRule',
-    #'IfThenElseRule', 'FilterRule',
+    'IfThenElseRule', 'FilterRule',
     'DateTimeLocalNowRule', 'DateTimeUTCNowRule', 'DateTimeToStrFormatRule',
     'DateTimeRoundRule', 'DateTimeRoundDownRule', 'DateTimeRoundUpRule',
     'DateTimeExtractComponentRule', 'DateTimeAddRule', 'DateTimeSubstractRule',
