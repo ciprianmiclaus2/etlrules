@@ -8,11 +8,13 @@ class Expression(ExpressionBase):
     def eval(self, df):
         try:
             expr_series = eval(self._compiled_expr, {}, {'df': df})
-        except TypeError:
+        except (TypeError, pl.exceptions.SchemaError):
             # attempt to run a slower apply
             expr = self._compiled_expr
-            if df.empty:
+            if df.is_empty():
                 expr_series = pl.Series([], dtype=pl.Utf8)
             else:
-                expr_series = df.map_elements(lambda df: eval(expr, {}, {'df': df}))
+                columns = list(df.columns)
+                df_out = df.map_rows(lambda df: eval(expr, {}, {'df': dict(zip(columns, df))}))
+                expr_series = df_out[df_out.columns[0]]
         return expr_series

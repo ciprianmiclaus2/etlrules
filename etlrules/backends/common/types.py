@@ -4,6 +4,14 @@ from etlrules.exceptions import MissingColumnError, UnsupportedTypeError
 from etlrules.rule import UnaryOpBaseRule
 
 
+SUPPORTED_TYPES = {
+    'int8', 'int16', 'int32', 'int64',
+    'float32', 'float64',
+    'string',
+    'datetime', 'timedelta',
+}
+
+
 class TypeConversionRule(UnaryOpBaseRule):
     """ Converts the type of a given set of columns to other types.
 
@@ -35,18 +43,6 @@ class TypeConversionRule(UnaryOpBaseRule):
         UnsupportedTypeError: is raised when an unknown type is speified in the values of the mapper.
     """
 
-    # values to map to are defined in the backends
-    SUPPORTED_TYPES = {
-        'int8': None,
-        'int16': None,
-        'int32': None,
-        'int64': None,
-        'float32': None,
-        'float64': None,
-        'string': None,
-        'datetime': None,
-    }
-
     def __init__(self, mapper: Mapping[str, str], named_input: Optional[str]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
         assert isinstance(mapper, dict), "mapper needs to be a dict {column_name:type}"
         assert all(isinstance(key, str) and isinstance(val, str) for key, val in mapper.items()), "mapper needs to be a dict {column_name:type} where the names are str"
@@ -63,7 +59,7 @@ class TypeConversionRule(UnaryOpBaseRule):
         for column_name, type_str in self.mapper.items():
             if column_name not in columns_set:
                 raise MissingColumnError(f"Column '{column_name}' is missing in the data frame. Available columns: {sorted(columns_set)}")
-            if type_str not in self.SUPPORTED_TYPES.keys():
+            if type_str not in SUPPORTED_TYPES:
                 raise UnsupportedTypeError(f"Type '{type_str}' for column '{column_name}' is not currently supported.")
         df = self.assign_do_apply_dict(df, {
             column_name: self.do_type_conversion(df, df[column_name], type_str) 

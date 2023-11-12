@@ -13,6 +13,7 @@ TYPE_MAPPING = {
         "Int64": pl.Int64,
         "object": pl.Object,
         "float64": pl.Float64,
+        "Float64": pl.Float64,
         "list_strings": pl.List(pl.Utf8),
         "datetime": pl.Datetime,
         "timedelta": pl.Duration,
@@ -99,6 +100,14 @@ class BackendFixture:
                 }
             return df.rename(rename_dict)
         assert False, f"unknown impl_pckg: {self.impl_pckg}"
+
+    def hconcat(self, df1, df2):
+        if self.impl_pckg == pd:
+            return pd.concat((df1, df2), axis=1)
+        elif self.impl_pckg == pl:
+            return df1.hstack(df2, in_place=False)
+        assert False, f"unknown impl_pckg: {self.impl_pckg}"
+
 
 @pytest.fixture(params=[('pandas', pd, pd_rules), ('polars', pl, pl_rules)])
 def backend(request):
