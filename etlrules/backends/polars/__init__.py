@@ -1,4 +1,4 @@
-#from .aggregate import AggregateRule
+from .aggregate import AggregateRule
 from etlrules.backends.common.basic import ProjectRule
 from .basic import DedupeRule, RenameRule, ReplaceRule, SortRule
 from .concat import VConcatRule, HConcatRule
@@ -26,7 +26,7 @@ from .io.files import ReadCSVFileRule, ReadParquetFileRule, WriteCSVFileRule, Wr
 
 
 __all__ = [
-    #'AggregateRule',
+    'AggregateRule',
     'DedupeRule', 'ProjectRule', 'RenameRule', 'ReplaceRule', 'SortRule',
     'VConcatRule', 'HConcatRule',
     'IfThenElseRule', 'FilterRule',

@@ -12,10 +12,8 @@ class AggregateRule(AggregateRuleBase):
         "count": "size",
         "countNoNA": ["is_not_null", "sum"],
         "sum": "sum",
-
         "first": "first",
         "last": "last",
-
         "list": lambda values: [value for value in values],
         "tuple": lambda values: tuple(value for value in values),
         "csv": lambda values: ",".join(str(elem) for elem in values),
@@ -36,8 +34,5 @@ class AggregateRule(AggregateRuleBase):
         return pl.col(col).apply(aggs)
 
     def do_aggregate(self, df, aggs):
-        try:
-            aggs = [self._get_agg(col, aggs) for col, aggs in aggs.items()]
-        except TypeError:
-            breakpoint()
+        aggs = [self._get_agg(col, aggs) for col, aggs in aggs.items()]
         return df.group_by(by=self.group_by).agg(*aggs)
