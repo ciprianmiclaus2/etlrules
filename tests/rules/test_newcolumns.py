@@ -132,7 +132,6 @@ def test_add_new_column(column_name, expression, expression_type, input_df_in, e
             with pytest.raises(expected) as exc:
                 rule = backend.rules.AddNewColumnRule(column_name, expression, expression_type, named_input="copy", named_output="result")
                 rule.apply(data)
-                breakpoint()
             if expected_info:
                 assert expected_info in str(exc.value)
         else:
