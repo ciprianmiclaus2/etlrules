@@ -50,7 +50,7 @@ class AggregateRule(UnaryOpBaseRule):
 
                 The above aggregates the column C by producing a ; separated string of values in the group, excluding NA.
 
-        aggregations_types: An optional mapping of {column_name: column_type} which converts the respective output
+        aggregation_types: An optional mapping of {column_name: column_type} which converts the respective output
             column to the given type. The supported types are: int8, int16, int32, int64, float32, float64,
             string, datetime and timedelta.
 
