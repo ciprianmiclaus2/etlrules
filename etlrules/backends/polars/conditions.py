@@ -1,13 +1,11 @@
-import numpy as np
 import polars as pl
 
-from etlrules.exceptions import ColumnAlreadyExistsError, MissingColumnError
 from etlrules.backends.common.conditions import (
     IfThenElseRule as IfThenElseRuleBase,
     FilterRule as FilterRuleBase
 )
 
-from .expressions import Expression
+from etlrules.backends.polars.expressions import Expression
 
 
 class IfThenElseRule(IfThenElseRuleBase):

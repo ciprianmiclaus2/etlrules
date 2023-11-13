@@ -24,7 +24,7 @@ class TypeConversionRule(UnaryOpBaseRule):
     Args:
         mapper: A dict with columns names as keys and the new types as values.
             The supported types are: int8, int16, int32, int64, float32, float64,
-            string, datetime and object (python object).
+            string, datetime and timedelta.
 
         named_input: Which dataframe to use as the input. Optional.
             When not set, the input is taken from the main output.

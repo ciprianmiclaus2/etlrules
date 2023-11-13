@@ -7,7 +7,9 @@ from etlrules.exceptions import (
     ColumnAlreadyExistsError,
     ExpressionSyntaxError,
     MissingColumnError,
+    UnsupportedTypeError,
 )
+from etlrules.backends.common.types import SUPPORTED_TYPES
 from etlrules.rule import UnaryOpBaseRule
 
 
@@ -48,6 +50,10 @@ class AggregateRule(UnaryOpBaseRule):
 
                 The above aggregates the column C by producing a ; separated string of values in the group, excluding NA.
 
+        aggregations_types: An optional mapping of {column_name: column_type} which converts the respective output
+            column to the given type. The supported types are: int8, int16, int32, int64, float32, float64,
+            string, datetime and timedelta.
+
         named_input: Which dataframe to use as the input. Optional.
             When not set, the input is taken from the main output.
             Set it to a string value, the name of an output dataframe of a previous rule.
@@ -64,7 +70,9 @@ class AggregateRule(UnaryOpBaseRule):
         ColumnAlreadyExistsError: raised if a column appears in multiple places in group_by/aggregations/aggregation_expressions.
         ExpressionSyntaxError: raised if any aggregation expression (if any are passed in) has a Python syntax error.
         MissingColumnError: raised in strict mode only if a column specified in aggregations or aggregation_expressions
-            is missing from the input dataframe.
+            is missing from the input dataframe. If aggregation_types are specified, it is raised in strict mode if a column
+            in the aggregation_types is missing from the input dataframe.
+        UnsupportedTypeError: raised if a type specified in aggregation_types is not supported.
         ValueError: raised if a column in aggregations is trying to be aggregated using an unknown aggregate function
         TypeError: raised if an operation is not supported between the types involved
         NameError: raised if an unknown variable is used
@@ -76,21 +84,7 @@ class AggregateRule(UnaryOpBaseRule):
         Any columns not in the group_by list and not present in either aggregations or aggregation_expressions will be dropped from the result.
     """
 
-    AGGREGATIONS = {
-        "min": "min",
-        "max": "max",
-        "mean": "mean",
-        "count": "size",
-        "countNoNA": "count",
-        "sum": "sum",
-        "first": "first",
-        "last": "last",
-        "list": lambda values: [value for value in values if not isnull(value)],
-        "tuple": lambda values: tuple(value for value in values if not isnull(value)),
-        "csv": lambda values: ",".join(
-            str(elem) for elem in values if not isnull(elem)
-        ),
-    }
+    AGGREGATIONS = {}
 
     EXCLUDE_FROM_COMPARE = ("_aggs",)
 
@@ -99,6 +93,7 @@ class AggregateRule(UnaryOpBaseRule):
         group_by: Iterable[str],
         aggregations: Optional[Mapping[str, str]] = None,
         aggregation_expressions: Optional[Mapping[str, str]] = None,
+        aggregation_types: Optional[Mapping[str, str]] = None,
         named_input: Optional[str] = None,
         named_output: Optional[str] = None,
         name: Optional[str] = None,
@@ -106,70 +101,60 @@ class AggregateRule(UnaryOpBaseRule):
         strict: bool = True,
     ):
         super().__init__(
-            named_input=named_input,
-            named_output=named_output,
-            name=name,
-            description=description,
-            strict=strict,
+            named_input=named_input, named_output=named_output, name=name,
+            description=description, strict=strict
         )
         self.group_by = [col for col in group_by]
-        assert (
-            aggregations or aggregation_expressions
-        ), "aggregations or aggregation_expressions must be specified."
-        for col, agg_func in (aggregations or {}).items():
-            if col in self.group_by:
-                raise ColumnAlreadyExistsError(
-                    f"Column {col} appears in group_by and cannot be aggregated."
-                )
-            if agg_func not in self.AGGREGATIONS:
-                raise ValueError(
-                    f"'{agg_func}' is not a supported aggregation function."
-                )
-        self.aggregations = {
-            key: agg_func for key, agg_func in (aggregations or {}).items()
-        }
-        self.aggregation_expressions = {
-            key: value for key, value in (aggregation_expressions or {}).items()
-        }
+        assert aggregations or aggregation_expressions, "One of aggregations or aggregation_expressions must be specified."
+        if aggregations is not None:
+            self.aggregations = {}
+            for col, agg_func in aggregations.items():
+                if col in self.group_by:
+                    raise ColumnAlreadyExistsError(f"Column {col} appears in group_by and cannot be aggregated.")
+                if agg_func not in self.AGGREGATIONS:
+                    raise ValueError(f"'{agg_func}' is not a supported aggregation function.")
+                self.aggregations[col] = agg_func
+        else:
+            self.aggregations = None
         self._aggs = {}
         if self.aggregations:
-            self._aggs.update(
-                {
-                    key: self.AGGREGATIONS[agg_func]
-                    for key, agg_func in (aggregations or {}).items()
-                }
-            )
-        if self.aggregation_expressions:
-            for col, agg_expr in self.aggregation_expressions.items():
+            self._aggs.update({
+                key: self.AGGREGATIONS[agg_func]
+                for key, agg_func in (aggregations or {}).items()
+            })
+        if aggregation_expressions is not None:
+            self.aggregation_expressions = {}
+            for col, agg_expr in aggregation_expressions.items():
                 if col in self.group_by:
-                    raise ColumnAlreadyExistsError(
-                        f"Column {col} appears in group_by and cannot be aggregated."
-                    )
+                    raise ColumnAlreadyExistsError(f"Column {col} appears in group_by and cannot be aggregated.")
                 if col in self._aggs:
-                    raise ColumnAlreadyExistsError(
-                        f"Column {col} is already being aggregated."
-                    )
+                    raise ColumnAlreadyExistsError(f"Column {col} is already being aggregated.")
                 try:
-                    _ast_expr = ast.parse(
-                        agg_expr, filename=f"{col}_expression.py", mode="eval"
-                    )
-                    _compiled_expr = compile(
-                        _ast_expr, filename=f"{col}_expression.py", mode="eval"
-                    )
-                    self._aggs[
-                        col
-                    ] = lambda values, bound_compiled_expr=_compiled_expr: eval(
+                    _ast_expr = ast.parse(agg_expr, filename=f"{col}_expression.py", mode="eval")
+                    _compiled_expr = compile(_ast_expr, filename=f"{col}_expression.py", mode="eval")
+                    self._aggs[col] = lambda values, bound_compiled_expr=_compiled_expr: eval(
                         bound_compiled_expr, {"isnull": isnull}, {"values": values}
                     )
                 except SyntaxError as exc:
-                    raise ExpressionSyntaxError(
-                        f"Error in aggregation expression for column '{col}': '{agg_expr}': {str(exc)}"
-                    )
+                    raise ExpressionSyntaxError(f"Error in aggregation expression for column '{col}': '{agg_expr}': {str(exc)}")
+                self.aggregation_expressions[col] = agg_expr
+
+        if aggregation_types is not None:
+            self.aggregation_types = {}
+            for col, col_type in aggregation_types.items():
+                if col not in self._aggs and col not in self.group_by:
+                    if self.strict:
+                        raise MissingColumnError(f"Column {col} is neither in the group by columns nor in the aggregations.")
+                    else:
+                        continue
+                if col_type not in SUPPORTED_TYPES:
+                    raise UnsupportedTypeError(f"Unsupported type {col_type} for column '{col}'.")
+                self.aggregation_types[col] = col_type
+        else:
+            self.aggregation_types = None
 
     def do_aggregate(self, df, aggs):
-        raise NotImplementedError(
-            "Have you imported the rules from etlrules.backends.<your_backend> and not common?"
-        )
+        raise NotImplementedError("Have you imported the rules from etlrules.backends.<your_backend> and not common?")
 
     def apply(self, data):
         super().apply(data)
@@ -177,9 +162,7 @@ class AggregateRule(UnaryOpBaseRule):
         df_columns_set = set(df.columns)
         if not set(self._aggs) <= df_columns_set:
             if self.strict:
-                raise MissingColumnError(
-                    f"Missimg columns to aggregate by: {set(self._aggs) - df_columns_set}"
-                )
+                raise MissingColumnError(f"Missimg columns to aggregate by: {set(self._aggs) - df_columns_set}")
             aggs = {
                 col: agg for col, agg in self._aggs.items() if col in df_columns_set
             }
