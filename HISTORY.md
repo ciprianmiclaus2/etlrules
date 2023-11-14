@@ -1,6 +1,6 @@
 # History
 
-## 0.2.0 (XXXX-XX-XX)
+## 0.2.0 (2023-11-14)
 
 * Add support for polars as a backend
 
