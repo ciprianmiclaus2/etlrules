@@ -1,5 +1,12 @@
 import pytest
 
+from etlrules.exceptions import (
+    ColumnAlreadyExistsError,
+    MissingColumnError,
+    ExpressionSyntaxError,
+    UnsupportedTypeError,
+)
+
 from tests.utils.data import assert_frame_equal, get_test_data
 
 
@@ -122,3 +129,34 @@ def test_aggregate_empty_df(backend):
         rule.apply(data)
         actual = data.get_named_output("result")
         assert_frame_equal(actual, input_empty_df)
+
+
+@pytest.mark.parametrize(
+    "group_by,aggregations,aggregation_expressions,aggregation_types,strict,expected_exc,expected_exc_str", [
+        [["A", "B"], {"C": "min", "A": "max"}, None, None, False, ColumnAlreadyExistsError, "Column A appears in group_by and cannot be aggregated."],
+        [["A", "B"], None, {"C": "min", "A": "max"}, None, False, ColumnAlreadyExistsError, "Column A appears in group_by and cannot be aggregated."],
+        [["A", "B"], {"C": "max", "D": "first"}, {"Z": "last", "C": "min"}, None, False, ColumnAlreadyExistsError, "Column C is already being aggregated."],
+        [["A", "B"], {"C": "unknown"}, None, None, False, ValueError, "'unknown' is not a supported aggregation function."],
+        [["A", "B"], None, {"C": "a + b + "}, None, False, SyntaxError, "Error in aggregation expression for column 'C': 'a + b + '"],
+        [["A", "B"], {"D": "min"}, {"C": "a + b"}, {"D": "int64", "C": "int64", "Z": "string"}, True, MissingColumnError, "Column Z is neither in the group by columns nor in the aggregations."],
+        [["A", "B"], {"D": "min"}, {"C": "a + b"}, {"Z": "int64", "Y": "int64", "C": "unknown"}, False, UnsupportedTypeError, "Unsupported type 'unknown' for column 'C'."],
+        [["A", "B"], {"Y": "min"}, None, None, True, MissingColumnError, "Missimg columns to aggregate by: {'Y'}"],
+    ]
+)
+def test_aggregate_exc_scenarios(group_by, aggregations, aggregation_expressions, aggregation_types, strict, expected_exc, expected_exc_str, backend):
+    input_df = backend.DataFrame(INPUT_DF, astype=INPUT_DF_TYPES)
+    input_empty_df = backend.DataFrame(INPUT_EMPTY_DF, astype=INPUT_DF_TYPES)
+    with get_test_data(input_df, named_inputs={"input": input_empty_df}, named_output="result") as data:
+        with pytest.raises(expected_exc) as exc:
+            rule = backend.rules.AggregateRule(
+                group_by=group_by,
+                aggregations=aggregations,
+                aggregation_expressions=aggregation_expressions,
+                aggregation_types=aggregation_types,
+                named_input="input",
+                named_output="result",
+                strict=strict,
+            )
+            rule.apply(data)
+        if expected_exc_str:
+            assert expected_exc_str in str(exc.value)

@@ -148,7 +148,7 @@ class AggregateRule(UnaryOpBaseRule):
                     else:
                         continue
                 if col_type not in SUPPORTED_TYPES:
-                    raise UnsupportedTypeError(f"Unsupported type {col_type} for column '{col}'.")
+                    raise UnsupportedTypeError(f"Unsupported type '{col_type}' for column '{col}'.")
                 self.aggregation_types[col] = col_type
         else:
             self.aggregation_types = None

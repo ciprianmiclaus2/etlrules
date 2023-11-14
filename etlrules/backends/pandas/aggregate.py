@@ -16,9 +16,7 @@ class AggregateRule(AggregateRuleBase):
         "first": "first",
         "last": "last",
         "list": lambda values: [value for value in values if not isnull(value)],
-        "csv": lambda values: ",".join(
-            str(elem) for elem in values if not isnull(elem)
-        ),
+        "csv": lambda values: ",".join(str(elem) for elem in values if not isnull(elem)),
     }
 
     def do_aggregate(self, df, aggs):
