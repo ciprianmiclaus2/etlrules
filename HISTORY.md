@@ -1,5 +1,9 @@
 # History
 
+## 0.2.1 (XXXX-XX-XX)
+
+* Add support for unsigned int types
+
 ## 0.2.0 (2023-11-14)
 
 * Add support for polars as a backend

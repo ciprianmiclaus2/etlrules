@@ -51,8 +51,8 @@ class AggregateRule(UnaryOpBaseRule):
                 The above aggregates the column C by producing a ; separated string of values in the group, excluding NA.
 
         aggregation_types: An optional mapping of {column_name: column_type} which converts the respective output
-            column to the given type. The supported types are: int8, int16, int32, int64, float32, float64,
-            string, datetime and timedelta.
+            column to the given type. The supported types are: int8, int16, int32, int64, uint8, uint16,
+            uint32, uint64, float32, float64, string, datetime and timedelta.
 
         named_input: Which dataframe to use as the input. Optional.
             When not set, the input is taken from the main output.
@@ -162,7 +162,7 @@ class AggregateRule(UnaryOpBaseRule):
         df_columns_set = set(df.columns)
         if not set(self._aggs) <= df_columns_set:
             if self.strict:
-                raise MissingColumnError(f"Missimg columns to aggregate by: {set(self._aggs) - df_columns_set}")
+                raise MissingColumnError(f"Missimg columns to aggregate by: {set(self._aggs) - df_columns_set}.")
             aggs = {
                 col: agg for col, agg in self._aggs.items() if col in df_columns_set
             }
