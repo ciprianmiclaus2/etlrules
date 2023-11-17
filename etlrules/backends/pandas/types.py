@@ -8,6 +8,10 @@ MAP_TYPES = {
     'int16': 'Int16',
     'int32': 'Int32',
     'int64': 'Int64',
+    'uint8': 'UInt8',
+    'uint16': 'UInt16',
+    'uint32': 'UInt32',
+    'uint64': 'UInt64',
     'float32': 'float32',
     'float64': 'float64',
     'string': 'string',
@@ -19,4 +23,4 @@ MAP_TYPES = {
 class TypeConversionRule(TypeConversionRuleBase, PandasMixin):
 
     def do_type_conversion(self, df, col, dtype):
-        return col.astype(MAP_TYPES[dtype])
+        return col.astype(MAP_TYPES[dtype], errors="raise" if self.strict else "ignore")
