@@ -1,4 +1,3 @@
-import datetime
 import pytest
 
 from etlrules.exceptions import MissingColumnError, UnsupportedTypeError
