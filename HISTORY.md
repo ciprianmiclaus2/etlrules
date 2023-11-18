@@ -3,6 +3,7 @@
 ## 0.2.1 (XXXX-XX-XX)
 
 * Add support for unsigned int types
+* Add AddRowNumbersRule, a rule to add row numbers
 
 ## 0.2.0 (2023-11-14)
 

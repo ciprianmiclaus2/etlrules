@@ -11,7 +11,7 @@ from .datetime import (
 )
 from .fill import ForwardFillRule, BackFillRule
 from .joins import LeftJoinRule, InnerJoinRule, OuterJoinRule, RightJoinRule
-from .newcolumns import AddNewColumnRule
+from .newcolumns import AddNewColumnRule, AddRowNumbersRule
 from .numeric import AbsRule, RoundRule
 from .strings import (
     StrLowerRule, StrUpperRule, StrCapitalizeRule, StrSplitRule, StrSplitRejoinRule,
@@ -36,7 +36,7 @@ __all__ = [
     'DateTimeDiffRule',
     'ForwardFillRule', 'BackFillRule',
     'LeftJoinRule', 'InnerJoinRule', 'OuterJoinRule', 'RightJoinRule',
-    'AddNewColumnRule',
+    'AddNewColumnRule', 'AddRowNumbersRule',
     'AbsRule', 'RoundRule',
     'StrLowerRule', 'StrUpperRule', 'StrCapitalizeRule', 'StrSplitRule', 'StrSplitRejoinRule',
     'StrStripRule', 'StrPadRule', 'StrExtractRule',

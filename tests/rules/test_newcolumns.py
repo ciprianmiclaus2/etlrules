@@ -136,3 +136,66 @@ def test_add_new_column(column_name, expression, expression_type, input_df_in, e
                 assert expected_info in str(exc.value)
         else:
             assert False, f"Unexpected {type(expected)} in '{expected}'"
+
+
+INPUT_DF2 = [
+    {"A": 10, "B": "b"},
+    {"A": 5, "B": "a"},
+    {"B": "c"},
+    {"A": 6},
+    {}
+]
+
+
+@pytest.mark.parametrize("output_column,start,step,strict,input_df_in,expected,expected_info", [
+    ["C", 0, 1, True, INPUT_DF2, [
+        {"A": 10, "B": "b", "C": 0},
+        {"A": 5, "B": "a", "C": 1},
+        {"B": "c", "C": 2},
+        {"A": 6, "C": 3},
+        {"C": 4}
+    ], None],
+    ["C", 8, 1, True, INPUT_DF2, [
+        {"A": 10, "B": "b", "C": 8},
+        {"A": 5, "B": "a", "C": 9},
+        {"B": "c", "C": 10},
+        {"A": 6, "C": 11},
+        {"C": 12}
+    ], None],
+    ["C", 10, 2, True, INPUT_DF2, [
+        {"A": 10, "B": "b", "C": 10},
+        {"A": 5, "B": "a", "C": 12},
+        {"B": "c", "C": 14},
+        {"A": 6, "C": 16},
+        {"C": 18}
+    ], None],
+    ["C", 10, 2, True, None, {"A": [], "B": [], "C": []}, None],
+    ["B", 10, 2, True, None, ColumnAlreadyExistsError, "Column B already exists in the input dataframe."],
+    ["B", 10, 2, False, INPUT_DF2, [
+        {"A": 10, "B": 10},
+        {"A": 5, "B": 12},
+        {"B": 14},
+        {"A": 6, "B": 16},
+        {"B": 18}
+    ], {"A": "Int64", "B": "int64"}],
+])
+def test_add_new_column(output_column, start, step, strict, input_df_in, expected, expected_info, backend):
+    input_df = backend.DataFrame(INPUT_DF2, astype={"A": "Int64", "B": "string"})
+    if input_df_in is None:
+        input_df = input_df[:0]
+    if isinstance(expected, (list, dict)):
+        expected = backend.DataFrame(expected, astype=expected_info or {"A": "Int64", "B": "string", "C": "int64"})
+    with get_test_data(input_df, named_inputs={"copy": input_df}, named_output="result") as data:
+        if isinstance(expected, backend.impl.DataFrame):
+            rule = backend.rules.AddRowNumbersRule(output_column, start, step, named_input="copy", named_output="result", strict=strict)
+            rule.apply(data)
+            result = data.get_named_output("result")
+            assert_frame_equal(result, expected)
+        elif issubclass(expected, Exception):
+            with pytest.raises(expected) as exc:
+                rule = backend.rules.AddRowNumbersRule(output_column, start, step, named_input="copy", named_output="result", strict=strict)
+                rule.apply(data)
+            if expected_info:
+                assert expected_info in str(exc.value)
+        else:
+            assert False, f"Unexpected {type(expected)} in '{expected}'"
