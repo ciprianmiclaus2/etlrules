@@ -1,5 +1,5 @@
 import pytest
-from etlrules.exceptions import ColumnAlreadyExistsError, MissingColumnError
+from etlrules.exceptions import ColumnAlreadyExistsError, MissingColumnError, UnsupportedTypeError
 from tests.utils.data import assert_frame_equal, get_test_data
 
 
@@ -250,6 +250,67 @@ def test_replace_scenarios(input_column, values, new_values, regex, output_colum
             assert_frame_equal(data.get_named_output("result"), expected)
         elif issubclass(expected, Exception):
             with pytest.raises(expected):
+                rule.apply(data)
+        else:
+            assert False
+
+
+@pytest.mark.parametrize("input_column, column_type, input_df, input_types, expected, expected_types", [
+    ["A", "int64", [
+        {"A": [1, 2, 3]}, 
+        {"A": [4, 5]},
+        {"A": [6]}
+    ], None, {"A": [1, 2, 3, 4, 5, 6]}, {"A": "Int64"}],
+    ["A", "int64", [
+        {"A": [1, 2, 3], "B": "str1"}, 
+        {"A": [4, 5], "B": "str2"},
+        {"A": [6], "B": "str3"}
+    ], {"A": "list_int64s", "B": "string"}, {
+        "A": [1, 2, 3, 4, 5, 6],
+        "B": ["str1", "str1", "str1", "str2", "str2", "str3"],
+    }, {"A": "Int64", "B": "string"}],
+    ["B", "string", [
+        {"A": 1, "B": ["str1", "str2", "str3"]}, 
+        {"A": 2, "B": ["str4"]},
+        {"A": 3, "B": ["str5"]}
+    ], {"A": "Int64", "B": "list_strings"}, {
+        "A": [1, 1, 1, 2, 3],
+        "B": ["str1", "str2", "str3", "str4", "str5"],
+    }, {"A": "Int64", "B": "string"}],
+
+    # nullable tests
+    ["A", "int64", [
+        {"A": [1, 2, 3], "B": "str1"}, 
+        {"B": "str2"},
+        {"A": [6], "B": "str3"}
+    ], {"A": "list_int64s", "B": "string"}, [
+        {"A": 1, "B": "str1"},
+        {"A": 2, "B": "str1"},
+        {"A": 3, "B": "str1"},
+        {"B": "str2"},
+        {"A": 6, "B": "str3"}
+    ], {"A": "Int64", "B": "string"}],
+
+    # exceptions
+    ["X", "int64", {"A": [1, 2, 3]}, {"A": "Int64"}, MissingColumnError, None],
+    ["A", "unknown", {"A": [1, 2, 3]}, {"A": "Int64"}, UnsupportedTypeError, None],
+])
+def test_explode_rule(input_column, column_type, input_df, input_types, expected, expected_types, backend):
+    input_df = backend.DataFrame(data=input_df, astype=input_types)
+    expected = backend.DataFrame(data=expected, astype=expected_types) if isinstance(expected, (list, dict)) else expected
+    with get_test_data(input_df, named_inputs={"input": input_df}, named_output="result") as data:
+        if isinstance(expected, backend.impl.DataFrame):
+            rule = backend.rules.ExplodeValuesRule(
+                input_column=input_column, column_type=column_type,
+                named_input="input", named_output="result")
+            rule.apply(data)
+            actual = data.get_named_output("result")
+            assert_frame_equal(actual, expected)
+        elif issubclass(expected, Exception):
+            with pytest.raises(expected):
+                rule = backend.rules.ExplodeValuesRule(
+                    input_column=input_column, column_type=column_type,
+                    named_input="input", named_output="result")
                 rule.apply(data)
         else:
             assert False

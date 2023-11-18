@@ -1,9 +1,10 @@
 from typing import Literal, Iterable, Mapping, Optional, Union
 
 from etlrules.data import RuleData
-from etlrules.rule import BaseRule, UnaryOpBaseRule
-from etlrules.exceptions import MissingColumnError
+from etlrules.rule import BaseRule, UnaryOpBaseRule, ColumnsInOutMixin
+from etlrules.exceptions import MissingColumnError, UnsupportedTypeError
 from etlrules.backends.common.base import BaseAssignColumnRule
+from etlrules.backends.common.types import SUPPORTED_TYPES
 
 
 class DedupeRule(UnaryOpBaseRule):
@@ -334,3 +335,61 @@ class RulesBlock(UnaryOpBaseRule):
         rules = [BaseRule.from_dict(rule, backend) for rule in dct.get("rules", ())]
         kwargs = {k: v for k, v in dct.items() if k != "rules"}
         return cls(rules=rules, **kwargs)
+
+
+class ExplodeValuesRule(UnaryOpBaseRule, ColumnsInOutMixin):
+    """ Explode a list of values into multiple rows with each value on a separate row
+
+    Example::
+
+        Given df:
+        | A         |
+        |-----------|
+        | [1, 2, 3] |
+        | [4, 5]    |
+        | [6]       |
+
+    > ExplodeValuesRule("A").apply(df)
+
+    Result::
+
+        | A   |
+        |-----|
+        | 1   |
+        | 2   |
+        | 3   |
+        | 4   |
+        | 5   |
+        | 6   |
+
+    Args:
+        input_column: A column with values to round as per the specified scale.
+        column_type: An optional string with the type of the resulting exploded column. When not specified, the
+            column_type is backend implementation specific.
+
+        named_input: Which dataframe to use as the input. Optional.
+            When not set, the input is taken from the main output.
+            Set it to a string value, the name of an output dataframe of a previous rule.
+        named_output: Give the output of this rule a name so it can be used by another rule as a named input. Optional.
+            When not set, the result of this rule will be available as the main output.
+            When set to a name (string), the result will be available as that named output.
+        name: Give the rule a name. Optional.
+            Named rules are more descriptive as to what they're trying to do/the intent.
+        description: Describe in detail what the rules does, how it does it. Optional.
+            Together with the name, the description acts as the documentation of the rule.
+        strict: When set to True, the rule does a stricter valiation. Default: True
+
+    Raises:
+        MissingColumnError: raised if the input column doesn't exist in the input dataframe.
+    """
+
+    def __init__(self, input_column: str, column_type: Optional[str]=None, named_input: Optional[str]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
+        super().__init__(named_input=named_input, named_output=named_output, name=name, description=description, strict=strict)
+        self.input_column = input_column
+        self.column_type = column_type
+        if self.column_type is not None and self.column_type not in SUPPORTED_TYPES:
+            raise UnsupportedTypeError(f"Type '{self.column_type}' is not supported.")
+
+    def _validate_input_column(self, df):
+        if self.input_column not in df.columns:
+            raise MissingColumnError(f"Column '{self.input_column}' is not present in the input dataframe.")

@@ -3,12 +3,13 @@ import re
 
 from etlrules.backends.common.basic import (
     DedupeRule as DedupeRuleBase,
+    ExplodeValuesRule as ExplodeValuesRuleBase,
     RenameRule as RenameRuleBase,
     ReplaceRule as ReplaceRuleBase,
     SortRule as SortRuleBase,
 )
-
-from .base import PolarsMixin
+from etlrules.backends.polars.base import PolarsMixin
+from etlrules.backends.polars.types import MAP_TYPES
 
 
 class DedupeRule(DedupeRuleBase):
@@ -51,3 +52,16 @@ class ReplaceRule(ReplaceRuleBase, PolarsMixin):
         else:
             col = col.map_dict(dict(zip(self.values, self.new_values)), default=pl.first())
         return col
+
+
+class ExplodeValuesRule(ExplodeValuesRuleBase):
+
+    def apply(self, data):
+        df = self._get_input_df(data)
+        self._validate_input_column(df)
+        result = df.explode(self.input_column)
+        if self.column_type:
+            result = result.with_columns(
+                **{self.input_column: pl.col(self.input_column).cast(MAP_TYPES[self.column_type])}
+            )
+        self._set_output_df(data, result)

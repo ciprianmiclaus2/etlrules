@@ -4,6 +4,7 @@
 
 * Add support for unsigned int types
 * Add AddRowNumbersRule, a rule to add row numbers
+* Add ExplodeValuesRule which explode lists of values into individual scalar values as additional rows
 
 ## 0.2.0 (2023-11-14)
 

@@ -2,12 +2,13 @@ import re
 
 from etlrules.backends.common.basic import (
     DedupeRule as DedupeRuleBase,
+    ExplodeValuesRule as ExplodeValuesRuleBase,
     RenameRule as RenameRuleBase,
     ReplaceRule as ReplaceRuleBase,
     SortRule as SortRuleBase,
 )
-
-from .base import PandasMixin
+from etlrules.backends.pandas.base import PandasMixin
+from etlrules.backends.pandas.types import MAP_TYPES
 
 
 class DedupeRule(DedupeRuleBase):
@@ -47,3 +48,14 @@ class ReplaceRule(ReplaceRuleBase, PandasMixin):
                 old_val, new_val = self._get_old_new_regex(old_val, new_val)
                 return col.replace(to_replace=old_val, value=new_val, regex=self.regex)
         return col.replace(to_replace=self.values, value=self.new_values, regex=self.regex)
+
+
+class ExplodeValuesRule(ExplodeValuesRuleBase):
+
+    def apply(self, data):
+        df = self._get_input_df(data)
+        self._validate_input_column(df)
+        result = df.explode(self.input_column, ignore_index=True)
+        if self.column_type:
+            result = result.astype({self.input_column: MAP_TYPES[self.column_type]})
+        self._set_output_df(data, result)

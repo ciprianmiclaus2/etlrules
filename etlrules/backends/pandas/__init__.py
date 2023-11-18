@@ -1,6 +1,6 @@
 from .aggregate import AggregateRule
 from etlrules.backends.common.basic import ProjectRule
-from .basic import DedupeRule, RenameRule, ReplaceRule, SortRule
+from .basic import DedupeRule, ExplodeValuesRule, RenameRule, ReplaceRule, SortRule
 from .concat import VConcatRule, HConcatRule
 from .conditions import IfThenElseRule, FilterRule
 from .datetime import (
@@ -27,7 +27,7 @@ from .io.files import ReadCSVFileRule, ReadParquetFileRule, WriteCSVFileRule, Wr
 
 __all__ = [
     'AggregateRule',
-    'DedupeRule', 'ProjectRule', 'RenameRule', 'ReplaceRule', 'SortRule',
+    'DedupeRule', 'ExplodeValuesRule', 'ProjectRule', 'RenameRule', 'ReplaceRule', 'SortRule',
     'VConcatRule', 'HConcatRule',
     'IfThenElseRule', 'FilterRule',
     'DateTimeLocalNowRule', 'DateTimeUTCNowRule', 'DateTimeToStrFormatRule',
