@@ -39,8 +39,10 @@ class TypeConversionRule(UnaryOpBaseRule):
         strict: When set to True, the rule does a stricter valiation. Default: True
 
     Raises:
-        MissingColumnError: is raised when a column specified in the mapper doesn't exist in the input data frame.
-        UnsupportedTypeError: is raised when an unknown type is speified in the values of the mapper.
+        MissingColumnError: raised when a column specified in the mapper doesn't exist in the input data frame.
+        UnsupportedTypeError: raised when an unknown type is speified in the values of the mapper.
+        ValueError: raised in strict mode if a value cannot be converted to the desired type.
+            In non strict mode, the exception is not raised and the value is converted to NA.
     """
 
     def __init__(self, mapper: Mapping[str, str], named_input: Optional[str]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):

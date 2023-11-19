@@ -16,12 +16,15 @@ MAP_TYPES = {
     'float32': pl.Float32,
     'float64': pl.Float64,
     'string': pl.Utf8,
-    'datetime': pl.Datetime,
-    'timedelta': pl.Duration,
 }
 
 
 class TypeConversionRule(TypeConversionRuleBase, PolarsMixin):
 
     def do_type_conversion(self, df, col, dtype):
+        if self.strict:
+            try:
+                col.cast(MAP_TYPES[dtype], strict=self.strict)
+            except pl.exceptions.ComputeError as exc:
+                raise ValueError(str(exc))
         return col.cast(MAP_TYPES[dtype], strict=self.strict)
