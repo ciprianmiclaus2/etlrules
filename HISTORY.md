@@ -1,6 +1,6 @@
 # History
 
-## 0.2.1 (XXXX-XX-XX)
+## 0.2.1 (2023-11-20)
 
 * Add support for unsigned int types
 * Add AddRowNumbersRule, a rule to add row numbers
