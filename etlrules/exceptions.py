@@ -26,3 +26,7 @@ class InvalidPlanError(Exception):
 
 class GraphRuntimeError(RuntimeError):
     """ There was an error when running a graph-mode plan. """
+
+
+class SQLError(RuntimeError):
+    """ There was an error during the execution of a sql statement. """

@@ -120,6 +120,10 @@ ALL_RULES = [
                 named_input="result", name="BF", description="Some desc2 BF", strict=True)],
     ["WriteParquetFileRule", dict(file_name="test.csv", file_dir="/home/myuser", compression="gzip", 
                 named_input="result", name="BF", description="Some desc2 BF", strict=True)],
+    ["ReadSQLQueryRule", dict(sql_engine="sqlite:///mydb.db", sql_query="SELECT * FROM MyTable", named_output="MyData", name="BF", description="Some desc2 BF", strict=True)],
+    ["WriteSQLTableRule", dict(sql_engine="sqlite:///mydb.db", sql_table="MyTable", if_exists="append", named_input="input_data", name="BF", description="Some desc2 BF", strict=True)],
+    ["ExplodeValuesRule", dict(input_column="to_explode", column_type="int64", named_input="input", named_output="result", name="name", description="description", strict=True)],
+    ["AddRowNumbersRule", dict(output_column="row_number", start=10, step=1, named_input="input", named_output="result", name="name", description="description", strict=True)],
 ]
 
 

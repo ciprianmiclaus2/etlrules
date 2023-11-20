@@ -23,6 +23,7 @@ from etlrules.backends.common.basic import RulesBlock
 
 ## IO - extractors and loaders
 from .io.files import ReadCSVFileRule, ReadParquetFileRule, WriteCSVFileRule, WriteParquetFileRule
+from .io.db import ReadSQLQueryRule, WriteSQLTableRule
 
 
 __all__ = [
@@ -44,4 +45,5 @@ __all__ = [
     'RulesBlock',
     # IO extractors and loaders
     'ReadCSVFileRule', 'ReadParquetFileRule', 'WriteCSVFileRule', 'WriteParquetFileRule',
+    'ReadSQLQueryRule', 'WriteSQLTableRule',
 ]

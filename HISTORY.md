@@ -5,6 +5,7 @@
 * Add support for unsigned int types
 * Add AddRowNumbersRule, a rule to add row numbers
 * Add ExplodeValuesRule which explode lists of values into individual scalar values as additional rows
+* Add support for reading/writing to/from DBs via sqlalchemy under etlrules.backends.common.io.db
 
 ## 0.2.0 (2023-11-14)
 
