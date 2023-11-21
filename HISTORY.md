@@ -1,5 +1,9 @@
 # History
 
+## 0.2.2 (XXXX-XX-XX)
+
+* Support environment variables substitution in the sql_engine string for SQL rules
+
 ## 0.2.1 (2023-11-20)
 
 * Add support for unsigned int types

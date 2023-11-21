@@ -153,3 +153,25 @@ def test_write_sql_table_scenarios(input_df, input_astypes, sql_table, if_exists
                 assert expected_info in str(exc.value)
         else:
             assert False
+
+
+def test_sql_engine_substitution(backend):
+    user = os.environ.get("DB_USER")
+    pswd = os.environ.get("DB_PASSWORD")
+    os.environ["DB_USER"] = "testUser"
+    os.environ["DB_PASSWORD"] = "testPassword"
+    try:
+        # DISCLAIMER - not a valid sqlite engine string
+        rule = backend.rules.ReadSQLQueryRule("sqlite:///user={env.DB_USER}&pswd={env.DB_PASSWORD}", "SELECT * FROM MyTable", named_output="result")
+        assert rule._get_sql_engine() == "sqlite:///user=testUser&pswd=testPassword"
+        rule = backend.rules.ReadSQLQueryRule("sqlite:///user={env.DB_USER}", f"SELECT * FROM MyTable", named_output="result")
+        assert rule._get_sql_engine() == "sqlite:///user=testUser"
+    finally:
+        if user:
+            os.environ["DB_USER"] = user
+        else:
+            del os.environ["DB_USER"]
+        if pswd:
+            os.environ["DB_PASSWORD"] = pswd
+        else:
+            del os.environ["DB_PASSWORD"]

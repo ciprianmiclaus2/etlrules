@@ -5,6 +5,7 @@ except ImportError:
     HAS_SQL_ALCHEMY = False
 from typing import Mapping, Optional
 
+from etlrules.backends.common.substitution import OSEnvironSubst
 from etlrules.backends.common.types import SUPPORTED_TYPES
 from etlrules.exceptions import SQLError, UnsupportedTypeError
 from etlrules.rule import BaseRule, UnaryOpBaseRule
@@ -47,6 +48,14 @@ class ReadSQLQueryRule(BaseRule):
             dialect+driver://username:password@host:port/database
             For more information, please refer to the sqlalchemy documentation here:
             https://docs.sqlalchemy.org/en/20/core/engines.html
+
+            In order to support users and passwords in the sql_engine string, substitutions of environment variables
+            is supported using the {env.VARIABLE_NAME} form.
+            For example, adding the USER and PASSWORD environment variables in the sql string could be done as:
+                sql_engine = "postgres://{env.USER}:{env.PASSWORD}@{env.DB_HOST}/mydb
+            In this example, when you run, env.USER, env.PASSWORD and env.DB_HOST will be replaced with the respective
+            environment variables, allowing you to not hardcode them in the plan for security reasons but also for
+            configurability. 
         sql_query: A SQL SELECT statement that will specify the columns, table and optionally any WHERE, GROUP BY, ORDER BY clauses.
             The SQL statement must be valid for the SQL engine specified in the sql_engine parameter.
         column_types: A mapping of column names and their types. Column types are inferred from the data when this parameter
@@ -93,9 +102,13 @@ class ReadSQLQueryRule(BaseRule):
     def _do_apply(self, connection):
         raise NotImplementedError("Can't instantiate base class.")
 
+    def _get_sql_engine(self):
+        return self.sql_engine.format(env=OSEnvironSubst())
+
     def apply(self, data):
         super().apply(data)
-        engine = SQLAlchemyEngines.get_engine(self.sql_engine)
+        sql_engine = self._get_sql_engine()
+        engine = SQLAlchemyEngines.get_engine(sql_engine)
         with engine.connect() as connection:
             try:
                 result = self._do_apply(connection)
@@ -128,6 +141,14 @@ class WriteSQLTableRule(UnaryOpBaseRule):
             dialect+driver://username:password@host:port/database
             For more information, please refer to the sqlalchemy documentation here:
             https://docs.sqlalchemy.org/en/20/core/engines.html
+
+            In order to support users and passwords in the sql_engine string, substitutions of environment variables
+            is supported using the {env.VARIABLE_NAME} form.
+            For example, adding the USER and PASSWORD environment variables in the sql string could be done as:
+                sql_engine = "postgres://{env.USER}:{env.PASSWORD}@{env.DB_HOST}/mydb
+            In this example, when you run, env.USER, env.PASSWORD and env.DB_HOST will be replaced with the respective
+            environment variables, allowing you to not hardcode them in the plan for security reasons but also for
+            configurability. 
         sql_table: The name of the sql table to write to.
         if_exists: Specifies what to do in case the table already exists in the database.
             The options are:
