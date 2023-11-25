@@ -9,6 +9,7 @@ SUPPORTED_TYPES = {
     'uint8', 'uint16', 'uint32', 'uint64',
     'float32', 'float64',
     'string',
+    'boolean',
 }
 
 
@@ -24,7 +25,7 @@ class TypeConversionRule(UnaryOpBaseRule):
     Args:
         mapper: A dict with columns names as keys and the new types as values.
             The supported types are: int8, int16, int32, int64, uint8, uint16,
-            uint32, uint64, float32, float64, string, datetime and timedelta.
+            uint32, uint64, float32, float64, string, boolean, datetime and timedelta.
 
         named_input: Which dataframe to use as the input. Optional.
             When not set, the input is taken from the main output.
@@ -50,6 +51,10 @@ class TypeConversionRule(UnaryOpBaseRule):
         assert all(isinstance(key, str) and isinstance(val, str) for key, val in mapper.items()), "mapper needs to be a dict {column_name:type} where the names are str"
         super().__init__(named_input=named_input, named_output=named_output, name=name, description=description, strict=strict)
         self.mapper = mapper
+        for column_name, type_str in self.mapper.items():
+            if type_str not in SUPPORTED_TYPES:
+                raise UnsupportedTypeError(f"Type '{type_str}' for column '{column_name}' is not currently supported.")
+
 
     def do_type_conversion(self, df, col, dtype):
         raise NotImplementedError("Have you imported the rules from etlrules.backends.<your_backend> and not common?")
@@ -58,11 +63,9 @@ class TypeConversionRule(UnaryOpBaseRule):
         super().apply(data)
         df = self._get_input_df(data)
         columns_set = set(df.columns)
-        for column_name, type_str in self.mapper.items():
+        for column_name in self.mapper:
             if column_name not in columns_set:
                 raise MissingColumnError(f"Column '{column_name}' is missing in the data frame. Available columns: {sorted(columns_set)}")
-            if type_str not in SUPPORTED_TYPES:
-                raise UnsupportedTypeError(f"Type '{type_str}' for column '{column_name}' is not currently supported.")
         df = self.assign_do_apply_dict(df, {
             column_name: self.do_type_conversion(df, df[column_name], type_str) 
                 for column_name, type_str in self.mapper.items()

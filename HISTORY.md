@@ -3,6 +3,7 @@
 ## 0.2.2 (XXXX-XX-XX)
 
 * Support environment variables substitution in the sql_engine string for SQL rules
+* Add support for the Boolean type
 
 ## 0.2.1 (2023-11-20)
 

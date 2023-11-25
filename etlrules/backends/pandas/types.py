@@ -17,6 +17,7 @@ MAP_TYPES = {
     'float32': 'Float32',
     'float64': 'Float64',
     'string': 'string',
+    'boolean': 'boolean',
 }
 
 NUMERIC_TYPES = {

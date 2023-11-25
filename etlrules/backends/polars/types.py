@@ -16,6 +16,7 @@ MAP_TYPES = {
     'float32': pl.Float32,
     'float64': pl.Float64,
     'string': pl.Utf8,
+    'boolean': pl.Boolean,
 }
 
 

@@ -20,6 +20,28 @@ from tests.utils.data import assert_frame_equal, get_test_data
     ], {"A": "Int8"}, True],
     [[
         {'A': 1},
+        {'A': -9},
+        {'A': 3},
+        {'A': 0},
+        {}
+    ], {'A': 'Int64'}, {'A': 'boolean'}, [
+        {'A': True},
+        {'A': True},
+        {'A': True},
+        {'A': False},
+        {}
+    ], {"A": "boolean"}, True],
+    [[
+        {'A': True},
+        {'A': False},
+        {}
+    ], {'A': 'boolean'}, {'A': 'int64'}, [
+        {'A': 1},
+        {'A': 0},
+        {}
+    ], {"A": "Int64"}, True],
+    [[
+        {'A': 1},
         {'A': 2},
         {'A': 3},
         {'A': -1},

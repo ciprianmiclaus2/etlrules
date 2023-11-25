@@ -25,6 +25,7 @@ TYPE_MAPPING = {
         "UInt32": pl.UInt32,
         "uint64": pl.UInt64,
         "UInt64": pl.UInt64,
+        "boolean": pl.Boolean,
         "object": pl.Object,
         "float64": pl.Float64,
         "Float64": pl.Float64,
@@ -34,6 +35,7 @@ TYPE_MAPPING = {
         "timedelta": pl.Duration,
     },
     "pd": {
+        "boolean": "boolean",
         "datetime": "datetime64[ns]",
         "list_strings": "object",
         "list_int64s": "object",
