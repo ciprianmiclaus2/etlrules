@@ -1,3 +1,7 @@
+from contextlib import contextmanager
+from typing import Generator, Mapping, Union
+
+
 class RuleData:
     def __init__(self, main_input=None, named_inputs=None, strict=True):
         self.strict = strict
@@ -26,3 +30,39 @@ class RuleData:
 
     def get_named_outputs(self):
         yield from self.named_outputs.items()
+
+
+class Context:
+
+    def __init__(self):
+        self.mappers = []
+
+    @contextmanager
+    def set(self, mapping: Mapping[str, Union[str, int, float, bool]]) -> Generator[dict[str, str], None, None]:
+        self.mappers.append(
+            {k: v for k, v in mapping.items()}
+        )
+        try:
+            yield self.mappers[-1]
+        finally:
+            self.mappers.pop()
+
+    def _do_get_attr(self, attr_name: str) -> Union[str, int, float, bool]:
+        if not isinstance(attr_name, str):
+            raise TypeError("Context attr name must be a string.")
+        if not self.mappers:
+            raise RuntimeError("No context set.")
+        current_context = self.mappers[-1]
+        try:
+            return current_context[attr_name]
+        except KeyError:
+            raise KeyError(f"No such attribute '{attr_name}' found in the current context.")
+
+    def __getattr__(self, attr_name: str) -> Union[str, int, float, bool]:
+        return self._do_get_attr(attr_name)
+
+    def __getitem__(self, attr_name: str) -> Union[str, int, float, bool]:
+        return self._do_get_attr(attr_name)
+
+
+context = Context()

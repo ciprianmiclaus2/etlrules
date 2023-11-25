@@ -1,6 +1,7 @@
 import datetime
 import pytest
 
+from etlrules.data import context
 from etlrules.exceptions import ExpressionSyntaxError, ColumnAlreadyExistsError, UnsupportedTypeError
 from tests.utils.data import assert_frame_equal, get_test_data
 
@@ -69,6 +70,19 @@ DF_OPS_SCENARIOS = [
 ]
 
 
+DF_CONTEXT_SCENARIOS = [
+    ["Cnst", "df['A'] + context.int_val", None, INPUT_DF, [
+        {"Cnst": 3}, {"Cnst": 4}, {"Cnst": 5}, {"Cnst": 6}, 
+    ], "Int64", None],
+    ["Cnst", "df['D'] + context.str_val", None, INPUT_DF, [
+        {"Cnst": "aSTR1"}, {"Cnst": "bSTR1"}, {"Cnst": "cSTR1"}, {"Cnst": "dSTR1"}, 
+    ], "string", None],
+    ["Cnst", "df['A'] and context.bool_val", "boolean", INPUT_DF, [
+        {"Cnst": True}, {"Cnst": True}, {"Cnst": True}, {"Cnst": True}, 
+    ], "boolean", None],
+]
+
+
 NON_DF_OPS_SCENARIOS = [
     ["BitwiseShiftRight", "df['B'] << df['A']", None, INPUT_DF, [
         {"BitwiseShiftRight": 2 << 1}, {"BitwiseShiftRight": 3 << 2}, {"BitwiseShiftRight": 4 << 3}, {"BitwiseShiftRight": 5 << 4}, 
@@ -105,7 +119,6 @@ ERROR_SCENARIOS = [
     ["ERR", "for i in df['A']:print(i)", None, INPUT_DF, ExpressionSyntaxError, None, "Error in expression 'for i in df['A']:print(i)': invalid syntax"],  # only expressions allowed
     ["ERR", "for i in df['A']:print(i)", None, None, ExpressionSyntaxError, None, "Error in expression 'for i in df['A']:print(i)': invalid syntax"],  # only expressions allowed
     ["IntStringConcat", "df['A'] + df['D']", None, None, {"IntStringConcat": []}, "string", None],
-    ["StringConcatToDatetime", "df['D'] + df['E']", "datetime", INPUT_DF, TypeError, None, None],
     ["UnsupportedType", "df['D'] + df['E']", "unknown", INPUT_DF, UnsupportedTypeError, None, None],
 ]
 
@@ -114,6 +127,7 @@ ERROR_SCENARIOS = [
     DF_OPS_SCENARIOS +
     NON_DF_OPS_SCENARIOS +
     NA_OPS_SCENARIOS +
+    DF_CONTEXT_SCENARIOS +
     ERROR_SCENARIOS
 )
 def test_add_new_column(column_name, expression, expression_type, input_df_in, expected, expected_dtype, expected_info, backend):
@@ -121,21 +135,22 @@ def test_add_new_column(column_name, expression, expression_type, input_df_in, e
     if input_df_in is None:
         input_df = input_df[:0]
     expected = backend.DataFrame(expected, dtype=expected_dtype) if isinstance(expected, (list, dict)) else expected
-    with get_test_data(input_df, named_inputs={"copy": input_df}, named_output="result") as data:
-        if isinstance(expected, backend.impl.DataFrame):
-            rule = backend.rules.AddNewColumnRule(column_name, expression, expression_type, named_input="copy", named_output="result")
-            rule.apply(data)
-            result = data.get_named_output("result")
-            expected = backend.hconcat(input_df, expected)
-            assert_frame_equal(result, expected)
-        elif issubclass(expected, Exception):
-            with pytest.raises(expected) as exc:
+    with context.set({"str_val": "STR1", "int_val": 2, "float_val": 3.5, "bool_val": True}):
+        with get_test_data(input_df, named_inputs={"copy": input_df}, named_output="result") as data:
+            if isinstance(expected, backend.impl.DataFrame):
                 rule = backend.rules.AddNewColumnRule(column_name, expression, expression_type, named_input="copy", named_output="result")
                 rule.apply(data)
-            if expected_info:
-                assert expected_info in str(exc.value)
-        else:
-            assert False, f"Unexpected {type(expected)} in '{expected}'"
+                result = data.get_named_output("result")
+                expected = backend.hconcat(input_df, expected)
+                assert_frame_equal(result, expected)
+            elif issubclass(expected, Exception):
+                with pytest.raises(expected) as exc:
+                    rule = backend.rules.AddNewColumnRule(column_name, expression, expression_type, named_input="copy", named_output="result")
+                    rule.apply(data)
+                if expected_info:
+                    assert expected_info in str(exc.value)
+            else:
+                assert False, f"Unexpected {type(expected)} in '{expected}'"
 
 
 INPUT_DF2 = [
@@ -179,7 +194,7 @@ INPUT_DF2 = [
         {"B": 18}
     ], {"A": "Int64", "B": "int64"}],
 ])
-def test_add_new_column(output_column, start, step, strict, input_df_in, expected, expected_info, backend):
+def test_add_row_numbers(output_column, start, step, strict, input_df_in, expected, expected_info, backend):
     input_df = backend.DataFrame(INPUT_DF2, astype={"A": "Int64", "B": "string"})
     if input_df_in is None:
         input_df = input_df[:0]

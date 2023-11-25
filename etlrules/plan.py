@@ -1,5 +1,5 @@
 import yaml
-from typing import Literal, Optional, Sequence
+from typing import Literal, Mapping, Optional, Sequence, Union
 
 from .exceptions import InvalidPlanError
 from .rule import BaseRule
@@ -68,6 +68,10 @@ class Plan:
         name: A name for the plan. Optional.
         description: An optional documentation for the plan.
             This can include what the plan does, its purpose and detailed information about how it works.
+        context: An optional key-value mapping which can be used in rules via string substitutions.
+            It can be used as arguments into the plan to tweak the running of the plan by providing different
+            values for certain arguments with each run.
+            The types of the values can be: strings, int, float, boolean (True or False).
         strict: A hint about how the plan should be executed.
             When None, then the plan has no hint to provide and its the caller deciding whether to run it
             in a strict mode or not.
@@ -76,10 +80,18 @@ class Plan:
         InvalidPlanError: if pipeline mode rules are mixed with graph mode rules
     """
 
-    def __init__(self, mode: Optional[Literal['pipeline', 'graph']]=None, name: Optional[str]=None, description: Optional[str]=None, strict: Optional[bool]=None):
+    def __init__(
+        self,
+        mode: Optional[Literal['pipeline', 'graph']]=None,
+        name: Optional[str]=None,
+        description: Optional[str]=None,
+        context: Optional[Mapping[str, Union[str, int, float, bool]]]=None,
+        strict: Optional[bool]=None
+    ):
         self.mode = mode
         self.name = name
         self.description = description
+        self.context = {k: v for k, v in context.items()} if context is not None else {}
         self.strict = strict
         self.rules = []
 
@@ -95,6 +107,9 @@ class Plan:
         if self.mode is None:
             self.mode = plan_mode_from_rules(self.rules)
         return self.mode
+
+    def get_context(self) -> dict[str, Union[str, int, float, bool]]:
+        return self.context
 
     def add_rule(self, rule: BaseRule) -> None:
         """ Add a new rule to the plan.
@@ -134,6 +149,7 @@ class Plan:
         return {
             "name": self.name,
             "description": self.description,
+            "context": self.context,
             "strict": self.strict,
             "rules": rules
         }
@@ -151,7 +167,8 @@ class Plan:
         instance = Plan(
             name=dct.get("name"),
             description=dct.get("description"),
-            strict=dct.get("strict")
+            context=dct.get("context"),
+            strict=dct.get("strict"),
         )
         rules = dct.get("rules", ())
         for rule in rules:

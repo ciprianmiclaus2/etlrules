@@ -4,6 +4,9 @@
 
 * Support environment variables substitution in the sql_engine string for SQL rules
 * Add support for the Boolean type
+* Introduce the concept of a plan context, consisting of a key-value mapping of string to int/float/str/bool values
+  which will act as the args into the plan. They can be used in expressions when adding new columns, ifthenelse and
+  filter rules.
 
 ## 0.2.1 (2023-11-20)
 

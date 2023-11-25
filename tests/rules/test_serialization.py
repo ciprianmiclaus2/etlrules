@@ -154,7 +154,7 @@ def test_serialize(rule_cls_str, rule_args_dict, backend):
 
 
 def test_serialize_plan(backend):
-    plan = Plan(name="plan1", description="Some description.", strict=True)
+    plan = Plan(name="plan1", description="Some description.", context={"str_val": "val1", "int_val": 1, "float_val": 2.5, "bool_val": True}, strict=True)
     for rule_cls_str, rule_args_dict in ALL_RULES:
         plan.add_rule(get_rule_instance(rule_cls_str, rule_args_dict, backend))
     dct = plan.to_dict()

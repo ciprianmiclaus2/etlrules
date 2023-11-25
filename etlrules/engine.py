@@ -1,7 +1,7 @@
 import graphlib
 from typing import Optional, Tuple
 
-from .data import RuleData
+from .data import RuleData, context
 from .exceptions import GraphRuntimeError, InvalidPlanError
 from .plan import PlanMode, Plan
 
@@ -28,8 +28,9 @@ class RuleEngine:
         self.plan = plan
 
     def run_pipeline(self, data: RuleData) -> RuleData:
-        for rule in self.plan:
-            rule.apply(data)
+        with context.set(self.plan.get_context()):
+            for rule in self.plan:
+                rule.apply(data)
         return data
 
     def _get_topological_sorter(self, data: RuleData) -> graphlib.TopologicalSorter:
@@ -72,11 +73,12 @@ class RuleEngine:
     def run_graph(self, data: RuleData) -> RuleData:
         g = self._get_topological_sorter(data)
         g.prepare()
-        while g.is_active():
-            for rule_idx in g.get_ready():
-                rule = self.plan.get_rule(rule_idx)
-                rule.apply(data)
-                g.done(rule_idx)
+        with context.set(self.plan.get_context()):
+            while g.is_active():
+                for rule_idx in g.get_ready():
+                    rule = self.plan.get_rule(rule_idx)
+                    rule.apply(data)
+                    g.done(rule_idx)
         return data
 
     def validate_pipeline(self, data: RuleData) -> Tuple[bool, Optional[str]]:
