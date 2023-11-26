@@ -5,6 +5,7 @@ except ImportError:
     HAS_SQL_ALCHEMY = False
 from typing import Mapping, Optional
 
+from etlrules.data import context
 from etlrules.backends.common.substitution import OSEnvironSubst
 from etlrules.backends.common.types import SUPPORTED_TYPES
 from etlrules.exceptions import SQLError, UnsupportedTypeError
@@ -103,7 +104,7 @@ class ReadSQLQueryRule(BaseRule):
         raise NotImplementedError("Can't instantiate base class.")
 
     def _get_sql_engine(self):
-        return self.sql_engine.format(env=OSEnvironSubst())
+        return self.sql_engine.format(env=OSEnvironSubst(), context=context)
 
     def apply(self, data):
         super().apply(data)

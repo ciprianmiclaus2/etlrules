@@ -1,12 +1,14 @@
 import datetime
 import os
-from etlrules.exceptions import SQLError, UnsupportedTypeError
 import pytest
 try:
     import sqlalchemy
     HAS_SQL_ALCHEMY = True
 except ImportError:
     HAS_SQL_ALCHEMY = False
+
+from etlrules.data import context
+from etlrules.exceptions import SQLError, UnsupportedTypeError
 
 from tests.utils.data import assert_frame_equal, get_test_data
 
@@ -155,7 +157,7 @@ def test_write_sql_table_scenarios(input_df, input_astypes, sql_table, if_exists
             assert False
 
 
-def test_sql_engine_substitution(backend):
+def test_sql_engine_env_substitution(backend):
     user = os.environ.get("DB_USER")
     pswd = os.environ.get("DB_PASSWORD")
     os.environ["DB_USER"] = "testUser"
@@ -175,3 +177,12 @@ def test_sql_engine_substitution(backend):
             os.environ["DB_PASSWORD"] = pswd
         else:
             del os.environ["DB_PASSWORD"]
+
+
+def test_sql_engine_context_substitution(backend):
+    with context.set({"DB_USER": "testUser", "DB_PASSWORD": "testPassword"}):
+        # DISCLAIMER - not a valid sqlite engine string
+        rule = backend.rules.ReadSQLQueryRule("sqlite:///user={context.DB_USER}&pswd={context.DB_PASSWORD}", "SELECT * FROM MyTable", named_output="result")
+        assert rule._get_sql_engine() == "sqlite:///user=testUser&pswd=testPassword"
+        rule = backend.rules.ReadSQLQueryRule("sqlite:///user={context.DB_USER}", f"SELECT * FROM MyTable", named_output="result")
+        assert rule._get_sql_engine() == "sqlite:///user=testUser"
