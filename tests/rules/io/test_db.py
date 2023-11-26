@@ -39,6 +39,9 @@ def sqlite3_db():
     ["SELECT * FROM Author WHERE Id=2", None, [
         {"Id": 2, "FirstName": "John", "LastName": "McEwan"},
     ], {"Id": "Int64", "FirstName": "string", "LastName": "string"}],
+    ["SELECT * FROM Author WHERE {context.SQL_FILTER}", None, [
+        {"Id": 2, "FirstName": "John", "LastName": "McEwan"},
+    ], {"Id": "Int64", "FirstName": "string", "LastName": "string"}],
     ["SELECT * FROM Author WHERE Id=-1", {"Id": "int64", "FirstName": "string", "LastName": "string"},
     {"Id": [], "FirstName": [], "LastName": []},
     {"Id": "Int64", "FirstName": "string", "LastName": "string"}],
@@ -56,20 +59,21 @@ def sqlite3_db():
 ])
 def test_read_sql_query_scenarios(sql_query, column_types, expected, expected_info, sqlite3_db, backend):
     expected = backend.DataFrame(expected, astype=expected_info) if isinstance(expected, (list, dict)) else expected
-    with get_test_data(None, named_inputs={}, named_output="result") as data:
-        if isinstance(expected, backend.impl.DataFrame):
-            rule = backend.rules.ReadSQLQueryRule(f"sqlite:///{sqlite3_db}", sql_query, column_types=column_types, named_output="result")
-            rule.apply(data)
-            actual = data.get_named_output("result")
-            assert_frame_equal(actual, expected)
-        elif issubclass(expected, Exception):
-            with pytest.raises(expected) as exc:
+    with context.set({"SQL_FILTER": "Id=2"}):
+        with get_test_data(None, named_inputs={}, named_output="result") as data:
+            if isinstance(expected, backend.impl.DataFrame):
                 rule = backend.rules.ReadSQLQueryRule(f"sqlite:///{sqlite3_db}", sql_query, column_types=column_types, named_output="result")
                 rule.apply(data)
-            if expected_info:
-                assert expected_info in str(exc.value)
-        else:
-            assert False
+                actual = data.get_named_output("result")
+                assert_frame_equal(actual, expected)
+            elif issubclass(expected, Exception):
+                with pytest.raises(expected) as exc:
+                    rule = backend.rules.ReadSQLQueryRule(f"sqlite:///{sqlite3_db}", sql_query, column_types=column_types, named_output="result")
+                    rule.apply(data)
+                if expected_info:
+                    assert expected_info in str(exc.value)
+            else:
+                assert False
 
 
 @pytest.mark.skipif(not HAS_SQL_ALCHEMY, reason="sqlalchemy not installed.")

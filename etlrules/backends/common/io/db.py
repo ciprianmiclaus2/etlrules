@@ -56,9 +56,16 @@ class ReadSQLQueryRule(BaseRule):
                 sql_engine = "postgres://{env.USER}:{env.PASSWORD}@{env.DB_HOST}/mydb
             In this example, when you run, env.USER, env.PASSWORD and env.DB_HOST will be replaced with the respective
             environment variables, allowing you to not hardcode them in the plan for security reasons but also for
-            configurability. 
+            configurability.
+            A similar substition can be achieved using the plan context using the context.property, e.g.
+                sql_engine = "postgres://{context.USER}:{env.PASSWORD}@{context.DB_HOST}/mydb
+            It's not recommended to store passwords in plain text in the plan.
         sql_query: A SQL SELECT statement that will specify the columns, table and optionally any WHERE, GROUP BY, ORDER BY clauses.
             The SQL statement must be valid for the SQL engine specified in the sql_engine parameter.
+
+            The env and context substitution work in the sql_query too. E.g.:
+                SELECT * from {env.SCHEMA}.{context.TABLE_NAME} WHERE {context.FILTER}
+            This allows you to parameterize the plan at run time.
         column_types: A mapping of column names and their types. Column types are inferred from the data when this parameter
             is not specified. For empty result sets, this inferrence is not possible, so specifying the column types allows
             the users to control the types in that scenario and not fallback onto backends defaults. 
@@ -105,6 +112,9 @@ class ReadSQLQueryRule(BaseRule):
 
     def _get_sql_engine(self):
         return self.sql_engine.format(env=OSEnvironSubst(), context=context)
+
+    def _get_sql_query(self):
+        return self.sql_query.format(env=OSEnvironSubst(), context=context)
 
     def apply(self, data):
         super().apply(data)

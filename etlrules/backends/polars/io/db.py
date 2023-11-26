@@ -15,7 +15,7 @@ class ReadSQLQueryRule(ReadSQLQueryRuleBase):
         else:
             column_types = None
         return pl.read_database(
-            self.sql_query,
+            self._get_sql_query(),
             connection,
             schema_overrides=column_types,
         )

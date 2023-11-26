@@ -16,7 +16,7 @@ class ReadSQLQueryRule(ReadSQLQueryRuleBase):
         else:
             column_types = None
         return pd.read_sql_query(
-            self.sql_query,
+            self._get_sql_query(),
             connection,
             dtype=column_types,
         ).convert_dtypes()
