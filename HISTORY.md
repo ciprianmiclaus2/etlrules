@@ -7,6 +7,7 @@
 * Introduce the concept of a plan context, consisting of a key-value mapping of string to int/float/str/bool values
   which will act as the args into the plan. They can be used in expressions when adding new columns, ifthenelse and
   filter rules.
+* Add env and context substitution feature to sql queries
 
 ## 0.2.1 (2023-11-20)
 
