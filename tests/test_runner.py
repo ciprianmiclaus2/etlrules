@@ -33,3 +33,28 @@ def test_runner(backend_str):
             assert rows == EXPECTED
     finally:
         os.remove(Path("tests") / "mydb.db")
+
+
+@pytest.mark.parametrize("backend_str", [
+    "pandas",
+    "polars",
+])
+def test_runner_with_cli_overrides(backend_str):
+    db_name = "otherdb.db"
+    args = [
+        "runner.py", "-p", "./tests/csv2db.yml", "-b", backend_str,
+        "--csv_file_dir", "./tests",
+        "--csv_file_name", "csv_sample.csv",
+        "--sql_engine", f"sqlite:///tests/{db_name}",
+        "--sql_table", "SomeOtherTable"
+    ]
+    with patch.object(sys, 'argv', args):
+        run_plan()
+    try:
+        import sqlalchemy as sa
+        engine = SQLAlchemyEngines.get_engine(f"sqlite:///tests/{db_name}")
+        with engine.connect() as connection:
+            rows = connection.execute(sa.text("SELECT * FROM SomeOtherTable")).fetchall()
+            assert rows == EXPECTED
+    finally:
+        os.remove(Path("tests") / db_name)
