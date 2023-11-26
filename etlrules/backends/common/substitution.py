@@ -1,6 +1,8 @@
 import os
 from urllib.parse import quote_plus
 
+from etlrules.data import context
+
 
 class OSEnvironSubst:
     def __init__(self, use_quote_plus=True):
@@ -11,3 +13,10 @@ class OSEnvironSubst:
         if self.use_quote_plus:
             val = quote_plus(val)
         return val
+
+
+def subst_string(str_in: str) -> str:
+    return str_in.format(
+        env=OSEnvironSubst(),
+        context=context
+    )

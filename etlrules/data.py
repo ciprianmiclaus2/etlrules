@@ -1,14 +1,20 @@
 from contextlib import contextmanager
-from typing import Generator, Mapping, Union
+from typing import Generator, Mapping, Optional, Union
 
 
 class RuleData:
-    def __init__(self, main_input=None, named_inputs=None, strict=True):
+    def __init__(self,
+        main_input=None,
+        named_inputs=None,
+        context: Optional[Mapping[str, Union[str, int, float, bool]]]=None,
+        strict: bool=True
+    ):
         self.strict = strict
         self.main_output = main_input
         self.named_outputs = (
             {name: df for name, df in named_inputs.items()} if named_inputs else {}
         )
+        self.context = {k: v for k, v in context.items()} if context is not None else {}
         self.lineage_info = {}
 
     def get_main_output(self):
@@ -30,6 +36,9 @@ class RuleData:
 
     def get_named_outputs(self):
         yield from self.named_outputs.items()
+
+    def get_context(self) -> dict[str, Union[str, int, float, bool]]:
+        return self.context
 
 
 class Context:

@@ -28,7 +28,7 @@ class WriteSQLTableRule(WriteSQLTableRuleBase):
 
     def _do_apply(self, connection, df):
         df.to_sql(
-            self.sql_table,
+            self._get_sql_table(),
             connection,
             if_exists=self.if_exists,
             index=False,
@@ -38,10 +38,11 @@ class WriteSQLTableRule(WriteSQLTableRuleBase):
     def apply(self, data):
         super().apply(data)
         df = self._get_input_df(data)
-        engine = SQLAlchemyEngines.get_engine(self.sql_engine)
+        engine = SQLAlchemyEngines.get_engine(self._get_sql_engine())
         import sqlalchemy as sa
         with engine.connect() as connection:
             try:
                 self._do_apply(connection, df)
             except sa.exc.SQLAlchemyError as exc:
                 raise SQLError(str(exc))
+            connection.commit()

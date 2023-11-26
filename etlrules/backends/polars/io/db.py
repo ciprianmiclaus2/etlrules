@@ -28,8 +28,8 @@ class WriteSQLTableRule(WriteSQLTableRuleBase):
         import sqlalchemy as sa
         try:
             df.write_database(
-                self.sql_table,
-                self.sql_engine,
+                self._get_sql_table(),
+                self._get_sql_engine(),
                 if_exists=self.if_exists
             )
         except sa.exc.SQLAlchemyError as exc:

@@ -1,0 +1,44 @@
+context:
+  csv_file_dir: ./tests
+  csv_file_name: csv_sample.csv
+  sql_engine: sqlite:///tests/mydb.db
+  sql_table: MyTable
+description: "Reads a CSV file and writes it into a DB table.\n        \n        To\
+  \ generate a yaml file from this plan, run:\n            python -m examples.csv2db.plan\n\
+  \        This should produce csv2db.yml in the curent directory.\n        To run\
+  \ the plan, run:\n            python -m etlrules.runner -p ./examples/csv2db/csv2db.yml\
+  \ -b pandas\n        "
+name: CSV2DB
+rules:
+- ReadCSVFileRule:
+    description: "The rule can be customized by specifying:\n\n            context.csv_file_name:\
+      \ The name of the csv to read\n            context.csv_file_dir: The directory\
+      \ of the csv file\n\n            When running in the runner, you can override\
+      \ the context params with:\n\n            python -m etlrules.runner -p csv2db.yml\
+      \ -b pandas --csv_file_name another_file.csv --csv_file_dir /another/file/dir\n\
+      \            \n            When not overridden, the defaults read the local\
+      \ csv_sample.csv file.\n            "
+    file_dir: '{context.csv_file_dir}'
+    file_name: '{context.csv_file_name}'
+    header: true
+    name: Load a csv file
+    named_output: null
+    regex: false
+    separator: ','
+    strict: true
+- WriteSQLTableRule:
+    description: "The rule can be customized by specifying:\n\n            context.sql_engine:\
+      \ The sql engine to write to\n            context.sql_table: The sql table to\
+      \ write to\n\n            If the table already exists, append to it.\n\n   \
+      \         When running in the runner, you can override the context params with:\n\
+      \n            python -m etlrules.runner -p csv2db.yml -b pandas --sql_engine\
+      \ some_sql_engine --sql_table SomeTable\n            \n            When not\
+      \ overridden, the defaults write to a sqlite3 local file called mydb.db into\
+      \ a table MyTable.\n            "
+    if_exists: append
+    name: Write the dataframe to the DB table
+    named_input: null
+    sql_engine: '{context.sql_engine}'
+    sql_table: '{context.sql_table}'
+    strict: true
+strict: true

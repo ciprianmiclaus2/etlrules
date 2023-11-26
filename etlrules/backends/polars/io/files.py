@@ -39,9 +39,9 @@ class WriteCSVFileRule(WriteCSVFileRuleBase):
 
     # TODO: support compressions
 
-    def do_write(self, df: pl.DataFrame) -> None:
+    def do_write(self, file_name: str, file_dir: str, df: pl.DataFrame) -> None:
         df.write_csv(
-            os.path.join(self.file_dir, self.file_name),
+            os.path.join(file_dir, file_name),
             separator=self.separator,
             has_header=self.header,
         )
@@ -49,10 +49,9 @@ class WriteCSVFileRule(WriteCSVFileRuleBase):
 
 class WriteParquetFileRule(WriteParquetFileRuleBase):
 
-    def do_write(self, df: pl.DataFrame) -> None:
+    def do_write(self, file_name: str, file_dir: str, df: pl.DataFrame) -> None:
         df.write_parquet(
-            os.path.join(self.file_dir, self.file_name),
+            os.path.join(file_dir, file_name),
             use_pyarrow=True,
             compression=self.compression or "uncompressed",
         )
-

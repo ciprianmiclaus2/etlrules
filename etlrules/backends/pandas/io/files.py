@@ -32,9 +32,9 @@ class ReadParquetFileRule(ReadParquetFileRuleBase):
 
 class WriteCSVFileRule(WriteCSVFileRuleBase):
 
-    def do_write(self, df: pd.DataFrame) -> None:
+    def do_write(self, file_name: str, file_dir: str,  df: pd.DataFrame) -> None:
         df.to_csv(
-            os.path.join(self.file_dir, self.file_name),
+            os.path.join(file_dir, file_name),
             sep=self.separator,
             header=self.header,
             compression=self.compression,
@@ -44,9 +44,9 @@ class WriteCSVFileRule(WriteCSVFileRuleBase):
 
 class WriteParquetFileRule(WriteParquetFileRuleBase):
 
-    def do_write(self, df: pd.DataFrame) -> None:
+    def do_write(self, file_name: str, file_dir: str, df: pd.DataFrame) -> None:
         df.to_parquet(
-            path=os.path.join(self.file_dir, self.file_name),
+            path=os.path.join(file_dir, file_name),
             engine="pyarrow",
             compression=self.compression,
             index=False

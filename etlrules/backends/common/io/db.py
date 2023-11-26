@@ -5,8 +5,7 @@ except ImportError:
     HAS_SQL_ALCHEMY = False
 from typing import Mapping, Optional
 
-from etlrules.data import context
-from etlrules.backends.common.substitution import OSEnvironSubst
+from etlrules.backends.common.substitution import subst_string
 from etlrules.backends.common.types import SUPPORTED_TYPES
 from etlrules.exceptions import SQLError, UnsupportedTypeError
 from etlrules.rule import BaseRule, UnaryOpBaseRule
@@ -110,11 +109,17 @@ class ReadSQLQueryRule(BaseRule):
     def _do_apply(self, connection):
         raise NotImplementedError("Can't instantiate base class.")
 
-    def _get_sql_engine(self):
-        return self.sql_engine.format(env=OSEnvironSubst(), context=context)
+    def _get_sql_engine(self) -> str:
+        sql_engine = subst_string(self.sql_engine)
+        if not sql_engine:
+            raise ValueError("The sql_engine parameter must be a non-empty string.")
+        return sql_engine
 
-    def _get_sql_query(self):
-        return self.sql_query.format(env=OSEnvironSubst(), context=context)
+    def _get_sql_query(self) -> str:
+        sql_query = subst_string(self.sql_query)
+        if not sql_query:
+            raise ValueError("The sql_query parameter must be a non-empty string.")
+        return sql_query
 
     def apply(self, data):
         super().apply(data)
@@ -206,3 +211,15 @@ class WriteSQLTableRule(UnaryOpBaseRule):
 
     def has_output(self):
         return False
+
+    def _get_sql_engine(self) -> str:
+        sql_engine = subst_string(self.sql_engine)
+        if not sql_engine:
+            raise ValueError("The sql_engine parameter must be a non-empty string.")
+        return sql_engine
+
+    def _get_sql_table(self) -> str:
+        sql_table = subst_string(self.sql_table)
+        if not sql_table:
+            raise ValueError("The sql_table parameter must be a non-empty string.")
+        return sql_table

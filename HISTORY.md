@@ -2,6 +2,10 @@
 
 ## 0.2.3 (XXXX-XX-XX)
 
+* Fix to apply substitution in the WriteSQLTableRule sql_engine parameter
+* Apply substitution in the Read/Write rules for csv and parquet files for the file_name and file_dir parameters
+* Add a cli runner which allows users to run a yml file and parameterize with cli args the plan context
+* Add the csv2db plan/yml example
 
 ## 0.2.2 (2023-11-26)
 

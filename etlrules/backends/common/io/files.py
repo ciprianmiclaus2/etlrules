@@ -2,6 +2,7 @@ import os, re
 from typing import List, NoReturn, Optional, Sequence, Tuple, Union
 
 from etlrules.rule import BaseRule, UnaryOpBaseRule
+from etlrules.backends.common.substitution import subst_string
 
 
 class BaseReadFileRule(BaseRule):
@@ -15,13 +16,15 @@ class BaseReadFileRule(BaseRule):
         return False
 
     def _get_full_file_paths(self):
+        file_name = subst_string(self.file_name)
+        file_dir = subst_string(self.file_dir)
         if self.regex:
-            pattern = re.compile(self.file_name)
-            for file_name in os.listdir(self.file_dir):
-                if pattern.match(file_name):
-                    yield os.path.join(self.file_dir, file_name)
+            pattern = re.compile(file_name)
+            for fn in os.listdir(file_dir):
+                if pattern.match(fn):
+                    yield os.path.join(file_dir, fn)
         else:
-            yield os.path.join(self.file_dir, self.file_name)
+            yield os.path.join(file_dir, file_name)
 
     def do_read(self, file_path: str):
         raise NotImplementedError("Have you imported the rules from etlrules.backends.<your_backend> and not common?")
@@ -233,13 +236,13 @@ class BaseWriteFileRule(UnaryOpBaseRule):
     def has_output(self):
         return False
 
-    def do_write(self, df) -> None:
+    def do_write(self, file_name: str, file_dir: str, df) -> None:
         raise NotImplementedError("Have you imported the rules from etlrules.backends.<your_backend> and not common?")
 
     def apply(self, data):
         super().apply(data)
         df = self._get_input_df(data)
-        self.do_write(df)
+        self.do_write(subst_string(self.file_name), subst_string(self.file_dir), df)
 
 
 class WriteCSVFileRule(BaseWriteFileRule):

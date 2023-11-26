@@ -1,5 +1,5 @@
 import graphlib
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Union
 
 from .data import RuleData, context
 from .exceptions import GraphRuntimeError, InvalidPlanError
@@ -27,8 +27,14 @@ class RuleEngine:
         assert isinstance(plan, Plan)
         self.plan = plan
 
+    def _get_context(self, data: RuleData) -> dict[str, Union[str, int, float, bool]]:
+        context = {}
+        context.update(self.plan.get_context())
+        context.update(data.get_context())
+        return context
+
     def run_pipeline(self, data: RuleData) -> RuleData:
-        with context.set(self.plan.get_context()):
+        with context.set(self._get_context(data)):
             for rule in self.plan:
                 rule.apply(data)
         return data
@@ -73,7 +79,7 @@ class RuleEngine:
     def run_graph(self, data: RuleData) -> RuleData:
         g = self._get_topological_sorter(data)
         g.prepare()
-        with context.set(self.plan.get_context()):
+        with context.set(self._get_context(data)):
             while g.is_active():
                 for rule_idx in g.get_ready():
                     rule = self.plan.get_rule(rule_idx)
