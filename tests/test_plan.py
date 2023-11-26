@@ -2,15 +2,14 @@ import pytest
 
 from etlrules.exceptions import InvalidPlanError
 from etlrules.plan import Plan
-from etlrules.backends.pandas import ProjectRule, RenameRule, SortRule
 
 
-def test_plan_rules():
+def test_plan_rules(backend):
     plan = Plan(name="Test Plan", description="This is a plan to test the plan.", strict=True)
     rules_in = [
-        SortRule(['A']),
-        ProjectRule(['A', 'B']),
-        RenameRule({'A': 'AA', 'B': 'BB'}),
+        backend.rules.SortRule(['A']),
+        backend.rules.ProjectRule(['A', 'B']),
+        backend.rules.RenameRule({'A': 'AA', 'B': 'BB'}),
     ]
     for rule in rules_in:
         plan.add_rule(rule)
@@ -18,34 +17,34 @@ def test_plan_rules():
         assert rule == rules_in[idx]
 
 
-def test_plan_to_from_dict():
+def test_plan_to_from_dict(backend):
     plan = Plan(name="Test Plan", description="This is a plan to test the plan.", strict=True)
-    plan.add_rule(SortRule(['A']))
-    plan.add_rule(ProjectRule(['A', 'B']))
-    plan.add_rule(RenameRule({'A': 'AA', 'B': 'BB'}))
+    plan.add_rule(backend.rules.SortRule(['A']))
+    plan.add_rule(backend.rules.ProjectRule(['A', 'B']))
+    plan.add_rule(backend.rules.RenameRule({'A': 'AA', 'B': 'BB'}))
     dct = plan.to_dict()
     assert dct["name"] == "Test Plan"
     assert dct["description"] == "This is a plan to test the plan."
     assert dct["strict"] == True
     assert len(dct["rules"]) == 3
-    plan2 = Plan.from_dict(dct, "pandas")
+    plan2 = Plan.from_dict(dct, backend.name)
     assert plan == plan2
 
 
-def test_plan_to_from_yaml():
+def test_plan_to_from_yaml(backend):
     plan = Plan(name="Test Plan", description="This is a plan to test the plan.", strict=True)
-    plan.add_rule(SortRule(['A']))
-    plan.add_rule(ProjectRule(['A', 'B']))
-    plan.add_rule(RenameRule({'A': 'AA', 'B': 'BB'}))
+    plan.add_rule(backend.rules.SortRule(['A']))
+    plan.add_rule(backend.rules.ProjectRule(['A', 'B']))
+    plan.add_rule(backend.rules.RenameRule({'A': 'AA', 'B': 'BB'}))
     yml = plan.to_yaml()
-    plan2 = Plan.from_yaml(yml, "pandas")
+    plan2 = Plan.from_yaml(yml, backend.name)
     assert plan == plan2
 
 
-def test_graph_plan_rule_without_named_output():
+def test_graph_plan_rule_without_named_output(backend):
     plan = Plan()
-    plan.add_rule(SortRule(['A'], named_input="input", named_output="sorted_data"))
-    plan.add_rule(ProjectRule(['A', 'B'], named_input="sorted_data", named_output="projected_data"))
+    plan.add_rule(backend.rules.SortRule(['A'], named_input="input", named_output="sorted_data"))
+    plan.add_rule(backend.rules.ProjectRule(['A', 'B'], named_input="sorted_data", named_output="projected_data"))
     with pytest.raises(InvalidPlanError) as exc:
-        plan.add_rule(RenameRule({'A': 'AA', 'B': 'BB'}, named_input="projected_data"))
+        plan.add_rule(backend.rules.RenameRule({'A': 'AA', 'B': 'BB'}, named_input="projected_data"))
     assert "Mixing of rules taking named inputs and rules with no named inputs is not supported." in str(exc.value)
