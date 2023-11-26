@@ -1,6 +1,9 @@
 # History
 
-## 0.2.2 (XXXX-XX-XX)
+## 0.2.3 (XXXX-XX-XX)
+
+
+## 0.2.2 (2023-11-26)
 
 * Support environment variables substitution in the sql_engine string for SQL rules
 * Add support for the Boolean type
