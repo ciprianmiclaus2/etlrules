@@ -1,0 +1,44 @@
+context:
+  csv_file_dir: ./examples/db2csv
+  csv_file_name: csv_sample.csv
+  sql_engine: sqlite:///examples/db2csv/mydb.db
+  sql_query: SELECT * FROM MyTable
+description: "Runs a DB query and writes the results to a local csv file.\n      \
+  \  \n        To generate a yaml file from this plan, run:\n            python -m\
+  \ examples.db2csv.plan\n        This should produce db2csv.yml in the curent directory.\n\
+  \        To run the plan, run:\n            python -m etlrules.runner -p ./examples/db2csv/db2csv.yml\
+  \ -b pandas\n        "
+name: DB2CSV
+rules:
+- ReadSQLQueryRule:
+    column_types: null
+    description: "The rule can be customized by specifying:\n\n            context.sql_engine:\
+      \ The sql engine to read from\n            context.sql_query: The sql query\
+      \ to run\n\n            When running in the runner, you can override the context\
+      \ params with:\n\n            python -m etlrules.runner -p db2csv.yml -b pandas\
+      \ --sql_engine some_sql_engine --sql_query \"SELECT * FROM OtherTable\"\n  \
+      \          \n            When not overridden, the defaults read from a sqlite3\
+      \ local file called mydb.db and selects all records from a table MyTable.\n\
+      \            "
+    name: Read a DB table
+    named_output: null
+    sql_engine: '{context.sql_engine}'
+    sql_query: '{context.sql_query}'
+    strict: true
+- WriteCSVFileRule:
+    compression: null
+    description: "The rule can be customized by specifying:\n\n            context.csv_file_name:\
+      \ The name of the csv to write to\n            context.csv_file_dir: The directory\
+      \ to write the csv file into\n\n            When running in the runner, you\
+      \ can override the context params with:\n\n            python -m etlrules.runner\
+      \ -p db2csv.yml -b pandas --csv_file_name another_file.csv --csv_file_dir /another/file/dir\n\
+      \            \n            When not overridden, the defaults write a local csv_sample.csv\
+      \ file.\n            "
+    file_dir: '{context.csv_file_dir}'
+    file_name: '{context.csv_file_name}'
+    header: true
+    name: Writes a local csv file.
+    named_input: null
+    separator: ','
+    strict: true
+strict: true
