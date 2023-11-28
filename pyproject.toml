@@ -51,12 +51,12 @@ dev = [
     "toml"
 ]
 
-doc = [
+docs = [
     "mkdocs==1.5.3",
-    "mkdocs-include-markdown-plugin==3.2.3",
+    "mkdocs-include-markdown-plugin==3.9.1",
     "mkdocs-material==8.1.11",
-    "mkdocstrings==0.18.0",
-    "mkdocs-material-extension==1.0.3",
+    "mkdocstrings==0.18.1",
+    "mkdocs-material-extensions==1.3",
     "mkdocs-autorefs==0.3.1",
     "mike==1.1.2"
     ]
