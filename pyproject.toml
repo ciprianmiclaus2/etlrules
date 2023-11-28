@@ -2,9 +2,9 @@
 name = "etlrules"
 version = "0.2.2"
 description = "A python rule engine operating with data frames aimed at the financial services."
-authors = ["Ciprian Miclaus <ciprianm@gmail.com>"]
+authors = [{name = "Ciprian Miclaus", email = "ciprianm@gmail.com"}]
 readme = "README.md"
-license =  "MIT"
+license = {file = "LICENSE"}
 requires-python = ">=3.9"
 classifiers=[
     'Development Status :: 2 - Pre-Alpha',
@@ -28,10 +28,11 @@ sqlalchemy = {version = "^2.0.23", optional = true}
 
 [project.optional-dependencies]
 polars = [
-    "polars" = "0.19.12",
-    #"polars-lts-cpu" = "0.19.12",
-    "polars-business" = "0.3.11",
+    "polars==0.19.12",
+    #"polars-lts-cpu==0.19.12",
+    "polars-business==0.3.11"
 ]
+
 test = [
     "pytest",
     "black",
@@ -51,13 +52,13 @@ dev = [
 ]
 
 doc = [
-    "mkdocs" = "^1.5.3",
-    "mkdocs-include-markdown-plugin" = "^3.2.3",
-    "mkdocs-material" = "^8.1.11",
-    "mkdocstrings" = "^0.18.0",
-    "mkdocs-material-extension" = "^1.0.3",
-    "mkdocs-autorefs" = "^0.3.1",
-    "mike" = "^1.1.2"
+    "mkdocs==1.5.3",
+    "mkdocs-include-markdown-plugin==3.2.3",
+    "mkdocs-material==8.1.11",
+    "mkdocstrings==0.18.0",
+    "mkdocs-material-extension==1.0.3",
+    "mkdocs-autorefs==0.3.1",
+    "mike==1.1.2"
     ]
 
 
@@ -66,3 +67,6 @@ homepage = "https://github.com/ciprianmiclaus/etlrules"
 documentation = "https://ciprianmiclaus.github.io/etlrules/"
 repository = "https://github.com/ciprianmiclaus/etlrules"
 history = "https://github.com/ciprianmiclaus/etlrules/blob/main/HISTORY.md"
+
+[tool.setuptools]
+packages = ["etlrules"]
