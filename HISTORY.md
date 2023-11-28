@@ -1,6 +1,6 @@
 # History
 
-## 0.2.3 (XXXX-XX-XX)
+## 0.2.3 (2023-11-28)
 
 * Fix to apply substitution in the WriteSQLTableRule sql_engine parameter
 * Apply substitution in the Read/Write rules for csv and parquet files for the file_name and file_dir parameters
