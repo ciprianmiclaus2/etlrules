@@ -1,5 +1,9 @@
 # History
 
+## 0.2.4 (XXXX-XX-XX)
+
+
+
 ## 0.2.3 (2023-11-28)
 
 * Fix to apply substitution in the WriteSQLTableRule sql_engine parameter
