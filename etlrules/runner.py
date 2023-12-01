@@ -48,21 +48,54 @@ def get_args_parser(plan: Optional[Plan]=None) -> dict[str, Any]:
 
 
 def load_plan(plan_file: str, backend: str) -> Plan:
+    """ Load a plan from a yaml file.
+
+    Basic usage:
+
+        from etlrules import load_plan
+        plan = load_plan("/home/someuser/some_plan.yml", "pandas")
+
+    Args:
+        plan_file: A path to a yaml file with the plan definition
+        backend: One of the supported backends (e.g. pandas, polars, etc.)
+
+    Returns:
+        A Plan instance deserialized from the yaml file.
+    """
     with open(plan_file, 'rt') as plan_f:
         contents = plan_f.read()
     return Plan.from_yaml(contents, backend)
 
 
-def run_plan() -> None:
-    args = get_args_parser()
-    plan = load_plan(args["plan"], args["backend"])
+def run_plan(plan_file: str, backend: str) -> RuleData:
+    """ Runs a plan from a yaml file with a given backend.
+
+    Basic usage:
+
+        from etlrules import run_plan
+        data = run_plan("/home/someuser/some_plan.yml", "pandas")
+
+    Args:
+        plan_file: A path to a yaml file with the plan definition
+        backend: One of the supported backends (e.g. pandas, polars, etc.)
+
+    Returns:
+        A RuleData instance which contains the result dataframe(s).
+    """
+    plan = load_plan(plan_file, backend)
     args = get_args_parser(plan)
     data = RuleData(context=args)
     engine = RuleEngine(plan)
-    logger.info(f"Running plan '{plan.name}'")
     engine.run(data)
+    return data
+
+
+def run() -> None:
+    args = get_args_parser()
+    logger.info(f"Running plan '{args['plan']}' with backend: {args['backend']}")
+    run_plan(args["plan"], args["backend"])
     logger.info("Done.")
 
 
 if __name__ == "__main__":
-    run_plan()
+    run()
