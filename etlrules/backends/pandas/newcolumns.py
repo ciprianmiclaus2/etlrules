@@ -7,6 +7,7 @@ from etlrules.backends.common.newcolumns import (
 from etlrules.backends.pandas.expressions import Expression
 from etlrules.backends.pandas.types import MAP_TYPES
 
+
 class AddNewColumnRule(AddNewColumnRuleBase):
 
     def get_column_expression(self):

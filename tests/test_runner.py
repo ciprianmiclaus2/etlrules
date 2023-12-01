@@ -4,7 +4,7 @@ import pytest
 import sys
 from unittest.mock import patch
 
-from etlrules.runner import run_plan
+from etlrules.runner import run
 from etlrules.backends.common.io.db import SQLAlchemyEngines
 
 
@@ -24,7 +24,7 @@ EXPECTED = [
 def test_runner(backend_str):
     args = ["runner.py", "-p", "./tests/csv2db.yml", "-b", backend_str]
     with patch.object(sys, 'argv', args):
-        run_plan()
+        run()
     try:
         import sqlalchemy as sa
         engine = SQLAlchemyEngines.get_engine("sqlite:///tests/mydb.db")
@@ -49,7 +49,7 @@ def test_runner_with_cli_overrides(backend_str):
         "--sql_table", "SomeOtherTable"
     ]
     with patch.object(sys, 'argv', args):
-        run_plan()
+        run()
     try:
         import sqlalchemy as sa
         engine = SQLAlchemyEngines.get_engine(f"sqlite:///tests/{db_name}")
