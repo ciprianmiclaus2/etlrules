@@ -35,6 +35,7 @@ class WriteCSVFileRule(WriteCSVFileRuleBase):
     def do_write(self, file_name: str, file_dir: str,  df: pd.DataFrame) -> None:
         df.to_csv(
             os.path.join(file_dir, file_name),
+            single_file=True,
             sep=self.separator,
             header=self.header,
             compression=self.compression,
@@ -49,6 +50,6 @@ class WriteParquetFileRule(WriteParquetFileRuleBase):
             path=os.path.join(file_dir, file_name),
             engine="pyarrow",
             compression=self.compression,
-            index=False
+            write_index=False
         )
 
