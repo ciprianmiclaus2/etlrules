@@ -14,6 +14,14 @@ try:
 except:
     polars_DataFrame = None
     polars_assert_frame_equal = None
+try:
+    from dask.dataframe import DataFrame as dask_DataFrame
+    from dask.dataframe.utils import assert_eq
+    dask_assert_frame_equal = lambda a, b: assert_eq(a, b, check_divisions=False, check_index=False, sort_results=False)
+except:
+    dask_DataFrame = None
+    dask_assert_frame_equal = None
+
 
 from etlrules.data import RuleData
 
@@ -28,6 +36,15 @@ def assert_frame_equal(df, df2, ignore_row_ordering=False, ignore_column_orderin
             df = df[sorted(df.columns)]
             df2 = df2[sorted(df2.columns)]
         pandas_assert_frame_equal(df, df2)
+    elif dask_DataFrame is not None and isinstance(df, dask_DataFrame) and isinstance(df2, dask_DataFrame):
+        assert dask_assert_frame_equal is not None
+        if ignore_row_ordering:
+            df = df.sort_values(list(df.columns))
+            df2 = df2.sort_values(list(df2.columns))
+        if ignore_column_ordering:
+            df = df[sorted(df.columns)]
+            df2 = df2[sorted(df2.columns)]
+        dask_assert_frame_equal(df, df2)
     elif polars_DataFrame is not None and isinstance(df, polars_DataFrame) and isinstance(df2, polars_DataFrame):
         assert polars_assert_frame_equal is not None
         if ignore_row_ordering:
