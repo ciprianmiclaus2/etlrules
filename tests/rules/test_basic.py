@@ -14,9 +14,9 @@ from tests.utils.data import assert_frame_equal, get_test_data
     [["A", "C", "E"], False, {"A": [], "B": [], "C": [], "D": [], "E": [], "F": []}, None, None, None, {"A": [], "C": [], "E": []}],
 ])
 def test_project_rule_scenarios(columns, exclude, main_input, named_inputs, named_input, named_output, expected, backend):
-    main_input = backend.impl.DataFrame(data=main_input)
-    named_inputs = {k: backend.impl.DataFrame(data=v) for k, v in named_inputs.items()} if named_inputs is not None else None
-    expected = backend.impl.DataFrame(data=expected)
+    main_input = backend.DataFrame(data=main_input)
+    named_inputs = {k: backend.DataFrame(data=v) for k, v in named_inputs.items()} if named_inputs is not None else None
+    expected = backend.DataFrame(data=expected)
     with get_test_data(main_input, named_inputs=named_inputs, named_output=named_output) as data:
         rule = backend.rules.ProjectRule(columns, exclude=exclude, named_input=named_input, named_output=named_output)
         rule.apply(data)
@@ -25,7 +25,7 @@ def test_project_rule_scenarios(columns, exclude, main_input, named_inputs, name
 
 
 def test_project_rule_unknown_column_strict(backend):
-    df = backend.impl.DataFrame(data=[{"A": 1, "B": "b", "C": 3, "D": 4, "E": "e", "F": "f"}])
+    df = backend.DataFrame(data=[{"A": 1, "B": "b", "C": 3, "D": 4, "E": "e", "F": "f"}])
     assert list(df.columns) == ["A", "B", "C", "D", "E", "F"]
     with get_test_data(df) as data:
         rule = backend.rules.ProjectRule(["A", "C", "UNKNOWN", "E"])
@@ -34,17 +34,17 @@ def test_project_rule_unknown_column_strict(backend):
 
 
 def test_project_rule_unknown_column_not_strict(backend):
-    df = backend.impl.DataFrame(data=[{"A": 1, "B": "b", "C": 3, "D": 4, "E": "e", "F": "f"}])
+    df = backend.DataFrame(data=[{"A": 1, "B": "b", "C": 3, "D": 4, "E": "e", "F": "f"}])
     assert list(df.columns) == ["A", "B", "C", "D", "E", "F"]
     with get_test_data(df) as data:
         rule = backend.rules.ProjectRule(["A", "C", "UNKNOWN", "E"], strict=False)
         rule.apply(data)
-        expected = backend.impl.DataFrame(data=[{"A": 1, "C": 3, "E": "e"}])
+        expected = backend.DataFrame(data=[{"A": 1, "C": 3, "E": "e"}])
         assert_frame_equal(data.get_main_output(), expected)
 
 
 def test_project_rule_unknown_column_exclude_strict(backend):
-    df = backend.impl.DataFrame(data=[{"A": 1, "B": "b", "C": 3, "D": 4, "E": "e", "F": "f"}])
+    df = backend.DataFrame(data=[{"A": 1, "B": "b", "C": 3, "D": 4, "E": "e", "F": "f"}])
     assert list(df.columns) == ["A", "B", "C", "D", "E", "F"]
     with get_test_data(df) as data:
         rule = backend.rules.ProjectRule(["A", "C", "UNKNOWN", "E"], exclude=True)
@@ -53,12 +53,12 @@ def test_project_rule_unknown_column_exclude_strict(backend):
 
 
 def test_project_rule_unknown_column_exclude_not_strict(backend):
-    df = backend.impl.DataFrame(data=[{"A": 1, "B": "b", "C": 3, "D": 4, "E": "e", "F": "f"}])
+    df = backend.DataFrame(data=[{"A": 1, "B": "b", "C": 3, "D": 4, "E": "e", "F": "f"}])
     assert list(df.columns) == ["A", "B", "C", "D", "E", "F"]
     with get_test_data(df) as data:
         rule = backend.rules.ProjectRule(["A", "C", "UNKNOWN", "E"], exclude=True, strict=False)
         rule.apply(data)
-        expected = backend.impl.DataFrame(data=[{"B": "b", "D": 4, "F": "f"}])
+        expected = backend.DataFrame(data=[{"B": "b", "D": 4, "F": "f"}])
         assert_frame_equal(data.get_main_output(), expected)
 
 
@@ -69,34 +69,34 @@ def test_project_rule_name_description(backend):
 
 
 def test_rename_rule(backend):
-    df = backend.impl.DataFrame(data=[{"A": 1, "B": "b", "C": 3, "D": 4, "E": "e", "F": "f"}])
+    df = backend.DataFrame(data=[{"A": 1, "B": "b", "C": 3, "D": 4, "E": "e", "F": "f"}])
     with get_test_data(df) as data:
         rule = backend.rules.RenameRule({'A': 'AA', 'C': 'CC', 'E': 'EE'})
         rule.apply(data)
-        expected = backend.impl.DataFrame(data=[{"AA": 1, "B": "b", "CC": 3, "D": 4, "EE": "e", "F": "f"}])
+        expected = backend.DataFrame(data=[{"AA": 1, "B": "b", "CC": 3, "D": 4, "EE": "e", "F": "f"}])
         assert_frame_equal(data.get_main_output(), expected)
 
 
 def test_rename_rule_empty_df(backend):
-    df = backend.impl.DataFrame(data={"A": [], "B": [], "C": [], "D": [], "E": [], "F": []})
+    df = backend.DataFrame(data={"A": [], "B": [], "C": [], "D": [], "E": [], "F": []})
     with get_test_data(df) as data:
         rule = backend.rules.RenameRule({'A': 'AA', 'C': 'CC', 'E': 'EE'})
         rule.apply(data)
-        expected = backend.impl.DataFrame(data={"AA": [], "B": [], "CC": [], "D": [], "EE": [], "F": []})
+        expected = backend.DataFrame(data={"AA": [], "B": [], "CC": [], "D": [], "EE": [], "F": []})
         assert_frame_equal(data.get_main_output(), expected)
 
 
 def test_rename_rule_named_input(backend):
-    df = backend.impl.DataFrame(data=[{"A": 1, "B": "b", "C": 3, "D": 4, "E": "e", "F": "f"}])
+    df = backend.DataFrame(data=[{"A": 1, "B": "b", "C": 3, "D": 4, "E": "e", "F": "f"}])
     with get_test_data(df, named_inputs={'other_data': df}) as data:
         rule = backend.rules.RenameRule({'A': 'AA', 'C': 'CC', 'E': 'EE'}, named_input='other_data', named_output="result")
         rule.apply(data)
-        expected = backend.impl.DataFrame(data=[{"AA": 1, "B": "b", "CC": 3, "D": 4, "EE": "e", "F": "f"}])
+        expected = backend.DataFrame(data=[{"AA": 1, "B": "b", "CC": 3, "D": 4, "EE": "e", "F": "f"}])
         assert_frame_equal(data.get_named_output("result"), expected)
 
 
 def test_rename_rule_strict_unknown_column(backend):
-    df = backend.impl.DataFrame(data=[{"A": 1, "B": "b", "C": 3, "D": 4, "E": "e", "F": "f"}])
+    df = backend.DataFrame(data=[{"A": 1, "B": "b", "C": 3, "D": 4, "E": "e", "F": "f"}])
     with get_test_data(df) as data:
         rule = backend.rules.RenameRule({'A': 'AA', 'C': 'CC', 'E': 'EE', 'UNKNOWN': 'NEW'})
         with pytest.raises(MissingColumnError):
@@ -104,11 +104,11 @@ def test_rename_rule_strict_unknown_column(backend):
 
 
 def test_rename_rule_non_strict_unknown_column(backend):
-    df = backend.impl.DataFrame(data=[{"A": 1, "B": "b", "C": 3, "D": 4, "E": "e", "F": "f"}])
+    df = backend.DataFrame(data=[{"A": 1, "B": "b", "C": 3, "D": 4, "E": "e", "F": "f"}])
     with get_test_data(df) as data:
         rule = backend.rules.RenameRule({'A': 'AA', 'C': 'CC', 'E': 'EE', 'UNKNOWN': 'NEW'}, strict=False)
         rule.apply(data)
-        expected = backend.impl.DataFrame(data=[{"AA": 1, "B": "b", "CC": 3, "D": 4, "EE": "e", "F": "f"}])
+        expected = backend.DataFrame(data=[{"AA": 1, "B": "b", "CC": 3, "D": 4, "EE": "e", "F": "f"}])
         assert_frame_equal(data.get_main_output(), expected)
 
 
@@ -163,16 +163,17 @@ DEDUPE_EMPTY_DF = {"A": [], "B": [], "C": []}
     [["A", "B"], "first", DEDUPE_EMPTY_DF, None, None, DEDUPE_EMPTY_DF],
 ])
 def test_dedupe_rule_scenarios(columns, keep, input_df, named_input, named_output, expected, backend):
-    input_df = backend.impl.DataFrame(input_df)
+    input_df = backend.DataFrame(data=input_df)
     with get_test_data(main_input=input_df, named_inputs=named_input and {named_input: input_df}, named_output=named_output) as data:
         rule = backend.rules.DedupeRule(columns, keep=keep, named_output=named_output)
         rule.apply(data)
-        expected = backend.impl.DataFrame(expected)
-        assert_frame_equal(data.get_main_output() if named_output is None else data.get_named_output(named_output), expected)
+        expected = backend.DataFrame(expected)
+        actual = data.get_main_output() if named_output is None else data.get_named_output(named_output)
+        assert_frame_equal(actual, expected)
 
 
 def test_dedupe_rule_raises_missing_column(backend):
-    df = backend.impl.DataFrame(data=[
+    df = backend.DataFrame(data=[
         {"A": 1, "B": 1, "C": 1},
         {"A": 1, "B": 1, "C": 2},
         {"A": 2, "B": 3, "C": 4},
@@ -239,8 +240,8 @@ def test_dedupe_rule_raises_missing_column(backend):
     ],
 ])
 def test_replace_scenarios(input_column, values, new_values, regex, output_column, input_df, expected, backend):
-    input_df = backend.impl.DataFrame(data=input_df)
-    expected = backend.impl.DataFrame(data=expected) if isinstance(expected, (list, dict)) else expected
+    input_df = backend.DataFrame(data=input_df)
+    expected = backend.DataFrame(data=expected) if isinstance(expected, (list, dict)) else expected
     with get_test_data(input_df, named_inputs={"input": input_df}, named_output="result") as data:
         rule = backend.rules.ReplaceRule(
             input_column=input_column, values=values, new_values=new_values, regex=regex,

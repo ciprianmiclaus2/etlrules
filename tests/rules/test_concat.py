@@ -5,17 +5,17 @@ from tests.utils.data import assert_frame_equal, get_test_data
 
 
 def test_vconcat_all_cols(backend):
-    left_df = backend.impl.DataFrame(data=[
+    left_df = backend.DataFrame(data=[
         {"A": 1, "B": "b", "C": True},
         {"A": 2, "B": "c", "C": False},
         {"A": 3, "B": "d", "C": True},
     ])
-    right_df = backend.impl.DataFrame(data=[
+    right_df = backend.DataFrame(data=[
         {"A": 4, "B": "e", "C": True},
         {"A": 5, "B": "f", "C": False},
         {"A": 6, "B": "g", "C": False},
     ])
-    expected = backend.impl.DataFrame(data=[
+    expected = backend.DataFrame(data=[
         {"A": 1, "B": "b", "C": True},
         {"A": 2, "B": "c", "C": False},
         {"A": 3, "B": "d", "C": True},
@@ -30,9 +30,9 @@ def test_vconcat_all_cols(backend):
 
 
 def test_vconcat_empty_df(backend):
-    left_df = backend.impl.DataFrame(data={"A": [], "B": [], "C": []})
-    right_df = backend.impl.DataFrame(data={"A": [], "B": [], "G": []})
-    expected = backend.impl.DataFrame(data={"A": [], "B": [], "C": [], "G": []})
+    left_df = backend.DataFrame(data={"A": [], "B": [], "C": []})
+    right_df = backend.DataFrame(data={"A": [], "B": [], "G": []})
+    expected = backend.DataFrame(data={"A": [], "B": [], "C": [], "G": []})
     with get_test_data(left_df, named_inputs={"left": left_df, "right": right_df}, named_output="result") as data:
         rule = backend.rules.VConcatRule(named_input_left="left", named_input_right="right", named_output="result", strict=False)
         rule.apply(data)
@@ -40,17 +40,17 @@ def test_vconcat_empty_df(backend):
 
 
 def test_vconcat_subset_cols(backend):
-    left_df = backend.impl.DataFrame(data=[
+    left_df = backend.DataFrame(data=[
         {"A": 1, "B": "b", "C": True, "D": "None"},
         {"A": 2, "B": "c", "C": False},
         {"A": 3, "B": "d", "C": True},
     ])
-    right_df = backend.impl.DataFrame(data=[
+    right_df = backend.DataFrame(data=[
         {"A": 4, "B": "e", "C": True, "F": 3.0},
         {"A": 5, "B": "f", "C": False},
         {"A": 6, "B": "g", "C": False},
     ])
-    expected = backend.impl.DataFrame(data=[
+    expected = backend.DataFrame(data=[
         {"A": 1, "B": "b"},
         {"A": 2, "B": "c"},
         {"A": 3, "B": "d"},
@@ -65,12 +65,12 @@ def test_vconcat_subset_cols(backend):
 
 
 def test_vconcat_missing_col_right(backend):
-    left_df = backend.impl.DataFrame(data=[
+    left_df = backend.DataFrame(data=[
         {"A": 1, "B": "b", "C": True, "D": "None"},
         {"A": 2, "B": "c", "C": False},
         {"A": 3, "B": "d", "C": True},
     ])
-    right_df = backend.impl.DataFrame(data=[
+    right_df = backend.DataFrame(data=[
         {"A": 4, "C": True, "F": 3.0},
         {"A": 5, "C": False},
         {"A": 6, "C": False},
@@ -83,12 +83,12 @@ def test_vconcat_missing_col_right(backend):
 
 
 def test_vconcat_missing_col_left(backend):
-    left_df = backend.impl.DataFrame(data=[
+    left_df = backend.DataFrame(data=[
         {"A": 1, "B": "b", "C": True, "D": "None"},
         {"A": 2, "B": "c", "C": False},
         {"A": 3, "B": "d", "C": True},
     ])
-    right_df = backend.impl.DataFrame(data=[
+    right_df = backend.DataFrame(data=[
         {"A": 4, "C": True, "F": 3.0},
         {"A": 5, "C": False},
         {"A": 6, "C": False},
@@ -101,17 +101,17 @@ def test_vconcat_missing_col_left(backend):
 
 
 def test_vconcat_different_schema_non_strict(backend):
-    left_df = backend.impl.DataFrame(data=[
+    left_df = backend.DataFrame(data=[
         {"A": 1, "B": "b", "C": True},
         {"A": 2, "B": "c", "C": False},
         {"A": 3, "B": "d", "C": True},
     ])
-    right_df = backend.impl.DataFrame(data=[
+    right_df = backend.DataFrame(data=[
         {"A": 4, "C": True, "F": 3.0},
         {"A": 5, "C": False},
         {"A": 6, "C": False},
     ])
-    expected = backend.impl.DataFrame(data=[
+    expected = backend.DataFrame(data=[
         {"A": 1, "B": "b", "C": True},
         {"A": 2, "B": "c", "C": False},
         {"A": 3, "B": "d", "C": True},
@@ -126,12 +126,12 @@ def test_vconcat_different_schema_non_strict(backend):
 
 
 def test_vconcat_different_schema_strict(backend):
-    left_df = backend.impl.DataFrame(data=[
+    left_df = backend.DataFrame(data=[
         {"A": 1, "B": "b", "C": True},
         {"A": 2, "B": "c", "C": False},
         {"A": 3, "B": "d", "C": True},
     ])
-    right_df = backend.impl.DataFrame(data=[
+    right_df = backend.DataFrame(data=[
         {"A": 4, "C": True, "F": 3.0},
         {"A": 5, "C": False},
         {"A": 6, "C": False},
@@ -144,17 +144,17 @@ def test_vconcat_different_schema_strict(backend):
 
 
 def test_hconcat(backend):
-    left_df = backend.impl.DataFrame(data=[
+    left_df = backend.DataFrame(data=[
         {"A": 1, "B": "b", "C": True},
         {"A": 2, "B": "c", "C": False},
         {"A": 3, "B": "d", "C": True},
     ])
-    right_df = backend.impl.DataFrame(data=[
+    right_df = backend.DataFrame(data=[
         {"D": 4, "F": "e", "G": True},
         {"D": 5, "F": "f", "G": False},
         {"D": 6, "F": "g", "G": False},
     ])
-    expected = backend.impl.DataFrame(data=[
+    expected = backend.DataFrame(data=[
         {"A": 1, "B": "b", "C": True, "D": 4, "F": "e", "G": True},
         {"A": 2, "B": "c", "C": False, "D": 5, "F": "f", "G": False},
         {"A": 3, "B": "d", "C": True, "D": 6, "F": "g", "G": False},
@@ -166,9 +166,9 @@ def test_hconcat(backend):
 
 
 def test_hconcat_empty_df(backend):
-    left_df = backend.impl.DataFrame(data={"A": [], "B": [], "C": []})
-    right_df = backend.impl.DataFrame(data={"D": [], "F": [], "G": []})
-    expected = backend.impl.DataFrame(data={"A": [], "B": [], "C": [], "D": [], "F": [], "G": []})
+    left_df = backend.DataFrame(data={"A": [], "B": [], "C": []})
+    right_df = backend.DataFrame(data={"D": [], "F": [], "G": []})
+    expected = backend.DataFrame(data={"A": [], "B": [], "C": [], "D": [], "F": [], "G": []})
     with get_test_data(left_df, named_inputs={"left": left_df, "right": right_df}, named_output="result") as data:
         rule = backend.rules.HConcatRule(named_input_left="left", named_input_right="right", named_output="result")
         rule.apply(data)
@@ -176,12 +176,12 @@ def test_hconcat_empty_df(backend):
 
 
 def test_hconcat_different_no_rows_strict(backend):
-    left_df = backend.impl.DataFrame(data=[
+    left_df = backend.DataFrame(data=[
         {"A": 1, "B": "b", "C": True},
         {"A": 2, "B": "c", "C": False},
         {"A": 3, "B": "d", "C": True},
     ])
-    right_df = backend.impl.DataFrame(data=[
+    right_df = backend.DataFrame(data=[
         {"D": 4, "F": "e", "G": True},
         {"D": 5, "F": "f", "G": False},
     ])
@@ -193,12 +193,12 @@ def test_hconcat_different_no_rows_strict(backend):
 
 
 def test_hconcat_different_columns_with_same_name(backend):
-    left_df = backend.impl.DataFrame(data=[
+    left_df = backend.DataFrame(data=[
         {"A": 1, "B": "b", "C": True},
         {"A": 2, "B": "c", "C": False},
         {"A": 3, "B": "d", "C": True},
     ])
-    right_df = backend.impl.DataFrame(data=[
+    right_df = backend.DataFrame(data=[
         {"D": 4, "B": "e", "G": True},
         {"D": 5, "B": "f", "G": False},
     ])
@@ -210,16 +210,16 @@ def test_hconcat_different_columns_with_same_name(backend):
 
 
 def test_hconcat_different_no_rows_non_strict(backend):
-    left_df = backend.impl.DataFrame(data=[
+    left_df = backend.DataFrame(data=[
         {"A": 1, "B": "b", "C": True},
         {"A": 2, "B": "c", "C": False},
         {"A": 3, "B": "d", "C": True},
     ])
-    right_df = backend.impl.DataFrame(data=[
+    right_df = backend.DataFrame(data=[
         {"D": 4, "F": "e", "G": True},
         {"D": 5, "F": "f", "G": False},
     ])
-    expected = backend.impl.DataFrame(data=[
+    expected = backend.DataFrame(data=[
         {"A": 1, "B": "b", "C": True, "D": 4, "F": "e", "G": True},
         {"A": 2, "B": "c", "C": False, "D": 5, "F": "f", "G": False},
         {"A": 3, "B": "d", "C": True},
