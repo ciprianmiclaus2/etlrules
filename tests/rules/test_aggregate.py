@@ -94,6 +94,9 @@ SCENARIOS = [
 def test_aggregate_scenarios(
     group_by, aggregations, aggregation_expressions, aggregation_types, expected, expected_astype, backend
 ):
+    if backend.name == "dask" and aggregation_expressions is not None:
+        # dask doesn't support aggregation expressions
+        pytest.skip()
     input_df = backend.DataFrame(INPUT_DF, astype=INPUT_DF_TYPES)
     expected = backend.DataFrame(expected, astype=expected_astype)
     with get_test_data(
@@ -144,6 +147,9 @@ def test_aggregate_empty_df(backend):
     ]
 )
 def test_aggregate_exc_scenarios(group_by, aggregations, aggregation_expressions, aggregation_types, strict, expected_exc, expected_exc_str, backend):
+    if backend.name == "dask" and aggregation_expressions is not None:
+        # dask doesn't support aggregation expressions
+        pytest.skip()
     input_df = backend.DataFrame(INPUT_DF, astype=INPUT_DF_TYPES)
     input_empty_df = backend.DataFrame(INPUT_EMPTY_DF, astype=INPUT_DF_TYPES)
     with get_test_data(input_df, named_inputs={"input": input_empty_df}, named_output="result") as data:

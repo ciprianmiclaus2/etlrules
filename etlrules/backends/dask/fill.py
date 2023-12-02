@@ -8,7 +8,7 @@ class FillMixin:
     def do_apply(self, df):
         df_columns = [col for col in df.columns]
         if self.sort_by:
-            df = df.sort_values(by=self.sort_by, ascending=self.sort_ascending, ignore_index=True)
+            df = df.sort_values(by=self.sort_by, ascending=self.sort_ascending)
         if self.group_by:
             res = df.groupby(self.group_by)
             res = getattr(res, self.FILL_METHOD)()
