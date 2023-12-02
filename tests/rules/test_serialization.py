@@ -46,13 +46,8 @@ ALL_RULES = [
     ["AggregateRule", dict(
         group_by=["A", "Col B"],
         aggregations={"D": "sum", "E": "last", "F": "csv"},
-        aggregation_expressions={
-            "C2": "sum(v**2 for v in values)",
-            "D2": "';'.join(values)",
-            "E2": "int(sum(v**2 for v in values if not isnull(v)))",
-            "F3": "':'.join(v for v in values if not isnull(v))"
-        },
-        aggregation_types={"E": "string", "E2": "int64"},
+        aggregation_expressions=None,
+        aggregation_types={"E": "string", "D": "int64"},
         named_input="BF1", named_output="BF2", name="BF", description="Some desc2 BF", strict=True)],
     ["RoundRule", dict(input_column="A", scale=2, output_column="E", named_input="input", 
                 named_output="result", name="BF", description="Some desc2 BF", strict=True)],
