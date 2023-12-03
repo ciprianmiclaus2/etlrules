@@ -1,4 +1,4 @@
-import numpy as np
+import dask.array as da
 
 from etlrules.backends.common.conditions import (
     IfThenElseRule as IfThenElseRuleBase,
@@ -19,9 +19,9 @@ class IfThenElseRule(IfThenElseRuleBase):
         cond_series = self._condition_expression.eval(df)
         then_value = self.then_value if self.then_value is not None else df[self.then_column]
         else_value = self.else_value if self.else_value is not None else df[self.else_column]
-        result = np.where(cond_series, then_value, else_value)
-        df = df.assign(**{self.output_column: result})
-        if df.empty and (isinstance(then_value, str) or isinstance(else_value, str)):
+        df = df.assign(**{self.output_column: then_value})
+        df = df.assign(**{self.output_column: df[self.output_column].where(cond_series, else_value)})
+        if (isinstance(then_value, str) or isinstance(else_value, str)) and len(df.index) == 0:
             df = df.astype({self.output_column: "string"})
         self._set_output_df(data, df)
 
