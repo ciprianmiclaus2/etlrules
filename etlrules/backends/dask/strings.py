@@ -1,5 +1,5 @@
 import re
-from pandas import NA
+from pandas import NA, isnull
 from numpy import nan
 
 from etlrules.backends.common.strings import (
@@ -33,19 +33,20 @@ class StrCapitalizeRule(StrCapitalizeRuleBase, DaskMixin):
 
 class StrSplitRule(StrSplitRuleBase, DaskMixin):
     def do_apply(self, df, col):
-        return col.str.split(pat=self.separator, n=self.limit, regex=False)
+        new_col = col.str.split(pat=self.separator, n=self.limit)
+        return new_col.apply(lambda val: eval(val) if not isnull(val) else val, meta=(col.name, "object"))
 
 
 class StrSplitRejoinRule(StrSplitRejoinRuleBase, DaskMixin):
     def do_apply(self, df, col):
-        new_col = col.str.split(pat=self.separator, n=self.limit, regex=False)
+        new_col = col.str.split(pat=self.separator, n=self.limit)
         new_separator = self.new_separator
         if self.sort is not None:
             reverse = self.sort==self.SORT_DESCENDING
-            func = lambda val: new_separator.join(sorted(val, reverse=reverse)) if val not in (nan, NA, None) else val
+            func = lambda val: new_separator.join(sorted(eval(val), reverse=reverse)) if not isnull(val) else val
         else:
-            func = lambda val: new_separator.join(val) if val not in (nan, NA, None) else val
-        return new_col.apply(func).astype("string")
+            func = lambda val: new_separator.join(eval(val)) if not isnull(val) else val
+        return new_col.apply(func, meta=(col.name, "string"))
 
 
 class StrStripRule(StrStripRuleBase, DaskMixin):
@@ -72,10 +73,11 @@ class StrExtractRule(StrExtractRuleBase, DaskMixin):
         groups = self._compiled_expr.groups
         for idx, col in enumerate(columns):
             new_col = df[col].str.extract(self._compiled_expr, expand=True)
-            if self.keep_original_value:
-                # only the first new column keeps the value (in case of multiple groups)
-                new_col[0].fillna(value=df[col], inplace=True)
             for group in range(groups):
-                new_cols_dict[output_columns[idx * groups + group]] = new_col[group]
+                new_column = new_col[group]
+                if group == 0 and self.keep_original_value:
+                    # only the first new column keeps the value (in case of multiple groups)
+                    new_column = new_column.fillna(value=df[col])
+                new_cols_dict[output_columns[idx * groups + group]] = new_column
         df = df.assign(**new_cols_dict)
         self._set_output_df(data, df)
