@@ -144,9 +144,16 @@ class BackendFixture:
         if self.impl_pckg == pd:
             return pd.concat((df1, df2), axis=1)
         elif self.impl_pckg == dd:
-            return dd.concat((df1, df2), axis=1)
+            return dd.concat([df1, df2], axis=1)
         elif self.impl_pckg == pl:
             return df1.hstack(df2, in_place=False)
+        assert False, f"unknown impl_pckg: {self.impl_pckg}"
+
+    def empty_df(self, df):
+        if self.impl_pckg in (pd, pl):
+            return df[:0]
+        elif self.impl_pckg == dd:
+            return dd.from_pandas(df.head(0), npartitions=1)
         assert False, f"unknown impl_pckg: {self.impl_pckg}"
 
 

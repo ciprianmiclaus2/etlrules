@@ -1,4 +1,4 @@
-import numpy as np
+import dask.array as da
 
 from etlrules.backends.common.newcolumns import (
     AddNewColumnRule as AddNewColumnRuleBase,
@@ -31,7 +31,7 @@ class AddRowNumbersRule(AddRowNumbersRuleBase):
     def apply(self, data):
         df = self._get_input_df(data)
         self._validate_columns(df.columns)
-        stop = self.start + df.shape[0] * self.step
-        result = np.arange(start=self.start, stop=stop, step=self.step)
+        stop = self.start + len(df.index) * self.step
+        result = da.arange(self.start, stop, self.step)
         df = df.assign(**{self.output_column: result})
         self._set_output_df(data, df)
