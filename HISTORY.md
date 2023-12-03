@@ -2,7 +2,7 @@
 
 ## 0.2.4 (XXXX-XX-XX)
 
-
+* Ability to deserialize custom rules (ie not part of the etlrules package) to support users implementing their own rules
 
 ## 0.2.3 (2023-11-28)
 

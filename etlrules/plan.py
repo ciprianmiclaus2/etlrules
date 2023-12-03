@@ -155,12 +155,13 @@ class Plan:
         }
 
     @classmethod
-    def from_dict(cls, dct: dict, backend: str) -> 'Plan':
-        """ Deserialize a plan from a dict.
+    def from_dict(cls, dct: dict, backend: str, additional_packages: Optional[Sequence[str]]=None) -> 'Plan':
+        """ Creates a plan instance from a python dictionary.
 
         Args:
             dct: A dictionary to create the plan from
             backend: One of the supported backends (ie pandas)
+            additional_packages: Optional list of other packages to look for rules in
         Returns:
             A new instance of a Plan.
         """
@@ -172,7 +173,7 @@ class Plan:
         )
         rules = dct.get("rules", ())
         for rule in rules:
-            instance.add_rule(BaseRule.from_dict(rule, backend))
+            instance.add_rule(BaseRule.from_dict(rule, backend, additional_packages))
         return instance
 
     def to_yaml(self) -> str:
@@ -180,18 +181,19 @@ class Plan:
         return yaml.safe_dump(self.to_dict())
 
     @classmethod
-    def from_yaml(cls, yml: str, backend: str) -> 'Plan':
-        """ Deserialize a plan from yaml.
+    def from_yaml(cls, yml: str, backend: str, additional_packages: Optional[Sequence[str]]=None) -> 'Plan':
+        """ Creates a plan from a yaml definition.
 
         Args:
             yml: The yaml string to create the plan from
             backend: A supported backend (ie pandas)
+            additional_packages: Optional list of other packages to look for rules in
         
         Returns:
             A new instance of a Plan.
         """
         dct = yaml.safe_load(yml)
-        return cls.from_dict(dct, backend)
+        return cls.from_dict(dct, backend, additional_packages)
 
     def __eq__(self, other: 'Plan') -> bool:
         return (
