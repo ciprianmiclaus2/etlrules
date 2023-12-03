@@ -1,4 +1,4 @@
-from typing import Literal, Iterable, Mapping, Optional, Union
+from typing import Literal, Iterable, Mapping, Optional, Sequence, Union
 
 from etlrules.data import RuleData
 from etlrules.rule import BaseRule, UnaryOpBaseRule, ColumnsInOutMixin
@@ -330,9 +330,9 @@ class RulesBlock(UnaryOpBaseRule):
         return dct
 
     @classmethod
-    def from_dict(cls, dct, backend):
+    def from_dict(cls, dct, backend, additional_packages: Optional[Sequence[str]]=None):
         dct = dct["RulesBlock"]
-        rules = [BaseRule.from_dict(rule, backend) for rule in dct.get("rules", ())]
+        rules = [BaseRule.from_dict(rule, backend, additional_packages) for rule in dct.get("rules", ())]
         kwargs = {k: v for k, v in dct.items() if k != "rules"}
         return cls(rules=rules, **kwargs)
 

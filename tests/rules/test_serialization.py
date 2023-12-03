@@ -5,6 +5,13 @@ from etlrules.plan import Plan
 from etlrules.rule import BaseRule
 
 
+class TestRule(BaseRule):
+
+    def apply(self):
+        ...
+
+
+
 ALL_RULES = [
     ["DedupeRule", dict(columns=["A", "B"], named_input="Dedupe1", named_output="Dedupe2", name="Deduplicate", description="Some text", strict=True)],
     ["ProjectRule", dict(columns=["A", "B"], named_input="PR1", named_output="PR2", name="Project", description="Remove some cols", strict=False)],
@@ -124,11 +131,16 @@ ALL_RULES = [
     ["WriteSQLTableRule", dict(sql_engine="sqlite:///mydb.db", sql_table="MyTable", if_exists="append", named_input="input_data", name="BF", description="Some desc2 BF", strict=True)],
     ["ExplodeValuesRule", dict(input_column="to_explode", column_type="int64", named_input="input", named_output="result", name="name", description="description", strict=True)],
     ["AddRowNumbersRule", dict(output_column="row_number", start=10, step=1, named_input="input", named_output="result", name="name", description="description", strict=True)],
+
+    ["TestRule", dict(named_output="result", name="name", description="description", strict=True)],
 ]
 
 
 def get_rule_instance(rule_cls_str, rule_args_dict, bk):
-    rule_cls = getattr(bk.rules, rule_cls_str)
+    if rule_cls_str == "TestRule":
+        rule_cls = TestRule
+    else:
+        rule_cls = getattr(bk.rules, rule_cls_str)
     if rule_cls_str == "RulesBlock":
         rule_args_dict = deepcopy(rule_args_dict)
         rules = rule_args_dict.pop("rules")
@@ -144,11 +156,11 @@ def get_rule_instance(rule_cls_str, rule_args_dict, bk):
 def test_serialize(rule_cls_str, rule_args_dict, backend):
     rule_instance = get_rule_instance(rule_cls_str, rule_args_dict, backend)
     d = rule_instance.to_dict()
-    instance = BaseRule.from_dict(d, backend=backend.name)
+    instance = BaseRule.from_dict(d, backend=backend.name, additional_packages=['tests.rules.test_serialization'])
     assert type(rule_instance) == type(instance)
     assert rule_instance == instance, "%s != %s" % (rule_instance.__dict__, instance.__dict__)
     y = rule_instance.to_yaml()
-    instance2 = BaseRule.from_yaml(y, backend=backend.name)
+    instance2 = BaseRule.from_yaml(y, backend=backend.name, additional_packages=['tests.rules.test_serialization'])
     assert type(rule_instance) == type(instance2)
     assert rule_instance == instance2, "%s != %s" % (rule_instance.__dict__, instance2.__dict__)
 
@@ -158,13 +170,13 @@ def test_serialize_plan(backend):
     for rule_cls_str, rule_args_dict in ALL_RULES:
         plan.add_rule(get_rule_instance(rule_cls_str, rule_args_dict, backend))
     dct = plan.to_dict()
-    plan2 = Plan.from_dict(dct, backend.name)
+    plan2 = Plan.from_dict(dct, backend.name, additional_packages=['tests.rules.test_serialization'])
     for rule1, rule2 in zip(plan.rules, plan2.rules):
         if rule1 != rule2:
             assert rule1.__dict__ == rule2.__dict__
     assert plan.__dict__ == plan2.__dict__
     assert plan == plan2
     yml = plan.to_yaml()
-    plan3 = Plan.from_yaml(yml, backend.name)
+    plan3 = Plan.from_yaml(yml, backend.name, additional_packages=['tests.rules.test_serialization'])
     assert plan.__dict__ == plan3.__dict__
     assert plan == plan3
