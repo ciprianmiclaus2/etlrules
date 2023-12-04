@@ -30,8 +30,6 @@ NUMERIC_TYPES = {
 class TypeConversionRule(TypeConversionRuleBase, DaskMixin):
 
     def do_type_conversion(self, df, col, dtype):
-        if not self.strict:
-            casting = "unsafe"
-        else:
-            casting = "same_kind"
+        if dtype in NUMERIC_TYPES:
+            col = dd.to_numeric(col, errors="raise" if self.strict else "coerce")
         return col.astype(MAP_TYPES[dtype])
