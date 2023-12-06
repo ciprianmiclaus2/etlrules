@@ -7,7 +7,8 @@ except:
 import dask.dataframe as dd
 import numpy as np
 from pandas import isnull
-from pandas.tseries.offsets import DateOffset, BusinessDay
+from pandas.api.types import is_scalar
+from pandas.tseries.offsets import DateOffset
 from pandas.api.types import is_timedelta64_dtype, is_datetime64_any_dtype
 
 from .base import DaskMixin
@@ -115,18 +116,28 @@ DT_ARITHMETIC_UNITS = {
 
 DT_TIMEDELTA_UNITS = set(["days", "hours", "minutes", "seconds", "milliseconds", "microseconds", "nanoseconds"])
 
+FOLL_MONDAY_ADJ_WEEKEND_OFFSETS = {0: np.nan, 1: np.nan, 2: np.nan, 3: np.nan, 4: np.nan, 5: 2, 6: 1}
+PREV_FRIDAY_ADJ_WEEKEND_OFFSETS = {0: np.nan, 1: np.nan, 2: np.nan, 3: np.nan, 4: np.nan, 5: -1, 6: -2}
+def dt_adjust_weekends(dt_col, offset, strict=True):
+    weekdays = dt_col.dt.weekday
+    if not is_scalar(offset):
+        offset = offset.fillna(0)
+        # -1 -> 0 | 0, 1 -> 3
+        offset = ((offset // offset.replace({0: 1}).abs() + 1) // 2) * 3
+        dt_col_weekend_offset = weekdays.replace(FOLL_MONDAY_ADJ_WEEKEND_OFFSETS) - offset
+    else:
+        dt_col_weekend_offset = weekdays.replace(FOLL_MONDAY_ADJ_WEEKEND_OFFSETS if offset < 0 else PREV_FRIDAY_ADJ_WEEKEND_OFFSETS)
+    dt_col_weekend_offset = dt_col_weekend_offset.fillna(0)
+    return dt_col + dd.to_timedelta(dt_col_weekend_offset, unit="D", errors="raise" if strict else "coerce")
 
-def business_day_offset(dt_col, offset_col, strict=True):
-    # TODO: tidy up this logic
-    offset_col = offset_col.fillna(0)
-    col = dt_col.dt.weekday.fillna(0)
-    # -1 -> 0, 1 -> 3
-    offset_sign_adj = ((offset_col // offset_col.replace({0: 1}).abs() + 1) // 2) * 3
-    col2_weekend_offset = col.replace({0: np.nan, 1: np.nan, 2: np.nan, 3: np.nan, 4: np.nan, 5: 2, 6: 1}) - offset_sign_adj
-    col2_weekend_offset = col2_weekend_offset.fillna(0)
-    dt_col2 = dt_col + dd.to_timedelta(col2_weekend_offset, unit="D", errors="raise" if strict else "coerce")
+
+def business_day_offset(dt_col, offset, strict=True):
+    if not is_scalar(offset):
+        offset = offset.fillna(0)
+    col = dt_col.dt.weekday
+    dt_col2 = dt_adjust_weekends(dt_col, offset, strict=strict)
     col = dt_col2.dt.weekday.fillna(0)
-    col2 = offset_col + col
+    col2 =  col + offset
     col3 = (
         (col2 // 5) * 7 + (col2 % 5)
     ) - col
@@ -171,7 +182,7 @@ def add_sub_col(df, col, unit_value, unit, sign):
     if unit not in DT_ARITHMETIC_UNITS.keys():
         raise ValueError(f"Unsupported unit: '{unit}'. It must be one of {DT_ARITHMETIC_UNITS.keys()}")
     if unit == "weekdays":
-        return col + BusinessDay(sign * unit_value)
+        return business_day_offset(col, sign * unit_value)
     return col + DateOffset(**{DT_ARITHMETIC_UNITS[unit]: sign * unit_value})
 
 
