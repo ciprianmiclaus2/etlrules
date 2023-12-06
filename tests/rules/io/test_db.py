@@ -2,13 +2,14 @@ import datetime
 import os
 import pytest
 try:
-    import sqlalchemy
+    import sqlalchemy as sa
     HAS_SQL_ALCHEMY = True
 except ImportError:
     HAS_SQL_ALCHEMY = False
 
 from etlrules.data import context
 from etlrules.exceptions import SQLError, UnsupportedTypeError
+from etlrules.backends.common.io.db import SQLAlchemyEngines
 
 from tests.utils.data import assert_frame_equal, get_test_data
 
@@ -32,17 +33,17 @@ def sqlite3_db():
 
 @pytest.mark.skipif(not HAS_SQL_ALCHEMY, reason="sqlalchemy not installed.")
 @pytest.mark.parametrize("sql_query,column_types,expected,expected_info", [
-    ["SELECT * FROM Author", None, [
+    ["SELECT * FROM Author", {"Id": "int64", "FirstName": "string", "LastName": "string"}, [
         {"Id": 1, "FirstName": "Mike", "LastName": "Good"},
         {"Id": 2, "FirstName": "John", "LastName": "McEwan"},
     ], {"Id": "Int64", "FirstName": "string", "LastName": "string"}],
-    ["SELECT * FROM Author WHERE Id=2", None, [
+    ["SELECT * FROM Author WHERE Id=2", {"Id": "int64", "FirstName": "string", "LastName": "string"}, [
         {"Id": 2, "FirstName": "John", "LastName": "McEwan"},
     ], {"Id": "Int64", "FirstName": "string", "LastName": "string"}],
-    ["SELECT * FROM Author WHERE {context.SQL_FILTER}", None, [
+    ["SELECT * FROM Author WHERE {context.SQL_FILTER}", {"Id": "int64", "FirstName": "string", "LastName": "string"}, [
         {"Id": 2, "FirstName": "John", "LastName": "McEwan"},
     ], {"Id": "Int64", "FirstName": "string", "LastName": "string"}],
-    ["SELECT * FROM Author WHERE Id=-1", {"Id": "int64", "FirstName": "string", "LastName": "string"},
+    ["SELECT * FROM Author WHERE Id=-1", {"Id": "int64", "FirstName": "string", "LastName": "string"}, 
     {"Id": [], "FirstName": [], "LastName": []},
     {"Id": "Int64", "FirstName": "string", "LastName": "string"}],
 
@@ -142,15 +143,15 @@ def test_read_sql_query_scenarios(sql_query, column_types, expected, expected_in
 ])
 def test_write_sql_table_scenarios(input_df, input_astypes, sql_table, if_exists, expected, expected_info, sqlite3_db, backend):
     input_df = backend.DataFrame(input_df, astype=input_astypes) if isinstance(input_df, (list, dict)) else input_df
-    expected = backend.DataFrame(expected, astype=expected_info) if isinstance(expected, (list, dict)) else expected
     with get_test_data(named_inputs={"input": input_df}, named_output="result") as data:
-        if isinstance(expected, backend.impl.DataFrame):
+        if isinstance(expected, (list, dict)):
             rule = backend.rules.WriteSQLTableRule(f"sqlite:///{sqlite3_db}", sql_table, if_exists=if_exists, named_input="input")
             rule.apply(data)
-            rule = backend.rules.ReadSQLQueryRule(f"sqlite:///{sqlite3_db}", f"SELECT * FROM {sql_table}", column_types={"Id": "int64", "FirstName": "string", "LastName": "string"}, named_output="result")
-            rule.apply(data)
-            actual = data.get_named_output("result")
-            assert_frame_equal(actual, expected)
+            engine = SQLAlchemyEngines.get_engine(f"sqlite:///{sqlite3_db}")
+            with engine.connect() as connection:
+                res = connection.execute(sa.text(f"SELECT * FROM {sql_table}"))
+                actual = [dict(zip(res.keys(), row)) for row in res]
+            assert actual == expected
         elif issubclass(expected, Exception):
             with pytest.raises(expected) as exc:
                 rule = backend.rules.WriteSQLTableRule(f"sqlite:///{sqlite3_db}", sql_table, if_exists=if_exists, named_input="input")

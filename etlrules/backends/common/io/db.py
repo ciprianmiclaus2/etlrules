@@ -68,6 +68,8 @@ class ReadSQLQueryRule(BaseRule):
         column_types: A mapping of column names and their types. Column types are inferred from the data when this parameter
             is not specified. For empty result sets, this inferrence is not possible, so specifying the column types allows
             the users to control the types in that scenario and not fallback onto backends defaults. 
+        batch_size: An optional batch size (number of rows) to use when reading the results. Defaults: 50000.
+            Some backends ignore this option, otherwise use it to partition the data.
 
         named_output (Optional[str]): Give the output of this rule a name so it can be used by another rule as a named input. Optional.
             When not set, the result of this rule will be available as the main output.
@@ -86,7 +88,7 @@ class ReadSQLQueryRule(BaseRule):
         The implementation uses sqlalchemy, which must be installed as an optional dependency of etlrules.
     """
 
-    def __init__(self, sql_engine: str, sql_query: str, column_types: Optional[Mapping[str, str]]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
+    def __init__(self, sql_engine: str, sql_query: str, column_types: Optional[Mapping[str, str]]=None, batch_size: int=50_000, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
         super().__init__(named_output=named_output, name=name, description=description, strict=strict)
         self.sql_engine = sql_engine
         self.sql_query = sql_query
@@ -96,6 +98,7 @@ class ReadSQLQueryRule(BaseRule):
             raise ValueError("The sql_query parameter must be a non-empty string.")
         self.column_types = column_types
         self._validate_column_types()
+        self.batch_size = batch_size
 
     def _validate_column_types(self):
         if self.column_types is not None:

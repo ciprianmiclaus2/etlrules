@@ -21,9 +21,10 @@ try:
 except:
     dask_DataFrame = None
     dask_assert_frame_equal = None
+import shutil
 
-
-from etlrules.data import RuleData
+from etlrules.data import RuleData, context
+from etlrules.runner import get_etlrules_temp_dir
 
 
 def assert_frame_equal(df, df2, ignore_row_ordering=False, ignore_column_ordering=False):
@@ -60,19 +61,29 @@ def assert_frame_equal(df, df2, ignore_row_ordering=False, ignore_column_orderin
 
 @contextmanager
 def get_test_data(main_input=None, named_inputs=None, named_output=None, strict=True):
-    data = TestRule(main_input=main_input, named_inputs=named_inputs, named_output=named_output, strict=strict)
-    yield data
-    data.validate()
+    etlrules_tempdir, etlrules_tempdir_cleanup = get_etlrules_temp_dir()
+    ctx = {
+        "etlrules_tempdir": etlrules_tempdir,
+        "etlrules_tempdir_cleanup": etlrules_tempdir_cleanup,
+    }
+    with context.set(ctx):
+        data = TestRule(main_input=main_input, named_inputs=named_inputs, named_output=named_output, context=ctx, strict=strict)
+        try:
+            yield data
+            data.validate()
+        finally:
+            if etlrules_tempdir_cleanup:
+                shutil.rmtree(etlrules_tempdir)
 
 
 class TestRule(RuleData):
 
-    def __init__(self, main_input=None, named_inputs=None, named_output=None, strict=True):
+    def __init__(self, main_input=None, named_inputs=None, named_output=None, context=None, strict=True):
         self.main_input_copy = deepcopy(main_input) if main_input is not None else None
         self.named_inputs_copies = {
             name: deepcopy(df) for name, df in (named_inputs or {}).items()
         }
-        super().__init__(main_input=main_input, named_inputs=named_inputs, strict=strict)
+        super().__init__(main_input=main_input, named_inputs=named_inputs, context=context, strict=strict)
         self.named_output = named_output
 
     def validate(self):

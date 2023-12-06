@@ -1,5 +1,8 @@
 import argparse
 import logging
+import os
+import shutil
+import tempfile
 from typing import Any, Optional
 
 from .data import RuleData
@@ -67,6 +70,19 @@ def load_plan(plan_file: str, backend: str) -> Plan:
     return Plan.from_yaml(contents, backend)
 
 
+def get_etlrules_temp_dir() -> tuple[str, bool]:
+    etlrules_tempdir_cleanup = True
+    etlrules_tempdir = os.environ.get("ETLRULES_TEMPDIR")
+    if etlrules_tempdir:
+        if os.path.exists(etlrules_tempdir) and os.path.isdir(etlrules_tempdir):
+            etlrules_tempdir_cleanup = False
+        else:
+            os.makedirs(etlrules_tempdir)
+    else:
+        etlrules_tempdir = tempfile.mkdtemp(prefix='tmp_etlrules')
+    return etlrules_tempdir, etlrules_tempdir_cleanup
+
+
 def run_plan(plan_file: str, backend: str) -> RuleData:
     """ Runs a plan from a yaml file with a given backend.
 
@@ -84,9 +100,21 @@ def run_plan(plan_file: str, backend: str) -> RuleData:
     """
     plan = load_plan(plan_file, backend)
     args = get_args_parser(plan)
-    data = RuleData(context=args)
-    engine = RuleEngine(plan)
-    engine.run(data)
+    context = {}
+    context.update(args)
+    etlrules_tempdir, etlrules_tempdir_cleanup = get_etlrules_temp_dir()
+    context.update({
+        "etlrules_tempdir": etlrules_tempdir,
+        "etlrules_tempdir_cleanup": etlrules_tempdir_cleanup,
+    })
+    try:
+        data = RuleData(context=context)
+        engine = RuleEngine(plan)
+        engine.run(data)
+    finally:
+        if etlrules_tempdir_cleanup:
+            shutil.rmtree(etlrules_tempdir)
+
     return data
 
 
