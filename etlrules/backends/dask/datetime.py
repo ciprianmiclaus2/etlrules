@@ -4,8 +4,9 @@ try:
     from pandas._config.localization import can_set_locale
 except:
     can_set_locale = None
+import dask.dataframe as dd
+import numpy as np
 from pandas import isnull
-from dask.dataframe import to_timedelta, to_datetime
 from pandas.tseries.offsets import DateOffset, BusinessDay
 from pandas.api.types import is_timedelta64_dtype, is_datetime64_any_dtype
 
@@ -24,7 +25,6 @@ from etlrules.backends.common.datetime import (
     DateTimeSubstractRule as DateTimeSubstractRuleBase,
     DateTimeDiffRule as DateTimeDiffRuleBase,
 )
-
 
 ROUND_TRUNC_UNITS_MAPPED = {
     "day": "D",
@@ -116,6 +116,22 @@ DT_ARITHMETIC_UNITS = {
 DT_TIMEDELTA_UNITS = set(["days", "hours", "minutes", "seconds", "milliseconds", "microseconds", "nanoseconds"])
 
 
+def business_day_offset(dt_col, offset_col, strict=True):
+    # TODO: tidy up this logic
+    offset_col = offset_col.fillna(0)
+    col = dt_col.dt.weekday.fillna(0)
+    # -1 -> 0, 1 -> 3
+    offset_sign_adj = ((offset_col // offset_col.replace({0: 1}).abs() + 1) // 2) * 3
+    col2_weekend_offset = col.replace({0: np.nan, 1: np.nan, 2: np.nan, 3: np.nan, 4: np.nan, 5: 2, 6: 1}) - offset_sign_adj
+    col2_weekend_offset = col2_weekend_offset.fillna(0)
+    dt_col2 = dt_col + dd.to_timedelta(col2_weekend_offset, unit="D", errors="raise" if strict else "coerce")
+    col = dt_col2.dt.weekday.fillna(0)
+    col2 = offset_col + col
+    col3 = (
+        (col2 // 5) * 7 + (col2 % 5)
+    ) - col
+    col4 = dd.to_timedelta(col3, unit="D", errors="raise" if strict else "coerce")
+    return dt_col2 + col4
 
 
 def add_sub_col(df, col, unit_value, unit, sign):
@@ -135,15 +151,20 @@ def add_sub_col(df, col, unit_value, unit, sign):
             if unit not in DT_ARITHMETIC_UNITS.keys():
                 raise ValueError(f"Unsupported unit: '{unit}'. It must be one of {DT_ARITHMETIC_UNITS.keys()}")
             if unit in DT_TIMEDELTA_UNITS:
-                col2 = to_timedelta(col2, unit=DT_ARITHMETIC_UNITS[unit], errors="coerce")
+                col2 = dd.to_timedelta(col2, unit=DT_ARITHMETIC_UNITS[unit], errors="coerce")
             else:
                 if unit == "weekdays":
-                    col2 = col2.apply(lambda x: BusinessDay(sign * (0 if isnull(x) else int(x))))
-                else:
-                    col2 = col2.apply(lambda x: DateOffset(**{DT_ARITHMETIC_UNITS[unit]: sign * (0 if isnull(x) else int(x))}))
-                if not col2.empty:
-                    col += col2
-                return to_datetime(col, errors='coerce')
+                    return business_day_offset(col, sign * col2)
+                elif unit == "weeks":
+                    col += dd.to_timedelta(col2.fillna(0) * sign * 7, "D", errors="coerce")
+                    return dd.to_datetime(col, errors="coerce")
+                # TODO: implement offset in years/months
+                #"years": "years",
+                #"months": "months",
+                col2 = col2.apply(lambda x: DateOffset(**{DT_ARITHMETIC_UNITS[unit]: sign * (0 if isnull(x) else int(x))}), meta=("", "object"))
+                #if col2.size.compute():
+                col += col2
+                return dd.to_datetime(col, errors='coerce')
         if sign == -1:
             return col - col2
         return col + col2
