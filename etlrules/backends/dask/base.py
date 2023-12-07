@@ -18,3 +18,7 @@ def force_pyarrow_string_config(value: bool):
     # However, when the rules that are not impacted are not used, we
     # want to keep pyarrow[strings] as they are faster and use less mem
     dask.config.set({"dataframe.convert-string": bool(value)})
+
+
+def is_pyarrow_string_enabled():
+    return dask.config.get("dataframe.convert-string")
