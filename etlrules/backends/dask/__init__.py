@@ -1,3 +1,5 @@
+import os
+
 from .aggregate import AggregateRule
 from etlrules.backends.common.basic import ProjectRule
 from .basic import DedupeRule, ExplodeValuesRule, RenameRule, ReplaceRule, SortRule
@@ -24,6 +26,13 @@ from etlrules.backends.common.basic import RulesBlock
 ## IO - extractors and loaders
 from .io.files import ReadCSVFileRule, ReadParquetFileRule, WriteCSVFileRule, WriteParquetFileRule
 from .io.db import ReadSQLQueryRule, WriteSQLTableRule
+
+from .base import force_pyarrow_string_config
+
+if os.environ.get("ETLRULES_ENABLE_PYARROW_STRING", "").lower() in ("1", "true", "yes"):
+    force_pyarrow_string_config(True)
+else:
+    force_pyarrow_string_config(False)
 
 
 __all__ = [
