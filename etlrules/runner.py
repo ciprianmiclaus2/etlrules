@@ -24,8 +24,8 @@ def get_args_parser(plan: Optional[Plan]=None) -> dict[str, Any]:
     parser.add_argument(
         "-b",
         "--backend",
-        help="The backend to use for running the plan (e.g. pandas, polars).",
-        choices=["pandas", "polars"],
+        help="The backend to use for running the plan.",
+        choices=["pandas", "polars", "dask"],
         required=False,
         default="pandas"
     )
@@ -86,6 +86,9 @@ def get_etlrules_temp_dir() -> tuple[str, bool]:
 def run_plan(plan_file: str, backend: str) -> RuleData:
     """ Runs a plan from a yaml file with a given backend.
 
+    The backend referers to the underlying dataframe library used to run
+    the plan.
+
     Basic usage:
 
         from etlrules import run_plan
@@ -93,7 +96,11 @@ def run_plan(plan_file: str, backend: str) -> RuleData:
 
     Args:
         plan_file: A path to a yaml file with the plan definition
-        backend: One of the supported backends (e.g. pandas, polars, etc.)
+        backend: One of the supported backends
+
+    Note:
+        The supported backends:
+            pandas, polars, dask (work in progress)
 
     Returns:
         A RuleData instance which contains the result dataframe(s).
