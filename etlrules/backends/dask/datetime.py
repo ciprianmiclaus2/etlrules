@@ -6,7 +6,7 @@ except:
     can_set_locale = None
 import dask.dataframe as dd
 import numpy as np
-from pandas import isnull
+from pandas import isnull, DataFrame
 from pandas.api.types import is_scalar
 from pandas.tseries.offsets import DateOffset
 from pandas.api.types import is_timedelta64_dtype, is_datetime64_any_dtype
@@ -134,6 +134,8 @@ def dt_adjust_weekends(dt_col, offset, strict=True):
 def business_day_offset(dt_col, offset, strict=True):
     if not is_scalar(offset):
         offset = offset.fillna(0)
+    else:
+        offset = offset or 0
     col = dt_col.dt.weekday
     dt_col2 = dt_adjust_weekends(dt_col, offset, strict=strict)
     col = dt_col2.dt.weekday.fillna(0)
@@ -145,7 +147,39 @@ def business_day_offset(dt_col, offset, strict=True):
     return dt_col2 + col4
 
 
-def add_sub_col(df, col, unit_value, unit, sign):
+def months_offset(dt_col, offset, strict=True):
+    if not is_scalar(offset):
+        offset = offset.fillna(0)
+    else:
+        offset = offset or 0
+    offset = offset + dt_col.dt.month - 1
+    year = dt_col.dt.year + (offset // 12)
+
+    df = year.to_frame(name="year")
+    df["month"] = (offset % 12) + 1
+    df["day"] = dt_col.dt.day
+    df["hour"] = dt_col.dt.hour
+    df["minute"] = dt_col.dt.minute
+    df["second"] = dt_col.dt.second
+    df["microsecond"] = dt_col.dt.microsecond
+
+    df["max"] = df["month"].replace({
+        1: 31, 2: 29, 3: 31, 4: 30, 5: 31, 6: 30, 7: 31, 8: 31, 9: 30, 10: 31, 11: 30, 12: 31
+    })
+    df["day"] = df["day"].where(df["day"] <= df["max"], df["max"])
+    df["day"] = df["day"].mask((df["year"] % 4 != 0) & (df["month"] == 2) & (df["day"] == 29), 28)
+
+    df = df[["year", "month", "day", "hour", "minute", "second", "microsecond"]]
+    df = dd.to_datetime(df, errors="raise" if strict else "coerce")
+    return df
+
+
+def years_offset(dt_col, offset, strict=True):
+    # TODO: optimize
+    return months_offset(dt_col, offset * 12, strict=strict)
+
+
+def add_sub_col(df, col, unit_value, unit, sign, strict=True):
     if isinstance(unit_value, str):
         # unit_value is a column
         if unit_value not in df.columns:
@@ -162,40 +196,39 @@ def add_sub_col(df, col, unit_value, unit, sign):
             if unit not in DT_ARITHMETIC_UNITS.keys():
                 raise ValueError(f"Unsupported unit: '{unit}'. It must be one of {DT_ARITHMETIC_UNITS.keys()}")
             if unit in DT_TIMEDELTA_UNITS:
-                col2 = dd.to_timedelta(col2, unit=DT_ARITHMETIC_UNITS[unit], errors="coerce")
+                col2 = dd.to_timedelta(col2, unit=DT_ARITHMETIC_UNITS[unit], errors="raise" if strict else "coerce")
             else:
                 if unit == "weekdays":
-                    return business_day_offset(col, sign * col2)
+                    return business_day_offset(col, sign * col2, strict=strict)
                 elif unit == "weeks":
-                    col += dd.to_timedelta(col2.fillna(0) * sign * 7, "D", errors="coerce")
-                    return dd.to_datetime(col, errors="coerce")
-                # TODO: implement offset in years/months
-                #"years": "years",
-                #"months": "months",
-                col2 = col2.apply(lambda x: DateOffset(**{DT_ARITHMETIC_UNITS[unit]: sign * (0 if isnull(x) else int(x))}), meta=("", "object"))
-                #if col2.size.compute():
-                col += col2
-                return dd.to_datetime(col, errors='coerce')
+                    col += dd.to_timedelta(col2.fillna(0) * sign * 7, "D", errors="raise" if strict else "coerce")
+                    return dd.to_datetime(col, errors="raise" if strict else "coerce")
+                elif unit == "months":
+                    return months_offset(col, sign * col2, strict=strict)
+                elif unit == "years":
+                    return years_offset(col, sign * col2, strict=strict)
+                else:
+                    assert False, f"Unexpected unit {unit}"
         if sign == -1:
             return col - col2
         return col + col2
     if unit not in DT_ARITHMETIC_UNITS.keys():
         raise ValueError(f"Unsupported unit: '{unit}'. It must be one of {DT_ARITHMETIC_UNITS.keys()}")
     if unit == "weekdays":
-        return business_day_offset(col, sign * unit_value)
+        return business_day_offset(col, sign * unit_value, strict=strict)
     return col + DateOffset(**{DT_ARITHMETIC_UNITS[unit]: sign * unit_value})
 
 
 class DateTimeAddRule(DaskMixin, DateTimeAddRuleBase):
 
     def do_apply(self, df, col):
-        return add_sub_col(df, col, self.unit_value, self.unit, 1)
+        return add_sub_col(df, col, self.unit_value, self.unit, 1, strict=self.strict)
 
 
 class DateTimeSubstractRule(DaskMixin, DateTimeSubstractRuleBase):
 
     def do_apply(self, df, col):
-        return add_sub_col(df, col, self.unit_value, self.unit, -1)
+        return add_sub_col(df, col, self.unit_value, self.unit, -1, strict=self.strict)
 
 
 class DateTimeDiffRule(DaskMixin, DateTimeDiffRuleBase):
@@ -213,7 +246,7 @@ class DateTimeDiffRule(DaskMixin, DateTimeDiffRuleBase):
     def do_apply(self, df, col):
         if self.input_column2 not in df.columns:
             raise MissingColumnError(f"Column {self.input_column2} in input_column2 does not exist in the input dataframe.")
-        res = add_sub_col(df, col, self.input_column2, self.unit, -1)
+        res = add_sub_col(df, col, self.input_column2, self.unit, -1, strict=self.strict)
         if is_timedelta64_dtype(res) and self.unit:
             if self.unit == "total_seconds":
                 res = res.dt.total_seconds()

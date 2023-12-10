@@ -4,7 +4,7 @@ import polars as pl
 import pytest
 import sys
 
-from etlrules.backends.dask.datetime import business_day_offset
+from etlrules.backends.dask.datetime import business_day_offset, months_offset
 from etlrules.exceptions import ColumnAlreadyExistsError, MissingColumnError
 from tests.utils.data import assert_frame_equal, get_test_data
 
@@ -912,6 +912,66 @@ def test_business_day_offset_scalar(input_df, scalar_offset, expected, backend):
     expected_df = pd.DataFrame(data=expected)
     assert_frame_equal(df_p[["E"]], expected_df)
 
+    expected_df = backend.DataFrame(data=expected)
+    actual = df[["E"]].compute()
+    expected_df = expected_df.compute()
+    assert_frame_equal(actual, expected_df)
+
+
+@pytest.mark.parametrize("input_df, expected", [
+    [[
+        {"A": datetime.datetime(2023, 12, 10, 10, 30, 40, 1234), "C": 1},
+        {"A": datetime.datetime(2023, 12, 10, 10, 30, 40, 1234), "C": 2},
+        {"A": datetime.datetime(2023, 12, 10, 10, 30, 40, 1234), "C": 3},
+        {"A": datetime.datetime(2023, 12, 10, 10, 30, 40, 1234), "C": 300},
+        {"A": datetime.datetime(2023, 12, 10, 10, 30, 40, 1234), "C": -300},
+        {"A": datetime.datetime(2020, 2, 29, 10, 30, 40, 1234), "C": 1},
+        {"A": datetime.datetime(2020, 1, 30, 10, 30, 40, 1234), "C": 1},
+        {"A": datetime.datetime(2020, 1, 31, 10, 30, 40, 1234), "C": 1},
+        {"A": datetime.datetime(2020, 1, 29, 10, 30, 40, 1234), "C": 1},
+        {"A": datetime.datetime(2020, 1, 28, 10, 30, 40, 1234), "C": 1},
+        {"A": datetime.datetime(2020, 3, 29, 10, 30, 40, 1234), "C": -1},
+        {"A": datetime.datetime(2020, 3, 30, 10, 30, 40, 1234), "C": -1},
+        {"A": datetime.datetime(2020, 3, 31, 10, 30, 40, 1234), "C": -1},
+        {"A": datetime.datetime(2020, 3, 28, 10, 30, 40, 1234), "C": -1},
+        {"C": 1},
+        {"A": datetime.datetime(2020, 3, 28, 10, 30, 40, 1234)},
+        {}
+    ], [
+        {"E": datetime.datetime(2024, 1, 10, 10, 30, 40, 1234)},
+        {"E": datetime.datetime(2024, 2, 10, 10, 30, 40, 1234)},
+        {"E": datetime.datetime(2024, 3, 10, 10, 30, 40, 1234)},
+        {"E": datetime.datetime(2048, 12, 10, 10, 30, 40, 1234)},
+        {"E": datetime.datetime(1998, 12, 10, 10, 30, 40, 1234)},
+        {"E": datetime.datetime(2020, 3, 29, 10, 30, 40, 1234)},
+        {"E": datetime.datetime(2020, 2, 29, 10, 30, 40, 1234)},
+        {"E": datetime.datetime(2020, 2, 29, 10, 30, 40, 1234)},
+        {"E": datetime.datetime(2020, 2, 29, 10, 30, 40, 1234)},
+        {"E": datetime.datetime(2020, 2, 28, 10, 30, 40, 1234)},
+        {"E": datetime.datetime(2020, 2, 29, 10, 30, 40, 1234)},
+        {"E": datetime.datetime(2020, 2, 29, 10, 30, 40, 1234)},
+        {"E": datetime.datetime(2020, 2, 29, 10, 30, 40, 1234)},
+        {"E": datetime.datetime(2020, 2, 28, 10, 30, 40, 1234)},
+        {},
+        {"E": datetime.datetime(2020, 3, 28, 10, 30, 40, 1234)},
+        {},
+    ]],
+])
+def test_months_offset(input_df, expected, backend):
+    if backend.name != "dask":
+        pytest.skip()
+
+    df_p = pd.DataFrame(input_df)
+    df_p["E"] = pd.to_datetime(
+        df_p["A"] + df_p["C"].apply(lambda x: pd.DateOffset(months=x if not pd.isnull(x) else 0)),
+        errors="coerce"
+    )
+    expected_df = pd.DataFrame(data=expected)
+    assert_frame_equal(df_p[["E"]], expected_df)
+
+    df = backend.DataFrame(data=input_df)
+    df["E"] = months_offset(df["A"], df["C"])
+    
     expected_df = backend.DataFrame(data=expected)
     actual = df[["E"]].compute()
     expected_df = expected_df.compute()
