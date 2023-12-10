@@ -1,4 +1,5 @@
 import datetime
+import glob
 import os
 from pandas import DataFrame
 import pytest
@@ -39,7 +40,7 @@ RESULT5_DF = [
 )
 def test_write_read_parquet_file(compression, backend):
     try:
-        test_df = backend.DataFrame(data=TEST_DF, astype={"A": "Int64"})
+        test_df = backend.DataFrame(data=TEST_DF, astype={"A": "Int64", "B": "boolean"})
         result3_df = backend.DataFrame(RESULT3_DF, astype={"A": "Int64"})
         result4_df = backend.DataFrame(RESULT4_DF, astype={"A": "Int64"})
         result5_df = backend.DataFrame(RESULT5_DF, astype={"A": "Int64"})
@@ -56,13 +57,15 @@ def test_write_read_parquet_file(compression, backend):
             read_rule.apply(data)
             read_rule = backend.rules.ReadParquetFileRule(file_name="tst.parquet", file_dir="/tmp", columns=["A", "C"], filters=[[("A", ">=", 3), ("B", "==", True)], [("C", "in", ("c1", "c3"))]], named_output="result5")
             read_rule.apply(data)
-            assert_frame_equal(data.get_named_output("result"), test_df)
+            actual = data.get_named_output("result")
+            assert_frame_equal(actual, test_df)
             assert_frame_equal(data.get_named_output("result2"), test_df[["A", "C"]])
             assert_frame_equal(data.get_named_output("result3"), result3_df)
             assert_frame_equal(data.get_named_output("result4"), result4_df)
             assert_frame_equal(data.get_named_output("result5"), result5_df)
     finally:
-        os.remove(os.path.join("/tmp", "tst.parquet"))
+        for f in glob.glob(os.path.join("/tmp", "tst*.parquet")):
+            os.remove(f)
 
 
 
@@ -79,20 +82,23 @@ def test_invalid_filters(filters, backend):
 
 def test_write_read_parquet_file_invalid_columns(backend):
     try:
-        test_df = backend.DataFrame(data=TEST_DF, astype={"A": "Int64"})
+        test_df = backend.DataFrame(data=TEST_DF, astype={"A": "Int64", "B": "boolean"})
         with get_test_data(test_df, named_inputs={"input": test_df}, named_output="result") as data:
             write_rule = backend.rules.WriteParquetFileRule(file_name="tst.parquet", file_dir="/tmp", named_input="input")
             write_rule.apply(data)
             read_rule = backend.rules.ReadParquetFileRule(file_name="tst.parquet", file_dir="/tmp", columns=["A", "M"], named_output="result")
             with pytest.raises(MissingColumnError):
                 read_rule.apply(data)
+                actual = data.get_named_output("result")
+                assert_frame_equal(actual, test_df)
     finally:
-        os.remove(os.path.join("/tmp", "tst.parquet"))
+        for f in glob.glob(os.path.join("/tmp", "tst*.parquet")):
+            os.remove(f)
 
 
 def test_write_read_parquet_file_invalid_column_in_filters(backend):
     try:
-        test_df = backend.DataFrame(data=TEST_DF, astype={"A": "Int64"})
+        test_df = backend.DataFrame(data=TEST_DF, astype={"A": "Int64", "B": "boolean"})
         with get_test_data(test_df, named_inputs={"input": test_df}, named_output="result") as data:
             write_rule = backend.rules.WriteParquetFileRule(file_name="tst.parquet", file_dir="/tmp", named_input="input")
             write_rule.apply(data)
@@ -100,4 +106,5 @@ def test_write_read_parquet_file_invalid_column_in_filters(backend):
             with pytest.raises(MissingColumnError):
                 read_rule.apply(data)
     finally:
-        os.remove(os.path.join("/tmp", "tst.parquet"))
+        for f in glob.glob(os.path.join("/tmp", "tst*.parquet")):
+            os.remove(f)

@@ -1,7 +1,9 @@
 import pytest
+import dask.dataframe as dd
 import pandas as pd
 import polars as pl
 
+from etlrules.backends import dask as dd_rules
 from etlrules.backends import pandas as pd_rules
 from etlrules.backends import polars as pl_rules
 
@@ -35,6 +37,13 @@ TYPE_MAPPING = {
         "timedelta": pl.Duration,
     },
     "pd": {
+        "boolean": "boolean",
+        "datetime": "datetime64[ns]",
+        "list_strings": "object",
+        "list_int64s": "object",
+        "timedelta": "timedelta64[ns]",
+    },
+    "dd": {
         "boolean": "boolean",
         "datetime": "datetime64[ns]",
         "list_strings": "object",
@@ -78,6 +87,11 @@ class BackendFixture:
             df = pd.DataFrame(data, dtype=TYPE_MAPPING["pd"].get(dtype, dtype))
             if astype is not None:
                 df = df.astype({k: TYPE_MAPPING["pd"].get(v, v) for k, v in astype.items()})
+        elif self.impl_pckg == dd:
+            df = pd.DataFrame(data, dtype=TYPE_MAPPING["pd"].get(dtype, dtype))
+            if astype is not None:
+                df = df.astype({k: TYPE_MAPPING["pd"].get(v, v) for k, v in astype.items()})
+            df = dd.from_pandas(df, npartitions=1)
         elif self.impl_pckg == pl:
             schema = None
             if dtype is not None:
@@ -101,6 +115,11 @@ class BackendFixture:
                 col: TYPE_MAPPING["pd"][dtype] for col, dtype in astype.items()
             }
             return df.astype(astype)
+        elif self.impl_pckg == dd:
+            astype = {
+                col: TYPE_MAPPING["pd"][dtype] for col, dtype in astype.items()
+            }
+            return df.astype(astype)
         elif self.impl_pckg == pl:
             return df.with_columns(
                 *[pl.col(col).cast(TYPE_MAPPING["pl"][dtype]) for col, dtype in astype.items()]
@@ -109,6 +128,8 @@ class BackendFixture:
 
     def rename(self, df, rename_dict):
         if self.impl_pckg == pd:
+            return df.rename(columns=rename_dict)
+        elif self.impl_pckg == dd:
             return df.rename(columns=rename_dict)
         elif self.impl_pckg == pl:
             columns = list(df.columns)
@@ -122,11 +143,24 @@ class BackendFixture:
     def hconcat(self, df1, df2):
         if self.impl_pckg == pd:
             return pd.concat((df1, df2), axis=1)
+        elif self.impl_pckg == dd:
+            return dd.concat([df1, df2], axis=1)
         elif self.impl_pckg == pl:
             return df1.hstack(df2, in_place=False)
         assert False, f"unknown impl_pckg: {self.impl_pckg}"
 
+    def empty_df(self, df):
+        if self.impl_pckg in (pd, pl):
+            return df[:0]
+        elif self.impl_pckg == dd:
+            return dd.from_pandas(df.head(0), npartitions=1)
+        assert False, f"unknown impl_pckg: {self.impl_pckg}"
 
-@pytest.fixture(params=[('pandas', pd, pd_rules), ('polars', pl, pl_rules)])
+
+@pytest.fixture(params=[
+    ('pandas', pd, pd_rules),
+    ('polars', pl, pl_rules),
+    ('dask', dd, dd_rules),
+])
 def backend(request):
     return BackendFixture(*request.param)

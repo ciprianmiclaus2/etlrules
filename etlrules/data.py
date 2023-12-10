@@ -61,11 +61,13 @@ class Context:
             raise TypeError("Context attr name must be a string.")
         if not self.mappers:
             raise RuntimeError("No context set.")
-        current_context = self.mappers[-1]
-        try:
-            return current_context[attr_name]
-        except KeyError:
-            raise KeyError(f"No such attribute '{attr_name}' found in the current context.")
+        for current_context in reversed(self.mappers):
+            try:
+                return current_context[attr_name]
+            except KeyError:
+                ...
+        raise KeyError(f"No such attribute '{attr_name}' found in the current context.")
+
 
     def __getattr__(self, attr_name: str) -> Union[str, int, float, bool]:
         return self._do_get_attr(attr_name)

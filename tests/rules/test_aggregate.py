@@ -65,14 +65,14 @@ SCENARIOS = [
     ], {
         "B": "string", "C": "list_int64s", "D": "list_strings", "E": "list_int64s", "F": "list_strings"
     }],
-    [["A", "B"], {"C": "csv", "D": "csv", "E": "csv", "F": "csv"}, None, {"C": "string", "D": "string", "E": "string"}, [
+    [["A", "B"], {"C": "csv", "D": "csv", "E": "csv", "F": "csv"}, None, {"C": "string", "D": "string", "E": "string", "F": "string"}, [
         {"A": 1, "B": "b", "C": "1,3", "D": "a,c", "E": "1", "F": "a"},
         {"A": 2, "B": "b", "C": "2,4,6", "D": "b,d,f", "E": "2", "F": "b"},
         {"A": 3, "B": "b", "C": "5", "D": "e", "E": "", "F": ""},
     ], {
         "A": "Int64", "B": "string", "C": "string", "D": "string", "E": "string", "F": "string"
     }],
-    [["B"], {"C": "csv", "D": "csv", "E": "csv", "F": "csv"}, None, {"C": "string", "E": "string", "F": "string"}, [
+    [["B"], {"C": "csv", "D": "csv", "E": "csv", "F": "csv"}, None, {"C": "string", "D": "string", "E": "string", "F": "string"}, [
         {"B": "b", "C": "1,2,3,4,5,6", "D": "a,b,c,d,e,f", "E": "1,2", "F": "a,b"},
     ], {
         "B": "string", "C": "string", "D": "string", "E": "string", "F": "string"
@@ -94,6 +94,9 @@ SCENARIOS = [
 def test_aggregate_scenarios(
     group_by, aggregations, aggregation_expressions, aggregation_types, expected, expected_astype, backend
 ):
+    if backend.name == "dask" and aggregation_expressions is not None:
+        # dask doesn't support aggregation expressions
+        pytest.skip()
     input_df = backend.DataFrame(INPUT_DF, astype=INPUT_DF_TYPES)
     expected = backend.DataFrame(expected, astype=expected_astype)
     with get_test_data(
@@ -144,6 +147,9 @@ def test_aggregate_empty_df(backend):
     ]
 )
 def test_aggregate_exc_scenarios(group_by, aggregations, aggregation_expressions, aggregation_types, strict, expected_exc, expected_exc_str, backend):
+    if backend.name == "dask" and aggregation_expressions is not None:
+        # dask doesn't support aggregation expressions
+        pytest.skip()
     input_df = backend.DataFrame(INPUT_DF, astype=INPUT_DF_TYPES)
     input_empty_df = backend.DataFrame(INPUT_EMPTY_DF, astype=INPUT_DF_TYPES)
     with get_test_data(input_df, named_inputs={"input": input_empty_df}, named_output="result") as data:

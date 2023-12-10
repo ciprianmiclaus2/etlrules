@@ -199,6 +199,8 @@ def test_type_conversion_rule_scenarios(input_df, input_astype, conversion_dict,
             with pytest.raises(expected) as exc:
                 rule = backend.rules.TypeConversionRule(conversion_dict, named_output="result", strict=strict)
                 rule.apply(data)
+                actual = data.get_named_output("result")
+                assert_frame_equal(actual, input_df)
             if expected_info:
                 assert expected_info in str(exc.value)
         else:

@@ -14,8 +14,17 @@ try:
 except:
     polars_DataFrame = None
     polars_assert_frame_equal = None
+try:
+    from dask.dataframe import DataFrame as dask_DataFrame
+    from dask.dataframe.utils import assert_eq
+    dask_assert_frame_equal = lambda a, b: assert_eq(a, b, check_divisions=False, check_index=False, sort_results=False)
+except:
+    dask_DataFrame = None
+    dask_assert_frame_equal = None
+import shutil
 
-from etlrules.data import RuleData
+from etlrules.data import RuleData, context
+from etlrules.runner import get_etlrules_temp_dir
 
 
 def assert_frame_equal(df, df2, ignore_row_ordering=False, ignore_column_ordering=False):
@@ -28,6 +37,17 @@ def assert_frame_equal(df, df2, ignore_row_ordering=False, ignore_column_orderin
             df = df[sorted(df.columns)]
             df2 = df2[sorted(df2.columns)]
         pandas_assert_frame_equal(df, df2)
+    elif dask_DataFrame is not None and isinstance(df, dask_DataFrame) and isinstance(df2, dask_DataFrame):
+        assert dask_assert_frame_equal is not None
+        if ignore_row_ordering:
+            df = df.sort_values(list(df.columns))
+            df2 = df2.sort_values(list(df2.columns))
+        if ignore_column_ordering:
+            df = df[sorted(df.columns)]
+            df2 = df2[sorted(df2.columns)]
+        df = df.compute()
+        df2 = df2.compute()
+        dask_assert_frame_equal(df, df2)
     elif polars_DataFrame is not None and isinstance(df, polars_DataFrame) and isinstance(df2, polars_DataFrame):
         assert polars_assert_frame_equal is not None
         if ignore_row_ordering:
@@ -43,19 +63,29 @@ def assert_frame_equal(df, df2, ignore_row_ordering=False, ignore_column_orderin
 
 @contextmanager
 def get_test_data(main_input=None, named_inputs=None, named_output=None, strict=True):
-    data = TestRule(main_input=main_input, named_inputs=named_inputs, named_output=named_output, strict=strict)
-    yield data
-    data.validate()
+    etlrules_tempdir, etlrules_tempdir_cleanup = get_etlrules_temp_dir()
+    ctx = {
+        "etlrules_tempdir": etlrules_tempdir,
+        "etlrules_tempdir_cleanup": etlrules_tempdir_cleanup,
+    }
+    with context.set(ctx):
+        data = TestRule(main_input=main_input, named_inputs=named_inputs, named_output=named_output, context=ctx, strict=strict)
+        try:
+            yield data
+            data.validate()
+        finally:
+            if etlrules_tempdir_cleanup:
+                shutil.rmtree(etlrules_tempdir)
 
 
 class TestRule(RuleData):
 
-    def __init__(self, main_input=None, named_inputs=None, named_output=None, strict=True):
+    def __init__(self, main_input=None, named_inputs=None, named_output=None, context=None, strict=True):
         self.main_input_copy = deepcopy(main_input) if main_input is not None else None
         self.named_inputs_copies = {
             name: deepcopy(df) for name, df in (named_inputs or {}).items()
         }
-        super().__init__(main_input=main_input, named_inputs=named_inputs, strict=strict)
+        super().__init__(main_input=main_input, named_inputs=named_inputs, context=context, strict=strict)
         self.named_output = named_output
 
     def validate(self):

@@ -1,8 +1,10 @@
 import datetime
+import pandas as pd
 import polars as pl
 import pytest
 import sys
 
+from etlrules.backends.dask.datetime import business_day_offset, months_offset
 from etlrules.exceptions import ColumnAlreadyExistsError, MissingColumnError
 from tests.utils.data import assert_frame_equal, get_test_data
 
@@ -679,7 +681,8 @@ def test_add_sub_rules(rule_cls_str, input_column, unit_value, unit, output_colu
             named_input="input", named_output="result")
         if isinstance(expected, backend.impl.DataFrame):
             rule.apply(data)
-            assert_frame_equal(data.get_named_output("result"), expected)
+            actual = data.get_named_output("result")
+            assert_frame_equal(actual, expected)
         elif issubclass(expected, Exception):
             with pytest.raises(expected):
                 rule.apply(data)
@@ -747,3 +750,229 @@ def test_date_diff_scenarios(input_column, input_column2, unit, output_column, i
                 rule.apply(data)
         else:
             assert False
+
+
+@pytest.mark.parametrize("strict", [True, False])
+def test_business_day_offset_col(strict, backend):
+    if backend.name != "dask":
+        pytest.skip()
+    input_df = [
+        {"A": datetime.datetime(2023, 12, 5, 10, 11, 12), "C": 0},
+        {"A": datetime.datetime(2023, 12, 5, 10, 11, 12), "C": 1},
+        {"A": datetime.datetime(2023, 12, 5, 10, 11, 12), "C": 2},
+        {"A": datetime.datetime(2023, 12, 5, 10, 11, 12), "C": 3},
+        {"A": datetime.datetime(2023, 12, 5, 10, 11, 12), "C": 4},
+        {"A": datetime.datetime(2023, 12, 5, 10, 11, 12), "C": 5},
+        {"A": datetime.datetime(2023, 12, 5, 10, 11, 12), "C": 6},
+        {"A": datetime.datetime(2023, 12, 5, 10, 11, 12), "C": 7},
+        {"A": datetime.datetime(2023, 12, 5, 10, 11, 12), "C": 300},
+        {"A": datetime.datetime(2023, 12, 4, 10, 11, 12), "C": 300},
+        {"A": datetime.datetime(2023, 12, 3, 10, 11, 12), "C": 300},
+        {"A": datetime.datetime(2023, 12, 2, 10, 11, 12), "C": 300},
+        {"A": datetime.datetime(2023, 12, 1, 10, 11, 12), "C": 300},
+        {"A": datetime.datetime(2023, 11, 30, 10, 11, 12), "C": 300},
+        {"A": datetime.datetime(2023, 11, 29, 10, 11, 12), "C": 300},
+        {"A": datetime.datetime(2023, 11, 28, 10, 11, 12), "C": 300},
+        {"C": 300},
+        {"A": datetime.datetime(2023, 11, 27, 10, 11, 12)},
+
+        {"A": datetime.datetime(2023, 12, 3, 10, 11, 12), "C": 0},
+        {"A": datetime.datetime(2023, 12, 2, 10, 11, 12), "C": 0},
+        {"A": datetime.datetime(2023, 12, 5, 10, 11, 12), "C": 0},
+        {"A": datetime.datetime(2023, 12, 5, 10, 11, 12), "C": -1},
+        {"A": datetime.datetime(2023, 12, 5, 10, 11, 12), "C": -2},
+        {"A": datetime.datetime(2023, 12, 5, 10, 11, 12), "C": -3},
+        {"A": datetime.datetime(2023, 12, 5, 10, 11, 12), "C": -4},
+        {"A": datetime.datetime(2023, 12, 5, 10, 11, 12), "C": -5},
+        {"A": datetime.datetime(2023, 12, 5, 10, 11, 12), "C": -6},
+        {"A": datetime.datetime(2023, 12, 5, 10, 11, 12), "C": -7},
+        {"A": datetime.datetime(2023, 12, 5, 10, 11, 12), "C": -300},
+        {"A": datetime.datetime(2023, 12, 4, 10, 11, 12), "C": -300},
+        {"A": datetime.datetime(2023, 12, 3, 10, 11, 12), "C": -300},
+        {"A": datetime.datetime(2023, 12, 2, 10, 11, 12), "C": -300},
+        {"A": datetime.datetime(2023, 12, 1, 10, 11, 12), "C": -300},
+        {"A": datetime.datetime(2023, 11, 30, 10, 11, 12), "C": -300},
+        {"A": datetime.datetime(2023, 11, 29, 10, 11, 12), "C": -300},
+        {"A": datetime.datetime(2023, 11, 28, 10, 11, 12), "C": -300},
+    ]
+    df_p = pd.DataFrame(input_df)
+    df_p["E"] = pd.to_datetime(
+        df_p["A"] + df_p["C"].apply(lambda x: pd.tseries.offsets.BusinessDay(0 if pd.isnull(x) else int(x))),
+        errors="coerce"
+    )
+    print(df_p)
+    df = backend.DataFrame(data=input_df)
+    df["E"] = business_day_offset(df["A"], df["C"])
+    expected = [
+        {"E": datetime.datetime(2023, 12, 5, 10, 11, 12)},
+        {"E": datetime.datetime(2023, 12, 6, 10, 11, 12)},
+        {"E": datetime.datetime(2023, 12, 7, 10, 11, 12)},
+        {"E": datetime.datetime(2023, 12, 8, 10, 11, 12)},
+        {"E": datetime.datetime(2023, 12, 11, 10, 11, 12)},
+        {"E": datetime.datetime(2023, 12, 12, 10, 11, 12)},
+        {"E": datetime.datetime(2023, 12, 13, 10, 11, 12)},
+        {"E": datetime.datetime(2023, 12, 14, 10, 11, 12)},
+        {"E": datetime.datetime(2025, 1, 28, 10, 11, 12)},
+        {"E": datetime.datetime(2025, 1, 27, 10, 11, 12)},
+        {"E": datetime.datetime(2025, 1, 24, 10, 11, 12)},
+        {"E": datetime.datetime(2025, 1, 24, 10, 11, 12)},
+        {"E": datetime.datetime(2025, 1, 24, 10, 11, 12)},
+        {"E": datetime.datetime(2025, 1, 23, 10, 11, 12)},
+        {"E": datetime.datetime(2025, 1, 22, 10, 11, 12)},
+        {"E": datetime.datetime(2025, 1, 21, 10, 11, 12)},
+        {},
+        {"E": datetime.datetime(2023, 11, 27, 10, 11, 12)},
+
+        {"E": datetime.datetime(2023, 12, 4, 10, 11, 12)},
+        {"E": datetime.datetime(2023, 12, 4, 10, 11, 12)},
+        {"E": datetime.datetime(2023, 12, 5, 10, 11, 12)},
+        {"E": datetime.datetime(2023, 12, 4, 10, 11, 12)},
+        {"E": datetime.datetime(2023, 12, 1, 10, 11, 12)},
+        {"E": datetime.datetime(2023, 11, 30, 10, 11, 12)},
+        {"E": datetime.datetime(2023, 11, 29, 10, 11, 12)},
+        {"E": datetime.datetime(2023, 11, 28, 10, 11, 12)},
+        {"E": datetime.datetime(2023, 11, 27, 10, 11, 12)},
+        {"E": datetime.datetime(2023, 11, 24, 10, 11, 12)},
+
+        {"E": datetime.datetime(2022, 10, 11, 10, 11, 12)},
+        {"E": datetime.datetime(2022, 10, 10, 10, 11, 12)},
+        {"E": datetime.datetime(2022, 10, 10, 10, 11, 12)},
+        {"E": datetime.datetime(2022, 10, 10, 10, 11, 12)},
+        {"E": datetime.datetime(2022, 10, 7, 10, 11, 12)},
+        {"E": datetime.datetime(2022, 10, 6, 10, 11, 12)},
+        {"E": datetime.datetime(2022, 10, 5, 10, 11, 12)},
+        {"E": datetime.datetime(2022, 10, 4, 10, 11, 12)},
+    ]
+    expected_df = pd.DataFrame(data=expected)
+    assert_frame_equal(df_p[["E"]], expected_df)
+
+    expected_df = backend.DataFrame(data=expected)
+    actual = df[["E"]].compute()
+    expected_df = expected_df.compute()
+    assert_frame_equal(actual, expected_df)
+
+
+@pytest.mark.parametrize("input_df,scalar_offset,expected", [
+    [[
+        {"A": datetime.datetime(2023, 12, 5, 10, 11, 12)},
+        {"A": datetime.datetime(2023, 12, 4, 10, 11, 12)},
+        {"A": datetime.datetime(2023, 12, 3, 10, 11, 12)},
+        {"A": datetime.datetime(2023, 12, 2, 10, 11, 12)},
+        {"A": datetime.datetime(2023, 12, 1, 10, 11, 12)},
+        {"A": datetime.datetime(2023, 11, 30, 10, 11, 12)},
+        {"A": datetime.datetime(2023, 11, 29, 10, 11, 12)},
+        {"A": datetime.datetime(2023, 11, 28, 10, 11, 12)},
+        {}
+    ], 300, [
+        {"E": datetime.datetime(2025, 1, 28, 10, 11, 12)},
+        {"E": datetime.datetime(2025, 1, 27, 10, 11, 12)},
+        {"E": datetime.datetime(2025, 1, 24, 10, 11, 12)},
+        {"E": datetime.datetime(2025, 1, 24, 10, 11, 12)},
+        {"E": datetime.datetime(2025, 1, 24, 10, 11, 12)},
+        {"E": datetime.datetime(2025, 1, 23, 10, 11, 12)},
+        {"E": datetime.datetime(2025, 1, 22, 10, 11, 12)},
+        {"E": datetime.datetime(2025, 1, 21, 10, 11, 12)},
+        {}]
+    ], [
+        [
+            {"A": datetime.datetime(2023, 12, 5, 10, 11, 12)},
+            {"A": datetime.datetime(2023, 12, 4, 10, 11, 12)},
+            {"A": datetime.datetime(2023, 12, 3, 10, 11, 12)},
+            {"A": datetime.datetime(2023, 12, 2, 10, 11, 12)},
+            {"A": datetime.datetime(2023, 12, 1, 10, 11, 12)},
+            {"A": datetime.datetime(2023, 11, 30, 10, 11, 12)},
+            {"A": datetime.datetime(2023, 11, 29, 10, 11, 12)},
+            {"A": datetime.datetime(2023, 11, 28, 10, 11, 12)},
+            {},
+        ], -300, [
+            {"E": datetime.datetime(2022, 10, 11, 10, 11, 12)},
+            {"E": datetime.datetime(2022, 10, 10, 10, 11, 12)},
+            {"E": datetime.datetime(2022, 10, 10, 10, 11, 12)},
+            {"E": datetime.datetime(2022, 10, 10, 10, 11, 12)},
+            {"E": datetime.datetime(2022, 10, 7, 10, 11, 12)},
+            {"E": datetime.datetime(2022, 10, 6, 10, 11, 12)},
+            {"E": datetime.datetime(2022, 10, 5, 10, 11, 12)},
+            {"E": datetime.datetime(2022, 10, 4, 10, 11, 12)},
+            {},
+        ]
+    ]
+])
+def test_business_day_offset_scalar(input_df, scalar_offset, expected, backend):
+    if backend.name != "dask":
+        pytest.skip()
+
+    df_p = pd.DataFrame(input_df)
+    df_p["E"] = pd.to_datetime(
+        df_p["A"] + pd.tseries.offsets.BusinessDay(scalar_offset),
+        errors="coerce"
+    )
+
+    df = backend.DataFrame(data=input_df)
+    df["E"] = business_day_offset(df["A"], scalar_offset)
+    expected_df = pd.DataFrame(data=expected)
+    assert_frame_equal(df_p[["E"]], expected_df)
+
+    expected_df = backend.DataFrame(data=expected)
+    actual = df[["E"]].compute()
+    expected_df = expected_df.compute()
+    assert_frame_equal(actual, expected_df)
+
+
+@pytest.mark.parametrize("input_df, expected", [
+    [[
+        {"A": datetime.datetime(2023, 12, 10, 10, 30, 40, 1234), "C": 1},
+        {"A": datetime.datetime(2023, 12, 10, 10, 30, 40, 1234), "C": 2},
+        {"A": datetime.datetime(2023, 12, 10, 10, 30, 40, 1234), "C": 3},
+        {"A": datetime.datetime(2023, 12, 10, 10, 30, 40, 1234), "C": 300},
+        {"A": datetime.datetime(2023, 12, 10, 10, 30, 40, 1234), "C": -300},
+        {"A": datetime.datetime(2020, 2, 29, 10, 30, 40, 1234), "C": 1},
+        {"A": datetime.datetime(2020, 1, 30, 10, 30, 40, 1234), "C": 1},
+        {"A": datetime.datetime(2020, 1, 31, 10, 30, 40, 1234), "C": 1},
+        {"A": datetime.datetime(2020, 1, 29, 10, 30, 40, 1234), "C": 1},
+        {"A": datetime.datetime(2020, 1, 28, 10, 30, 40, 1234), "C": 1},
+        {"A": datetime.datetime(2020, 3, 29, 10, 30, 40, 1234), "C": -1},
+        {"A": datetime.datetime(2020, 3, 30, 10, 30, 40, 1234), "C": -1},
+        {"A": datetime.datetime(2020, 3, 31, 10, 30, 40, 1234), "C": -1},
+        {"A": datetime.datetime(2020, 3, 28, 10, 30, 40, 1234), "C": -1},
+        {"C": 1},
+        {"A": datetime.datetime(2020, 3, 28, 10, 30, 40, 1234)},
+        {}
+    ], [
+        {"E": datetime.datetime(2024, 1, 10, 10, 30, 40, 1234)},
+        {"E": datetime.datetime(2024, 2, 10, 10, 30, 40, 1234)},
+        {"E": datetime.datetime(2024, 3, 10, 10, 30, 40, 1234)},
+        {"E": datetime.datetime(2048, 12, 10, 10, 30, 40, 1234)},
+        {"E": datetime.datetime(1998, 12, 10, 10, 30, 40, 1234)},
+        {"E": datetime.datetime(2020, 3, 29, 10, 30, 40, 1234)},
+        {"E": datetime.datetime(2020, 2, 29, 10, 30, 40, 1234)},
+        {"E": datetime.datetime(2020, 2, 29, 10, 30, 40, 1234)},
+        {"E": datetime.datetime(2020, 2, 29, 10, 30, 40, 1234)},
+        {"E": datetime.datetime(2020, 2, 28, 10, 30, 40, 1234)},
+        {"E": datetime.datetime(2020, 2, 29, 10, 30, 40, 1234)},
+        {"E": datetime.datetime(2020, 2, 29, 10, 30, 40, 1234)},
+        {"E": datetime.datetime(2020, 2, 29, 10, 30, 40, 1234)},
+        {"E": datetime.datetime(2020, 2, 28, 10, 30, 40, 1234)},
+        {},
+        {"E": datetime.datetime(2020, 3, 28, 10, 30, 40, 1234)},
+        {},
+    ]],
+])
+def test_months_offset(input_df, expected, backend):
+    if backend.name != "dask":
+        pytest.skip()
+
+    df_p = pd.DataFrame(input_df)
+    df_p["E"] = pd.to_datetime(
+        df_p["A"] + df_p["C"].apply(lambda x: pd.DateOffset(months=x if not pd.isnull(x) else 0)),
+        errors="coerce"
+    )
+    expected_df = pd.DataFrame(data=expected)
+    assert_frame_equal(df_p[["E"]], expected_df)
+
+    df = backend.DataFrame(data=input_df)
+    df["E"] = months_offset(df["A"], df["C"])
+    
+    expected_df = backend.DataFrame(data=expected)
+    actual = df[["E"]].compute()
+    expected_df = expected_df.compute()
+    assert_frame_equal(actual, expected_df)

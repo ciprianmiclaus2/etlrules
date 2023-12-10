@@ -133,7 +133,7 @@ ERROR_SCENARIOS = [
 def test_add_new_column(column_name, expression, expression_type, input_df_in, expected, expected_dtype, expected_info, backend):
     input_df = backend.DataFrame(INPUT_DF, astype=INPUT_DF_TYPES)
     if input_df_in is None:
-        input_df = input_df[:0]
+        input_df = backend.empty_df(input_df)
     expected = backend.DataFrame(expected, dtype=expected_dtype) if isinstance(expected, (list, dict)) else expected
     with context.set({"str_val": "STR1", "int_val": 2, "float_val": 3.5, "bool_val": True}):
         with get_test_data(input_df, named_inputs={"copy": input_df}, named_output="result") as data:
@@ -197,7 +197,7 @@ INPUT_DF2 = [
 def test_add_row_numbers(output_column, start, step, strict, input_df_in, expected, expected_info, backend):
     input_df = backend.DataFrame(INPUT_DF2, astype={"A": "Int64", "B": "string"})
     if input_df_in is None:
-        input_df = input_df[:0]
+        input_df = backend.empty_df(input_df)
     if isinstance(expected, (list, dict)):
         expected = backend.DataFrame(expected, astype=expected_info or {"A": "Int64", "B": "string", "C": "int64"})
     with get_test_data(input_df, named_inputs={"copy": input_df}, named_output="result") as data:

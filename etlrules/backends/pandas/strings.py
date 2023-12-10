@@ -1,4 +1,3 @@
-import re
 from pandas import NA
 from numpy import nan
 
