@@ -175,8 +175,26 @@ def months_offset(dt_col, offset, strict=True):
 
 
 def years_offset(dt_col, offset, strict=True):
-    # TODO: optimize
-    return months_offset(dt_col, offset * 12, strict=strict)
+    if not is_scalar(offset):
+        offset = offset.fillna(0)
+    else:
+        offset = offset or 0
+
+    year = dt_col.dt.year + offset
+
+    df = year.to_frame(name="year")
+    df["month"] = dt_col.dt.month
+    df["day"] = dt_col.dt.day
+    df["hour"] = dt_col.dt.hour
+    df["minute"] = dt_col.dt.minute
+    df["second"] = dt_col.dt.second
+    df["microsecond"] = dt_col.dt.microsecond
+
+    df["day"] = df["day"].mask((df["year"] % 4 != 0) & (df["month"] == 2) & (df["day"] == 29), 28)
+
+    df = df[["year", "month", "day", "hour", "minute", "second", "microsecond"]]
+    df = dd.to_datetime(df, errors="raise" if strict else "coerce")
+    return df
 
 
 def add_sub_col(df, col, unit_value, unit, sign, strict=True):
