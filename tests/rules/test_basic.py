@@ -163,6 +163,9 @@ DEDUPE_EMPTY_DF = {"A": [], "B": [], "C": []}
     [["A", "B"], "first", DEDUPE_EMPTY_DF, None, None, DEDUPE_EMPTY_DF],
 ])
 def test_dedupe_rule_scenarios(columns, keep, input_df, named_input, named_output, expected, backend):
+    if keep == "none" and backend.name == "dask":
+        # keep=none not supported in dask currently
+        pytest.skip()
     input_df = backend.DataFrame(data=input_df)
     with get_test_data(main_input=input_df, named_inputs=named_input and {named_input: input_df}, named_output=named_output) as data:
         rule = backend.rules.DedupeRule(columns, keep=keep, named_output=named_output)
