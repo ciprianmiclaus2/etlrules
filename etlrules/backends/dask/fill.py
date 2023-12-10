@@ -10,6 +10,7 @@ class FillMixin:
         if self.sort_by:
             df = df.sort_values(by=self.sort_by, ascending=self.sort_ascending)
         if self.group_by:
+            df = df.reset_index()
             res = df.groupby(self.group_by)
             res = getattr(res, self.FILL_METHOD)()
             res = res[self.columns]
