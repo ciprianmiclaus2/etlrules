@@ -227,4 +227,5 @@ def test_hconcat_different_no_rows_non_strict(backend):
     with get_test_data(left_df, named_inputs={"left": left_df, "right": right_df}, named_output="result") as data:
         rule = backend.rules.HConcatRule(named_input_left="left", named_input_right="right", named_output="result", strict=False)
         rule.apply(data)
-        assert_frame_equal(data.get_named_output("result"), expected)
+        actual = data.get_named_output("result")
+        assert_frame_equal(actual, expected)

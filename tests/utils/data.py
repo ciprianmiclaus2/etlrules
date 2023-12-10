@@ -45,6 +45,8 @@ def assert_frame_equal(df, df2, ignore_row_ordering=False, ignore_column_orderin
         if ignore_column_ordering:
             df = df[sorted(df.columns)]
             df2 = df2[sorted(df2.columns)]
+        df = df.compute()
+        df2 = df2.compute()
         dask_assert_frame_equal(df, df2)
     elif polars_DataFrame is not None and isinstance(df, polars_DataFrame) and isinstance(df2, polars_DataFrame):
         assert polars_assert_frame_equal is not None
