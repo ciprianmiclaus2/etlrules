@@ -50,6 +50,8 @@ class AggregateRule(UnaryOpBaseRule):
 
                 The above aggregates the column C by producing a ; separated string of values in the group, excluding NA.
 
+            The dask backend doesn't support aggregation_expressions.
+
         aggregation_types: An optional mapping of {column_name: column_type} which converts the respective output
             column to the given type. The supported types are: int8, int16, int32, int64, uint8, uint16,
             uint32, uint64, float32, float64, string, boolean, datetime and timedelta.
