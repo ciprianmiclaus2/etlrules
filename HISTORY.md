@@ -1,7 +1,8 @@
 # History
 
-## 0.2.4 (XXXX-XX-XX)
+## 0.3.0 (2023-12-11)
 
+* Add support for dask backend
 * Ability to deserialize custom rules (ie not part of the etlrules package) to support users implementing their own rules
 
 ## 0.2.3 (2023-11-28)
