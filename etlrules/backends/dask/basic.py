@@ -13,8 +13,14 @@ from etlrules.backends.dask.types import MAP_TYPES
 
 class DedupeRule(DedupeRuleBase):
     def do_dedupe(self, df):
-        keep = False if self.keep == DedupeRule.KEEP_NONE else self.keep
-        return df.drop_duplicates(subset=self.columns, keep=keep, ignore_index=True)
+        if self.keep == DedupeRule.KEEP_NONE:
+            # dask's drop_duplicates doesn't support this
+            result = df.groupby(by=self.columns, group_keys=True).size().reset_index()
+            result = result[result[0] > 1]
+            result = df.merge(result, how="left", on=self.columns, suffixes=[None, "_y"], indicator=True)
+            result = result[result["_merge"] == "left_only"]
+            return result[df.columns]
+        return df.drop_duplicates(subset=self.columns, keep=self.keep, ignore_index=True)
 
 
 class RenameRule(RenameRuleBase):
