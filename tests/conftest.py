@@ -156,6 +156,23 @@ class BackendFixture:
             return dd.from_pandas(df.head(0), npartitions=1)
         assert False, f"unknown impl_pckg: {self.impl_pckg}"
 
+    def business_day_offset(self, dt_col, offset, strict=True):
+        if self.impl_pckg == pd:
+            from etlrules.backends.pandas.datetime import business_day_offset
+            return business_day_offset(dt_col, offset, strict=strict)
+        elif self.impl_pckg == dd:
+            from etlrules.backends.dask.datetime import business_day_offset
+            return business_day_offset(dt_col, offset, strict=strict)
+        assert False, "Not implemented for backend."
+
+    def months_offset(self, dt_col, offset, strict=True):
+        if self.impl_pckg == pd:
+            from etlrules.backends.pandas.datetime import months_offset
+            return months_offset(dt_col, offset, strict=strict)
+        elif self.impl_pckg == dd:
+            from etlrules.backends.dask.datetime import months_offset
+            return months_offset(dt_col, offset, strict=strict)
+        assert False, "Not implemented for backend."
 
 @pytest.fixture(params=[
     ('pandas', pd, pd_rules),

@@ -2,6 +2,7 @@
 
 ## 0.3.1 (XXXX-XX-XX)
 
+* Optimize pandas business_offset and date_offset using values from a different columns to be vectorized operations
 * Add a perf logger which will log a warning when using operations which are not vectorized
 
 ## 0.3.0 (2023-12-11)

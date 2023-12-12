@@ -6,10 +6,8 @@ except:
     can_set_locale = None
 import dask.dataframe as dd
 import numpy as np
-from pandas import isnull, DataFrame
-from pandas.api.types import is_scalar
 from pandas.tseries.offsets import DateOffset
-from pandas.api.types import is_timedelta64_dtype, is_datetime64_any_dtype
+from pandas.api.types import is_scalar, is_timedelta64_dtype, is_datetime64_any_dtype
 
 from .base import DaskMixin
 from etlrules.exceptions import ColumnAlreadyExistsError, MissingColumnError

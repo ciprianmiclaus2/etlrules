@@ -1,13 +1,14 @@
 import datetime
 import locale
 import logging
+import numpy as np
 try:
     from pandas._config.localization import can_set_locale
 except:
     can_set_locale = None
 from pandas import to_timedelta, isnull, to_datetime
 from pandas.tseries.offsets import DateOffset, BusinessDay
-from pandas.api.types import is_timedelta64_dtype, is_datetime64_any_dtype
+from pandas.api.types import is_scalar, is_timedelta64_dtype, is_datetime64_any_dtype
 
 from .base import PandasMixin
 from etlrules.exceptions import ColumnAlreadyExistsError, MissingColumnError
@@ -117,10 +118,88 @@ DT_ARITHMETIC_UNITS = {
 
 DT_TIMEDELTA_UNITS = set(["days", "hours", "minutes", "seconds", "milliseconds", "microseconds", "nanoseconds"])
 
+FOLL_MONDAY_ADJ_WEEKEND_OFFSETS = {0: np.nan, 1: np.nan, 2: np.nan, 3: np.nan, 4: np.nan, 5: 2, 6: 1}
+PREV_FRIDAY_ADJ_WEEKEND_OFFSETS = {0: np.nan, 1: np.nan, 2: np.nan, 3: np.nan, 4: np.nan, 5: -1, 6: -2}
+def dt_adjust_weekends(dt_col, offset, strict=True):
+    weekdays = dt_col.dt.weekday
+    if not is_scalar(offset):
+        offset = offset.fillna(0)
+        # -1 -> 0 | 0, 1 -> 3
+        offset = ((offset // offset.replace({0: 1}).abs() + 1) // 2) * 3
+        dt_col_weekend_offset = weekdays.replace(FOLL_MONDAY_ADJ_WEEKEND_OFFSETS) - offset
+    else:
+        dt_col_weekend_offset = weekdays.replace(FOLL_MONDAY_ADJ_WEEKEND_OFFSETS if offset < 0 else PREV_FRIDAY_ADJ_WEEKEND_OFFSETS)
+    dt_col_weekend_offset = dt_col_weekend_offset.fillna(0)
+    return dt_col + to_timedelta(dt_col_weekend_offset, unit="D", errors="raise" if strict else "coerce")
 
 
+def business_day_offset(dt_col, offset, strict=True):
+    if not is_scalar(offset):
+        offset = offset.fillna(0)
+    else:
+        offset = offset or 0
+    col = dt_col.dt.weekday
+    dt_col2 = dt_adjust_weekends(dt_col, offset, strict=strict)
+    col = dt_col2.dt.weekday.fillna(0)
+    col2 =  col + offset
+    col3 = (
+        (col2 // 5) * 7 + (col2 % 5)
+    ) - col
+    col4 = to_timedelta(col3, unit="D", errors="raise" if strict else "coerce")
+    return dt_col2 + col4
 
-def add_sub_col(df, col, unit_value, unit, sign):
+
+def months_offset(dt_col, offset, strict=True):
+    if not is_scalar(offset):
+        offset = offset.fillna(0)
+    else:
+        offset = offset or 0
+    offset = offset + dt_col.dt.month - 1
+    year = dt_col.dt.year + (offset // 12)
+
+    df = year.to_frame(name="year")
+    df["month"] = (offset % 12) + 1
+    df["day"] = dt_col.dt.day
+    df["hour"] = dt_col.dt.hour
+    df["minute"] = dt_col.dt.minute
+    df["second"] = dt_col.dt.second
+    df["microsecond"] = dt_col.dt.microsecond
+
+    df["max"] = df["month"].replace({
+        1: 31, 2: 29, 3: 31, 4: 30, 5: 31, 6: 30, 7: 31, 8: 31, 9: 30, 10: 31, 11: 30, 12: 31
+    })
+    df["day"] = df["day"].where(df["day"] <= df["max"], df["max"])
+    df["day"] = df["day"].mask((df["year"] % 4 != 0) & (df["month"] == 2) & (df["day"] == 29), 28)
+
+    df = df[["year", "month", "day", "hour", "minute", "second", "microsecond"]]
+    df = to_datetime(df, errors="raise" if strict else "coerce")
+    return df
+
+
+def years_offset(dt_col, offset, strict=True):
+    if not is_scalar(offset):
+        offset = offset.fillna(0)
+    else:
+        offset = offset or 0
+
+    year = dt_col.dt.year + offset
+
+    df = year.to_frame(name="year")
+    df["month"] = dt_col.dt.month
+    df["day"] = dt_col.dt.day
+    df["hour"] = dt_col.dt.hour
+    df["minute"] = dt_col.dt.minute
+    df["second"] = dt_col.dt.second
+    df["microsecond"] = dt_col.dt.microsecond
+
+    df["day"] = df["day"].mask((df["year"] % 4 != 0) & (df["month"] == 2) & (df["day"] == 29), 28)
+
+    df = df[["year", "month", "day", "hour", "minute", "second", "microsecond"]]
+    df = to_datetime(df, errors="raise" if strict else "coerce")
+    return df
+
+
+def add_sub_col(df, col, unit_value, unit, sign, strict=True):
     if isinstance(unit_value, str):
         # unit_value is a column
         if unit_value not in df.columns:
@@ -139,14 +218,19 @@ def add_sub_col(df, col, unit_value, unit, sign):
             if unit in DT_TIMEDELTA_UNITS:
                 col2 = to_timedelta(col2, unit=DT_ARITHMETIC_UNITS[unit], errors="coerce")
             else:
-                perf_logger.warning("Adding/substracting a column with unit=%s to a datetime is not vectorized and might hurt the performance.", unit)
                 if unit == "weekdays":
-                    col2 = col2.apply(lambda x: BusinessDay(sign * (0 if isnull(x) else int(x))))
+                    return business_day_offset(col, sign * col2, strict=strict)
+                elif unit == "weeks":
+                    return to_datetime(
+                        col + to_timedelta(col2.fillna(0) * sign * 7, "D", errors="raise" if strict else "coerce"),
+                        errors="raise" if strict else "coerce"
+                    )
+                elif unit == "months":
+                    return months_offset(col, sign * col2, strict=strict)
+                elif unit == "years":
+                    return years_offset(col, sign * col2, strict=strict)
                 else:
-                    col2 = col2.apply(lambda x: DateOffset(**{DT_ARITHMETIC_UNITS[unit]: sign * (0 if isnull(x) else int(x))}))
-                if not col2.empty:
-                    col += col2
-                return to_datetime(col, errors='coerce')
+                    assert False, f"Unexpected unit {unit}"
         if sign == -1:
             return col - col2
         return col + col2
@@ -160,13 +244,13 @@ def add_sub_col(df, col, unit_value, unit, sign):
 class DateTimeAddRule(PandasMixin, DateTimeAddRuleBase):
 
     def do_apply(self, df, col):
-        return add_sub_col(df, col, self.unit_value, self.unit, 1)
+        return add_sub_col(df, col, self.unit_value, self.unit, 1, strict=self.strict)
 
 
 class DateTimeSubstractRule(PandasMixin, DateTimeSubstractRuleBase):
 
     def do_apply(self, df, col):
-        return add_sub_col(df, col, self.unit_value, self.unit, -1)
+        return add_sub_col(df, col, self.unit_value, self.unit, -1, strict=self.strict)
 
 
 class DateTimeDiffRule(PandasMixin, DateTimeDiffRuleBase):
@@ -184,7 +268,7 @@ class DateTimeDiffRule(PandasMixin, DateTimeDiffRuleBase):
     def do_apply(self, df, col):
         if self.input_column2 not in df.columns:
             raise MissingColumnError(f"Column {self.input_column2} in input_column2 does not exist in the input dataframe.")
-        res = add_sub_col(df, col, self.input_column2, self.unit, -1)
+        res = add_sub_col(df, col, self.input_column2, self.unit, -1, strict=self.strict)
         if is_timedelta64_dtype(res) and self.unit:
             if self.unit == "total_seconds":
                 res = res.dt.total_seconds()
