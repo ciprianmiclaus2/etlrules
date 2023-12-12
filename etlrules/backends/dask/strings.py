@@ -1,3 +1,4 @@
+import logging
 from numpy import nan
 from pandas import NA, isnull
 
@@ -13,6 +14,8 @@ from etlrules.backends.common.strings import (
 )
 
 from .base import DaskMixin, is_pyarrow_string_enabled
+
+perf_logger = logging.getLogger("etlrules.perf")
 
 
 class StrLowerRule(StrLowerRuleBase, DaskMixin):
@@ -32,6 +35,7 @@ class StrCapitalizeRule(StrCapitalizeRuleBase, DaskMixin):
 
 class StrSplitRule(StrSplitRuleBase, DaskMixin):
     def do_apply(self, df, col):
+        perf_logger.warning("StrSplitRule is not vectorized and might hurt the overall performance.")
         new_col = col.str.split(pat=self.separator, n=self.limit)
         pyarrow_string_enabled = is_pyarrow_string_enabled()
         if pyarrow_string_enabled:
@@ -41,6 +45,7 @@ class StrSplitRule(StrSplitRuleBase, DaskMixin):
 
 class StrSplitRejoinRule(StrSplitRejoinRuleBase, DaskMixin):
     def do_apply(self, df, col):
+        perf_logger.warning("StrSplitRejoinRule is not vectorized and might hurt the overall performance.")
         new_col = col.str.split(pat=self.separator, n=self.limit)
         new_separator = self.new_separator
         pyarrow_string_enabled = is_pyarrow_string_enabled()

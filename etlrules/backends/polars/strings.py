@@ -1,3 +1,4 @@
+import logging
 import polars as pl
 
 from .base import PolarsMixin
@@ -11,6 +12,8 @@ from etlrules.backends.common.strings import (
     StrPadRule as StrPadRuleBase,
     StrExtractRule as StrExtractRuleBase,
 )
+
+perf_logger = logging.getLogger("etlrules.perf")
 
 
 class StrLowerRule(StrLowerRuleBase, PolarsMixin):
@@ -45,6 +48,7 @@ class StrSplitRule(StrSplitRuleBase, PolarsMixin):
 
 class StrSplitRejoinRule(StrSplitRejoinRuleBase, PolarsMixin):
     def do_apply(self, df, col):
+        perf_logger.warning("StrSplitRejoinRule is not vectorized and might hurt the overall performance.")
         if self.limit is not None:
             # self.limit + 1 to mimic pandas
             struct_col = col.str.splitn(by=self.separator, n=self.limit + 1)

@@ -1,5 +1,6 @@
 import datetime
 import locale
+import logging
 try:
     from pandas._config.localization import can_set_locale
 except:
@@ -23,6 +24,8 @@ from etlrules.backends.common.datetime import (
     DateTimeSubstractRule as DateTimeSubstractRuleBase,
     DateTimeDiffRule as DateTimeDiffRuleBase,
 )
+
+perf_logger = logging.getLogger("etlrules.perf")
 
 
 ROUND_TRUNC_UNITS_MAPPED = {
@@ -136,6 +139,7 @@ def add_sub_col(df, col, unit_value, unit, sign):
             if unit in DT_TIMEDELTA_UNITS:
                 col2 = to_timedelta(col2, unit=DT_ARITHMETIC_UNITS[unit], errors="coerce")
             else:
+                perf_logger.warning("Adding/substracting a column with unit=%s to a datetime is not vectorized and might hurt the performance.", unit)
                 if unit == "weekdays":
                     col2 = col2.apply(lambda x: BusinessDay(sign * (0 if isnull(x) else int(x))))
                 else:

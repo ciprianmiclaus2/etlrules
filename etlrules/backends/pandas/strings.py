@@ -1,3 +1,4 @@
+import logging
 from pandas import NA
 from numpy import nan
 
@@ -13,6 +14,8 @@ from etlrules.backends.common.strings import (
 )
 
 from .base import PandasMixin
+
+perf_logger = logging.getLogger("etlrules.perf")
 
 
 class StrLowerRule(StrLowerRuleBase, PandasMixin):
@@ -37,6 +40,7 @@ class StrSplitRule(StrSplitRuleBase, PandasMixin):
 
 class StrSplitRejoinRule(StrSplitRejoinRuleBase, PandasMixin):
     def do_apply(self, df, col):
+        perf_logger.warning("StrSplitRejoinRule is not vectorized and might hurt the overall performance.")
         new_col = col.str.split(pat=self.separator, n=self.limit, regex=False)
         new_separator = self.new_separator
         if self.sort is not None:

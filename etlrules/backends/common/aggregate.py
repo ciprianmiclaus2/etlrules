@@ -1,4 +1,5 @@
 import ast
+import logging
 from typing import Iterable, Mapping, Optional
 
 from pandas import isnull
@@ -11,6 +12,8 @@ from etlrules.exceptions import (
 )
 from etlrules.backends.common.types import SUPPORTED_TYPES
 from etlrules.rule import UnaryOpBaseRule
+
+perf_logger = logging.getLogger("etlrules.perf")
 
 
 class AggregateRule(UnaryOpBaseRule):
@@ -120,6 +123,8 @@ class AggregateRule(UnaryOpBaseRule):
             self.aggregations = None
         self._aggs = {}
         if self.aggregations:
+            if agg_func in ('list', 'csv'):
+                perf_logger.warning("Aggregation '%s' in AggregateRule is not vectorized and might hurt the overall performance", agg_func)
             self._aggs.update({
                 key: self.AGGREGATIONS[agg_func]
                 for key, agg_func in (aggregations or {}).items()
@@ -132,6 +137,7 @@ class AggregateRule(UnaryOpBaseRule):
                 if col in self._aggs:
                     raise ColumnAlreadyExistsError(f"Column {col} is already being aggregated.")
                 try:
+                    perf_logger.warning("Aggregation expression '%s' in AggregateRule is not vectorized and might hurt the overall performance", agg_expr)
                     _ast_expr = ast.parse(agg_expr, filename=f"{col}_expression.py", mode="eval")
                     _compiled_expr = compile(_ast_expr, filename=f"{col}_expression.py", mode="eval")
                     self._aggs[col] = lambda values, bound_compiled_expr=_compiled_expr: eval(

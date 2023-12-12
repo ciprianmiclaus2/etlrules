@@ -1,5 +1,9 @@
 # History
 
+## 0.3.1 (XXXX-XX-XX)
+
+* Add a perf logger which will log a warning when using operations which are not vectorized
+
 ## 0.3.0 (2023-12-11)
 
 * Add support for dask backend
