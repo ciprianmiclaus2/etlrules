@@ -83,6 +83,11 @@ The rule data can have some input dataframes or they can start as empty canvases
 The underlying dataframe library to use for executing the plan. For example: pandas, vaex, polars, etc.
 At the moment, only pandas is supported.
 
+### Runner
+
+A command line interface application which can take a plan serialized as a yaml file and run it. Also allows to run that
+programmatically via the run_plan import.
+
 
 ## Documentation
 
