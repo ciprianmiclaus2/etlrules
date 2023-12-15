@@ -7,6 +7,11 @@
         alt = "Release Status">
 </a>
 
+<a href="http://github.com/ciprianmiclaus/etlrules/">
+
+<img src="https://img.shields.io/pypi/pyversions/etlrules.svg" alt="Python versions">
+</a>
+
 <a href="https://github.com/ciprianmiclaus/etlrules/actions">
     <img src="https://github.com/ciprianmiclaus/etlrules/actions/workflows/python-package.yml/badge.svg?branch=main" alt="CI Status">
 </a>
