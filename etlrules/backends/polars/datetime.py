@@ -185,26 +185,50 @@ def months_offset(dt_col, offset, strict=True):
         offset = offset.fill_null(0)
     else:
         offset = offset or 0
-    offset = offset + dt_col.dt.month - 1
-    year = dt_col.dt.year + (offset // 12)
+    offset = offset + dt_col.dt.month() - 1
+    year = dt_col.dt.year() + (offset // 12)
 
     df = year.to_frame(name="year")
-    df["month"] = (offset % 12) + 1
-    df["day"] = dt_col.dt.day
-    df["hour"] = dt_col.dt.hour
-    df["minute"] = dt_col.dt.minute
-    df["second"] = dt_col.dt.second
-    df["microsecond"] = dt_col.dt.microsecond
-
-    df["max"] = df["month"].replace({
-        1: 31, 2: 29, 3: 31, 4: 30, 5: 31, 6: 30, 7: 31, 8: 31, 9: 30, 10: 31, 11: 30, 12: 31
-    })
-    df["day"] = df["day"].where(df["day"] <= df["max"], df["max"])
-    df["day"] = df["day"].mask((df["year"] % 4 != 0) & (df["month"] == 2) & (df["day"] == 29), 28)
+    df = df.with_columns(
+        month=(offset % 12) + 1,
+        day=dt_col.dt.day(),
+        hour=dt_col.dt.hour(),
+        minute=dt_col.dt.minute(),
+        second=dt_col.dt.second(),
+        microsecond=dt_col.dt.microsecond(),
+    )
+    df = df.with_columns(
+        max=df["month"].map_dict({
+            1: 31, 2: 29, 3: 31, 4: 30, 5: 31, 6: 30, 7: 31, 8: 31, 9: 30, 10: 31, 11: 30, 12: 31
+        }, default=df["month"]),
+    )
+    df = df.with_columns(
+        day=pl.when(df["day"] <= df["max"]).then(df["day"]).otherwise(df["max"])
+    )
+    df = df.with_columns(
+        day=pl.when((df["year"] % 4 != 0) & (df["month"] == 2) & (df["day"] == 29)).then(28).otherwise(df["day"])
+    )
 
     df = df[["year", "month", "day", "hour", "minute", "second", "microsecond"]]
-    df = to_datetime(df, errors="raise" if strict else "coerce")
-    return df
+    return to_datetime(df)
+
+
+def to_datetime(df):
+    return pl.concat_str(
+        df["year"].cast(pl.Utf8),
+        pl.lit("-"),
+        df["month"].cast(pl.Utf8).str.pad_start(2, '0'),
+        pl.lit("-"),
+        df["day"].cast(pl.Utf8).str.pad_start(2, '0'),
+        pl.lit(" "),
+        df["hour"].cast(pl.Utf8).str.pad_start(2, '0'),
+        pl.lit(":"),
+        df["minute"].cast(pl.Utf8).str.pad_start(2, '0'),
+        pl.lit(":"),
+        df["second"].cast(pl.Utf8).str.pad_start(2, '0'),
+        pl.lit("."),
+        df["microsecond"].cast(pl.Utf8).str.pad_start(6, '0'),
+    ).str.to_datetime(format="%Y-%m-%d %H:%M:%S%.6f", time_unit="us", ambiguous="latest")
 
 
 def years_offset(dt_col, offset, strict=True):
@@ -213,28 +237,22 @@ def years_offset(dt_col, offset, strict=True):
     else:
         offset = offset or 0
 
-    year = dt_col.dt.year + offset
+    year = dt_col.dt.year() + offset
 
     df = year.to_frame(name="year")
-    df["month"] = dt_col.dt.month
-    df["day"] = dt_col.dt.day
-    df["hour"] = dt_col.dt.hour
-    df["minute"] = dt_col.dt.minute
-    df["second"] = dt_col.dt.second
-    df["microsecond"] = dt_col.dt.microsecond
-
-    df["day"] = df["day"].mask((df["year"] % 4 != 0) & (df["month"] == 2) & (df["day"] == 29), 28)
-
-    df = df[["year", "month", "day", "hour", "minute", "second", "microsecond"]]
-    pl.concat_str(
-        df["year"].cast(pl.Utf8),
-        "-",
-        df["month"].cast(pl.Utf8).str.pad_start(2, '0'),
-        "-",
-        df["day"].cast(pl.Utf8).str.pad_start(2, '0'),
+    df = df.with_columns(
+        month=dt_col.dt.month(),
+        day=dt_col.dt.day(),
+        hour=dt_col.dt.hour(),
+        minute=dt_col.dt.minute(),
+        second=dt_col.dt.second(),
+        microsecond=dt_col.dt.microsecond(),
     )
-    df = to_datetime(df, errors="raise" if strict else "coerce")
-    return df
+    df = df.with_columns(
+        day=pl.when((df["year"] % 4 != 0) & (df["month"] == 2) & (df["day"] == 29)).then(28).otherwise(df["day"])
+    )
+    df = df[["year", "month", "day", "hour", "minute", "second", "microsecond"]]
+    return to_datetime(df)
 
 
 def add_sub_col(df, col, unit_value, unit, sign, input_column, strict=True):
@@ -257,10 +275,9 @@ def add_sub_col(df, col, unit_value, unit, sign, input_column, strict=True):
                 col2 = pl.duration(**{DT_ARITHMETIC_UNITS[unit]: col2})
             else:
                 if unit == "weekdays":
-                    return business_day_offset(df, col, sign * col2, strict=strict)
+                    return business_day_offset(col, sign * col2, strict=strict)
                 elif unit == "weeks":
-                    col += pd.duration(weeks=col2.fillna(0) * sign)
-                    return dd.to_datetime(col, errors="raise" if strict else "coerce")
+                    return col + pl.duration(weeks=col2.fillna(0) * sign)
                 elif unit == "months":
                     return months_offset(col, sign * col2, strict=strict)
                 elif unit == "years":
