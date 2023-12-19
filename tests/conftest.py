@@ -126,6 +126,11 @@ class BackendFixture:
             )
         assert False, f"unknown impl_pckg: {self.impl_pckg}"
 
+    def assign(self, df, column_name, column):
+        if self.impl_pckg == pl:
+            return df.with_columns(**{column_name: column})
+        return df.assign(**{column_name: column})
+
     def rename(self, df, rename_dict):
         if self.impl_pckg == pd:
             return df.rename(columns=rename_dict)
@@ -162,6 +167,9 @@ class BackendFixture:
             return business_day_offset(dt_col, offset, strict=strict)
         elif self.impl_pckg == dd:
             from etlrules.backends.dask.datetime import business_day_offset
+            return business_day_offset(dt_col, offset, strict=strict)
+        elif self.impl_pckg == pl:
+            from etlrules.backends.polars.datetime import business_day_offset
             return business_day_offset(dt_col, offset, strict=strict)
         assert False, "Not implemented for backend."
 
