@@ -30,7 +30,6 @@ dependencies = [
 polars = [
     "polars==0.19.12",
     #"polars-lts-cpu==0.19.12",
-    "polars-business==0.3.11"
 ]
 
 dask = [
