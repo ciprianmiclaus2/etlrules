@@ -286,7 +286,7 @@ def add_sub_col(df, col, unit_value, unit, sign, input_column, strict=True):
     if unit not in DT_ARITHMETIC_UNITS.keys():
         raise ValueError(f"Unsupported unit: '{unit}'. It must be one of {DT_ARITHMETIC_UNITS.keys()}")
     if unit == "weekdays":
-        return col + business_day_offset(col, sign * df[unit_value], strict=strict)
+        return col + business_day_offset(col, sign * unit_value, strict=strict)
     return col.dt.offset_by(f"{sign * unit_value}{OFFSETS[unit]}")
 
 
