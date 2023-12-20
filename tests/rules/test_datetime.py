@@ -668,8 +668,6 @@ INPUT_ADD_SUB_DF4 = [
     ["DateTimeSubstractRule", "A", 10, "days", "B", INPUT_ADD_SUB_DF2, None, ColumnAlreadyExistsError, None],
     ["DateTimeSubstractRule", "A", "C", "days", None, INPUT_ADD_SUB_DF2, None, MissingColumnError, None],])
 def test_add_sub_rules(rule_cls_str, input_column, unit_value, unit, output_column, input_df, input_astype, expected, expected_astype, backend):
-    if backend.impl == pl and unit == "weekdays" and sys.version_info <= (3, 10):
-        pytest.skip()
     input_df = backend.DataFrame(input_df, astype=input_astype)
     if isinstance(expected, (list, dict)):
         expected = backend.DataFrame(expected, astype=expected_astype)
@@ -753,8 +751,6 @@ def test_date_diff_scenarios(input_column, input_column2, unit, output_column, i
 
 @pytest.mark.parametrize("strict", [True, False])
 def test_business_day_offset_col(strict, backend):
-    if backend.name not in ("dask", "pandas"):
-        pytest.skip()
     input_df = [
         {"A": datetime.datetime(2023, 12, 5, 10, 11, 12), "C": 0},
         {"A": datetime.datetime(2023, 12, 5, 10, 11, 12), "C": 1},
@@ -800,7 +796,7 @@ def test_business_day_offset_col(strict, backend):
         errors="coerce"
     )
     df = backend.DataFrame(data=input_df)
-    df["E"] = backend.business_day_offset(df["A"], df["C"])
+    df = backend.assign(df, "E", backend.business_day_offset(df["A"], df["C"]))
     expected = [
         {"E": datetime.datetime(2023, 12, 5, 10, 11, 12)},
         {"E": datetime.datetime(2023, 12, 6, 10, 11, 12)},
@@ -895,9 +891,6 @@ def test_business_day_offset_col(strict, backend):
     ]
 ])
 def test_business_day_offset_scalar(input_df, scalar_offset, expected, backend):
-    if backend.name not in ("dask", "pandas"):
-        pytest.skip()
-
     df_p = pd.DataFrame(input_df)
     df_p["E"] = pd.to_datetime(
         df_p["A"] + pd.tseries.offsets.BusinessDay(scalar_offset),
@@ -905,7 +898,7 @@ def test_business_day_offset_scalar(input_df, scalar_offset, expected, backend):
     )
 
     df = backend.DataFrame(data=input_df)
-    df["E"] = backend.business_day_offset(df["A"], scalar_offset)
+    df = backend.assign(df, "E", backend.business_day_offset(df["A"], scalar_offset))
     expected_df = pd.DataFrame(data=expected)
     assert_frame_equal(df_p[["E"]], expected_df)
 

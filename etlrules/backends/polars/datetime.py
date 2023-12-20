@@ -1,10 +1,6 @@
 import datetime
 import locale
 import polars as pl
-try:
-    import polars_business as plb
-except:
-    plb = None
 
 from .base import PolarsMixin
 from etlrules.exceptions import ColumnAlreadyExistsError, MissingColumnError
@@ -143,7 +139,119 @@ OFFSETS = {
 DT_TIMEDELTA_UNITS = set(["weeks", "days", "hours", "minutes", "seconds", "milliseconds", "microseconds"])
 
 
-def add_sub_col(df, col, unit_value, unit, sign, input_column):
+def is_scalar(offset):
+    return isinstance(offset, (int, float))
+
+FOLL_MONDAY_ADJ_WEEKEND_OFFSETS = {0: None, 1: None, 2: None, 3: None, 4: None, 5: 2, 6: 1}
+PREV_FRIDAY_ADJ_WEEKEND_OFFSETS = {0: None, 1: None, 2: None, 3: None, 4: None, 5: -1, 6: -2}
+def dt_adjust_weekends(dt_col, offset, strict=True):
+    weekdays = dt_col.dt.weekday().cast(pl.Int64) - 1
+    if not is_scalar(offset):
+        offset = offset.cast(pl.Int64).fill_null(0)
+        # -1 -> 0 | 0, 1 -> 3
+        offset = ((offset // offset.map_dict({0: 1}, default=offset).abs() + 1) // 2) * 3
+        dt_col_weekend_offset = weekdays.map_dict(FOLL_MONDAY_ADJ_WEEKEND_OFFSETS, default=weekdays) - offset
+    else:
+        dt_col_weekend_offset = weekdays.map_dict(FOLL_MONDAY_ADJ_WEEKEND_OFFSETS if offset < 0 else PREV_FRIDAY_ADJ_WEEKEND_OFFSETS, default=weekdays)
+    dt_col_weekend_offset = dt_col_weekend_offset.fill_null(0)
+    return dt_col + pl.duration(days=dt_col_weekend_offset)
+
+
+def business_day_offset(dt_col, offset, strict=True):
+    if not is_scalar(offset):
+        offset = offset.cast(pl.Int64).fill_null(0)
+    else:
+        offset = offset or 0
+    dt_col2 = dt_adjust_weekends(dt_col, offset, strict=strict)
+    col = (dt_col2.dt.weekday().cast(pl.Int64) - 1).fill_null(0)
+    col2 =  col + offset
+    col3 = (
+        (col2 // 5) * 7 + (
+            pl.when(col2 < 0).then(
+                pl.when(
+                    col2.mod(5) == 0
+                ).then(0).otherwise(5 + col2.mod(5))
+            ).otherwise(col2.mod(5)))
+    ) - col
+    return dt_col2 + pl.duration(days=col3)
+
+
+def months_offset(dt_col, offset, strict=True):
+    if not is_scalar(offset):
+        offset = offset.fill_null(0)
+    else:
+        offset = offset or 0
+    offset = offset + dt_col.dt.month() - 1
+    year = dt_col.dt.year() + (offset // 12)
+
+    df = year.to_frame(name="year")
+    df = df.with_columns(
+        month=(offset % 12) + 1,
+        day=dt_col.dt.day(),
+        hour=dt_col.dt.hour(),
+        minute=dt_col.dt.minute(),
+        second=dt_col.dt.second(),
+        microsecond=dt_col.dt.microsecond(),
+    )
+    df = df.with_columns(
+        max=df["month"].map_dict({
+            1: 31, 2: 29, 3: 31, 4: 30, 5: 31, 6: 30, 7: 31, 8: 31, 9: 30, 10: 31, 11: 30, 12: 31
+        }, default=df["month"]),
+    )
+    df = df.with_columns(
+        day=pl.when(df["day"] <= df["max"]).then(df["day"]).otherwise(df["max"])
+    )
+    df = df.with_columns(
+        day=pl.when((df["year"] % 4 != 0) & (df["month"] == 2) & (df["day"] == 29)).then(28).otherwise(df["day"])
+    )
+
+    df = df[["year", "month", "day", "hour", "minute", "second", "microsecond"]]
+    return to_datetime(df)
+
+
+def to_datetime(df):
+    return pl.concat_str(
+        df["year"].cast(pl.Utf8),
+        pl.lit("-"),
+        df["month"].cast(pl.Utf8).str.pad_start(2, '0'),
+        pl.lit("-"),
+        df["day"].cast(pl.Utf8).str.pad_start(2, '0'),
+        pl.lit(" "),
+        df["hour"].cast(pl.Utf8).str.pad_start(2, '0'),
+        pl.lit(":"),
+        df["minute"].cast(pl.Utf8).str.pad_start(2, '0'),
+        pl.lit(":"),
+        df["second"].cast(pl.Utf8).str.pad_start(2, '0'),
+        pl.lit("."),
+        df["microsecond"].cast(pl.Utf8).str.pad_start(6, '0'),
+    ).str.to_datetime(format="%Y-%m-%d %H:%M:%S%.6f", time_unit="us", ambiguous="latest")
+
+
+def years_offset(dt_col, offset, strict=True):
+    if not is_scalar(offset):
+        offset = offset.fill_null(0)
+    else:
+        offset = offset or 0
+
+    year = dt_col.dt.year() + offset
+
+    df = year.to_frame(name="year")
+    df = df.with_columns(
+        month=dt_col.dt.month(),
+        day=dt_col.dt.day(),
+        hour=dt_col.dt.hour(),
+        minute=dt_col.dt.minute(),
+        second=dt_col.dt.second(),
+        microsecond=dt_col.dt.microsecond(),
+    )
+    df = df.with_columns(
+        day=pl.when((df["year"] % 4 != 0) & (df["month"] == 2) & (df["day"] == 29)).then(28).otherwise(df["day"])
+    )
+    df = df[["year", "month", "day", "hour", "minute", "second", "microsecond"]]
+    return to_datetime(df)
+
+
+def add_sub_col(df, col, unit_value, unit, sign, input_column, strict=True):
     if isinstance(unit_value, str):
         # unit_value is a column
         if unit_value not in df.columns:
@@ -163,37 +271,35 @@ def add_sub_col(df, col, unit_value, unit, sign, input_column):
                 col2 = pl.duration(**{DT_ARITHMETIC_UNITS[unit]: col2})
             else:
                 if unit == "weekdays":
-                    if plb is None:
-                        raise RuntimeError("Calculation requires polars_business. pip install polars_business.")
-                    return plb.col(input_column).bdt.offset_by(
-                        col2.map_elements(lambda x: f"{sign*x}bd" if x else x, return_dtype=pl.Utf8), weekend=('Sat', 'Sun'), roll="forward" if sign == -1 else "backward"
-                    )
-                offset_unit = OFFSETS[unit]
-                return col.dt.offset_by(
-                    col2.map_elements(lambda x: f"{sign*x}{offset_unit}" if x else x, return_dtype=pl.Utf8)
-                )
+                    return business_day_offset(col, sign * col2, strict=strict)
+                elif unit == "weeks":
+                    return col + pl.duration(weeks=col2.fillna(0) * sign)
+                elif unit == "months":
+                    return months_offset(col, sign * col2, strict=strict)
+                elif unit == "years":
+                    return years_offset(col, sign * col2, strict=strict)
+                else:
+                    assert False, f"Unexpected unit {unit}"
         if sign == -1:
             return col - col2
         return col + col2
     if unit not in DT_ARITHMETIC_UNITS.keys():
         raise ValueError(f"Unsupported unit: '{unit}'. It must be one of {DT_ARITHMETIC_UNITS.keys()}")
     if unit == "weekdays":
-        if plb is None:
-            raise RuntimeError("Calculation requires polars_business. pip install polars_business.")
-        return plb.col(input_column).bdt.offset_by(f"{sign * unit_value}{OFFSETS[unit]}", weekend=('Sat', 'Sun'), roll="forward" if sign == -1 else "backward")
+        return business_day_offset(col, sign * unit_value, strict=strict)
     return col.dt.offset_by(f"{sign * unit_value}{OFFSETS[unit]}")
 
 
 class DateTimeAddRule(PolarsMixin, DateTimeAddRuleBase):
 
     def do_apply(self, df, col):
-        return add_sub_col(df, col, self.unit_value, self.unit, 1, self.input_column)
+        return add_sub_col(df, col, self.unit_value, self.unit, 1, self.input_column, strict=self.strict)
 
 
 class DateTimeSubstractRule(PolarsMixin, DateTimeSubstractRuleBase):
 
     def do_apply(self, df, col):
-        return add_sub_col(df, col, self.unit_value, self.unit, -1, self.input_column)
+        return add_sub_col(df, col, self.unit_value, self.unit, -1, self.input_column, strict=self.strict)
 
 
 class DateTimeDiffRule(PolarsMixin, DateTimeDiffRuleBase):
@@ -210,7 +316,7 @@ class DateTimeDiffRule(PolarsMixin, DateTimeDiffRuleBase):
     def do_apply(self, df, col):
         if self.input_column2 not in df.columns:
             raise MissingColumnError(f"Column {self.input_column2} in input_column2 does not exist in the input dataframe.")
-        res = add_sub_col(df, col, self.input_column2, self.unit, -1, self.input_column)
+        res = add_sub_col(df, col, self.input_column2, self.unit, -1, self.input_column, strict=self.strict)
         if res.dtype == pl.Duration and self.unit:
             method, mod = self.COMPONENTS[self.unit]
             res = getattr(res.dt, method)()

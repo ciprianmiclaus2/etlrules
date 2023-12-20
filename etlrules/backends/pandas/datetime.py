@@ -138,7 +138,6 @@ def business_day_offset(dt_col, offset, strict=True):
         offset = offset.fillna(0)
     else:
         offset = offset or 0
-    col = dt_col.dt.weekday
     dt_col2 = dt_adjust_weekends(dt_col, offset, strict=strict)
     col = dt_col2.dt.weekday.fillna(0)
     col2 =  col + offset
