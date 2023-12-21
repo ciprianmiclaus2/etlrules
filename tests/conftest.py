@@ -180,6 +180,9 @@ class BackendFixture:
         elif self.impl_pckg == dd:
             from etlrules.backends.dask.datetime import months_offset
             return months_offset(dt_col, offset, strict=strict)
+        elif self.impl_pckg == pl:
+            from etlrules.backends.polars.datetime import months_offset
+            return months_offset(dt_col, offset, strict=strict)
         assert False, "Not implemented for backend."
 
 @pytest.fixture(params=[

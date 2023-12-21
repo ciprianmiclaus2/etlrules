@@ -186,7 +186,13 @@ def months_offset(dt_col, offset, strict=True):
 
     df = year.to_frame(name="year")
     df = df.with_columns(
-        month=(offset % 12) + 1,
+        month=(
+            pl.when(offset < 0).then(
+                pl.when(
+                    offset % 12 == 0
+                ).then(0).otherwise(12 + offset % 12)
+            ).otherwise(offset % 12)
+        ) + 1,
         day=dt_col.dt.day(),
         hour=dt_col.dt.hour(),
         minute=dt_col.dt.minute(),

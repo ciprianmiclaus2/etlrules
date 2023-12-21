@@ -947,9 +947,6 @@ def test_business_day_offset_scalar(input_df, scalar_offset, expected, backend):
     ]],
 ])
 def test_months_offset(input_df, expected, backend):
-    if backend.name not in ("dask", "pandas"):
-        pytest.skip()
-
     df_p = pd.DataFrame(input_df)
     df_p["E"] = pd.to_datetime(
         df_p["A"] + df_p["C"].apply(lambda x: pd.DateOffset(months=x if not pd.isnull(x) else 0)),
@@ -959,7 +956,7 @@ def test_months_offset(input_df, expected, backend):
     assert_frame_equal(df_p[["E"]], expected_df)
 
     df = backend.DataFrame(data=input_df)
-    df["E"] = backend.months_offset(df["A"], df["C"])
+    df = backend.assign(df, "E", backend.months_offset(df["A"], df["C"]))
     
     expected_df = backend.DataFrame(data=expected)
     actual = df[["E"]]
