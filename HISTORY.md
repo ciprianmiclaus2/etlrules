@@ -1,6 +1,6 @@
 # History
 
-## 0.3.1 (XXXX-XX-XX)
+## 0.3.1 (2023-12-22)
 
 * Remove polars-business dependency and implement vectorized datetime operations for weekdays offsets
 * Add tests to run the examples to make sure they don't get broken by future changes
