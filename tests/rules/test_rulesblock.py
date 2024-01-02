@@ -37,3 +37,23 @@ def test_rules_block(named_input, named_output, backend):
         ], astype={"B": "Int64"})
         result = data.get_main_output() if named_output is None else data.get_named_output(named_output)
         assert_frame_equal(expected, result)
+
+
+def test_rules_block_empty_df(backend):
+    df = backend.DataFrame({"A": [], "B": [], "C": []}, astype={"A": "string", "B": "string", "C": "Int64"})
+    with get_test_data(df, named_inputs={"input_df": df}, named_output="result") as data:
+        rule = backend.rules.RulesBlock(
+            rules=[
+                backend.rules.TypeConversionRule({"A": "int64"}),
+                backend.rules.DedupeRule(["A", "B"]),
+                backend.rules.ProjectRule(["A", "C"]),
+                backend.rules.RenameRule({"A": "B"}),
+                backend.rules.SortRule(["C"], ascending=False)
+            ],
+            named_input="input_df",
+            named_output="result"
+        )
+        rule.apply(data)
+        expected = backend.DataFrame({"B": [], "C": []}, astype={"B": "Int64", "C": "Int64"})
+        result = data.get_named_output("result")
+        assert_frame_equal(expected, result)
