@@ -82,6 +82,7 @@ class ReadCSVFileRule(BaseReadFileRule):
         header: When True, the first line is interpreted as the header and the column names are extracted from it.
             When False, the first line is part of the data and the columns will have names like 0, 1, 2, etc.
             Defaults to True.
+        skip_header_rows: Optional number of rows to skip at the top of the file, before the header.
 
         named_output (Optional[str]): Give the output of this rule a name so it can be used by another rule as a named input. Optional.
             When not set, the result of this rule will be available as the main output.
@@ -96,10 +97,13 @@ class ReadCSVFileRule(BaseReadFileRule):
         IOError: raised when the file is not found.
     """
 
-    def __init__(self, file_name: str, file_dir: str=".", regex: bool=False, separator: str=",", header: bool=True, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
+    def __init__(self, file_name: str, file_dir: str=".", regex: bool=False, separator: str=",",
+                 header: bool=True, skip_header_rows: Optional[int]=None,
+                 named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
         super().__init__(file_name=file_name, file_dir=file_dir, regex=regex, named_output=named_output, name=name, description=description, strict=strict)
         self.separator = separator
         self.header = header
+        self.skip_header_rows = skip_header_rows
 
 
 class ReadParquetFileRule(BaseReadFileRule):

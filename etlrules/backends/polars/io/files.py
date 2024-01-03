@@ -17,7 +17,8 @@ class ReadCSVFileRule(ReadCSVFileRuleBase):
 
     def do_read(self, file_path: str) -> pl.DataFrame:
         return pl.read_csv(
-            file_path, separator=self.separator, has_header=self.header
+            file_path, separator=self.separator, has_header=self.header,
+            skip_rows=self.skip_header_rows or 0
         )
 
 

@@ -36,13 +36,26 @@ def test_write_read_csv_file(compression, backend):
         os.remove(os.path.join("/tmp", "tst.csv" + extension))
 
 
-def test_write_read_csv_file_separator(backend):
+@pytest.mark.parametrize("separator,skip_header_rows", [
+    [",", None],
+    ["|", None],
+    [",", 0],
+    [",", 3],
+])
+def test_write_read_csv_file_options(separator, skip_header_rows, backend):
     try:
         test_df = backend.DataFrame(data=TEST_DF)
         with get_test_data(test_df, named_inputs={"input": test_df}, named_output="result") as data:
-            write_rule = backend.rules.WriteCSVFileRule(file_name="tst.csv", file_dir="/tmp", separator="|", named_input="input")
+            write_rule = backend.rules.WriteCSVFileRule(file_name="tst.csv", file_dir="/tmp", separator=separator, named_input="input")
             write_rule.apply(data)
-            read_rule = backend.rules.ReadCSVFileRule(file_name="tst.csv", file_dir="/tmp", separator="|", named_output="result")
+            if skip_header_rows:
+                with open("/tmp/tst.csv", "rt") as f:
+                    contents = f.read()
+                with open("/tmp/tst.csv", "wt") as f:
+                    for x in range(skip_header_rows):
+                        f.write(f"skipped line {x}\n")
+                    f.write(contents)
+            read_rule = backend.rules.ReadCSVFileRule(file_name="tst.csv", file_dir="/tmp", separator=separator, skip_header_rows=skip_header_rows, named_output="result")
             read_rule.apply(data)
             result = data.get_named_output("result")
             result = backend.astype(result, {"D": "datetime"})
