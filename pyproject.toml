@@ -38,6 +38,7 @@ dask = [
 ]
 
 test = [
+    "aiohttp",
     "pytest",
     "black",
     "isort",
