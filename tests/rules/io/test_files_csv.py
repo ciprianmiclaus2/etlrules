@@ -78,3 +78,29 @@ def test_write_read_csv_file_no_header(backend):
             assert_frame_equal(result, test_df)
     finally:
         os.remove(os.path.join("/tmp", "tst.csv"))
+
+
+EXPECTED = [
+    {"Id": 1, "FirstName": "Mike", "LastName": "Geoffrey", "Book": "Like a python", "Year": 2012},
+    {"Id": 2, "FirstName": "Adam", "LastName": "Rolley", "Book": "How to make friends", "Year": 1998},
+    {"Id": 3, "FirstName": "Michelle", "LastName": "Saville", "Book": "Scent of a pear", "Year": 2022},
+    {"Id": 4, "FirstName": "Dorothy", "LastName": "Andrews", "Book": "Tell me your name", "Year": 2014},
+    {"Id": 5, "FirstName": "John", "LastName": "Rawley", "Book": "Make me a lasagna", "Year": 2011},
+]
+
+def test_read_csv_file_via_http(backend):
+    url = "https://raw.githubusercontent.com/ciprianmiclaus/etlrules/main/examples/csv2db/csv_sample.csv"
+    with get_test_data(None, named_inputs={}, named_output="result") as data:
+        read_rule = backend.rules.ReadCSVFileRule(file_name=url, header=True, named_output="result")
+        read_rule.apply(data)
+        actual = data.get_named_output("result")
+        expected = backend.DataFrame(data=EXPECTED)
+        assert_frame_equal(actual, expected)
+
+
+def test_read_csv_file_via_http_regex(backend):
+    url = "https://raw.githubusercontent.com/ciprianmiclaus/etlrules/main/examples/csv2db/.*.csv"
+    with get_test_data(None, named_inputs={}, named_output="result") as data:
+        with pytest.raises(ValueError) as exc:
+            backend.rules.ReadCSVFileRule(file_name=url, regex=True, header=False, named_output="result")
+        assert str(exc.value) == "Regex read not supported for URIs."
