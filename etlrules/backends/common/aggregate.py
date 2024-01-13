@@ -20,14 +20,14 @@ class AggregateRule(UnaryOpBaseRule):
     """Performs a SQL-like groupby and aggregation.
 
     It takes a list of columns to group by and the result will have one row for each unique combination
-    of values in the group_by columns.
+    of values in the group_by columns.  
     The rest of the columns (not in the group_by) can be aggregated using either pre-defined aggregations
     or using custom python expressions.
 
     Args:
         group_by: A list of columns to group the result by
         aggregations: A mapping {column_name: aggregation_function} which specifies how to aggregate
-            columns which are not in the group_by list.
+            columns which are not in the group_by list.  
             The following list of aggregation functions are supported::
 
                 min: minimum of the values in the group
@@ -43,8 +43,8 @@ class AggregateRule(UnaryOpBaseRule):
                 csv: Produces a comma separated string of values, exluding NA
 
         aggregation_expressions: A mapping {column_name: aggregation_expression} which specifies how to aggregate
-            columns which are not in the group_by list.
-            The aggregation expression is a string representing a valid Python expression which gets evaluated.
+            columns which are not in the group_by list.  
+            The aggregation expression is a string representing a valid Python expression which gets evaluated.  
             The input will be in a variable `values`. `isnull` can be used to filter out NA.
 
             Example::
@@ -59,15 +59,15 @@ class AggregateRule(UnaryOpBaseRule):
             column to the given type. The supported types are: int8, int16, int32, int64, uint8, uint16,
             uint32, uint64, float32, float64, string, boolean, datetime and timedelta.
 
-        named_input: Which dataframe to use as the input. Optional.
-            When not set, the input is taken from the main output.
+        named_input: Which dataframe to use as the input. Optional.  
+            When not set, the input is taken from the main output.  
             Set it to a string value, the name of an output dataframe of a previous rule.
-        named_output: Give the output of this rule a name so it can be used by another rule as a named input. Optional.
-            When not set, the result of this rule will be available as the main output.
+        named_output: Give the output of this rule a name so it can be used by another rule as a named input. Optional.  
+            When not set, the result of this rule will be available as the main output.  
             When set to a name (string), the result will be available as that named output.
-        name: Give the rule a name. Optional.
+        name: Give the rule a name. Optional.  
             Named rules are more descriptive as to what they're trying to do/the intent.
-        description: Describe in detail what the rules does, how it does it. Optional.
+        description: Describe in detail what the rules does, how it does it. Optional.  
             Together with the name, the description acts as the documentation of the rule.
         strict: When set to True, the rule does a stricter valiation. Default: True
 

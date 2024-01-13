@@ -11,6 +11,8 @@ nav:
   - Contributing: contributing.md
   - Authors: authors.md
   - History: history.md
+extra_css:
+  - stylesheets/extra.css
 theme:
   name: material
   language: en
