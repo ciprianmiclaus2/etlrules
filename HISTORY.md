@@ -2,6 +2,7 @@
 
 ## 0.3.3 (XXXX-XX-XX)
 
+* Upgrade polars support to 1.9
 * Fix perf_logger missing in pandas expressions
 
 ## 0.3.2 (2024-01-08)
