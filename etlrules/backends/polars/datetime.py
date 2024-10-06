@@ -146,10 +146,10 @@ def dt_adjust_weekends(dt_col, offset, strict=True):
     if not is_scalar(offset):
         offset = offset.cast(pl.Int64).fill_null(0)
         # -1 -> 0 | 0, 1 -> 3
-        offset = ((offset // offset.replace({0: 1}, default=offset).abs() + 1) // 2) * 3
-        dt_col_weekend_offset = weekdays.replace(FOLL_MONDAY_ADJ_WEEKEND_OFFSETS, default=weekdays) - offset
+        offset = ((offset // offset.replace({0: 1}).abs() + 1) // 2) * 3
+        dt_col_weekend_offset = weekdays.replace(FOLL_MONDAY_ADJ_WEEKEND_OFFSETS) - offset
     else:
-        dt_col_weekend_offset = weekdays.replace(FOLL_MONDAY_ADJ_WEEKEND_OFFSETS if offset < 0 else PREV_FRIDAY_ADJ_WEEKEND_OFFSETS, default=weekdays)
+        dt_col_weekend_offset = weekdays.replace(FOLL_MONDAY_ADJ_WEEKEND_OFFSETS if offset < 0 else PREV_FRIDAY_ADJ_WEEKEND_OFFSETS)
     dt_col_weekend_offset = dt_col_weekend_offset.fill_null(0)
     return dt_col + pl.duration(days=dt_col_weekend_offset)
 
@@ -190,7 +190,7 @@ def months_offset(dt_col, offset, strict=True):
     df = df.with_columns(
         max=df["month"].replace({
             1: 31, 2: 29, 3: 31, 4: 30, 5: 31, 6: 30, 7: 31, 8: 31, 9: 30, 10: 31, 11: 30, 12: 31
-        }, default=df["month"]),
+        }),
     )
     df = df.with_columns(
         day=pl.when(df["day"] <= df["max"]).then(df["day"]).otherwise(df["max"])
