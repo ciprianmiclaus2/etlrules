@@ -5,7 +5,7 @@ from etlrules.plan import Plan
 from etlrules.rule import BaseRule
 
 
-class TestRule(BaseRule):
+class SomeTestRule(BaseRule):
 
     def apply(self):
         ...
@@ -127,13 +127,13 @@ ALL_RULES = [
     ["ExplodeValuesRule", dict(input_column="to_explode", column_type="int64", named_input="input", named_output="result", name="name", description="description", strict=True)],
     ["AddRowNumbersRule", dict(output_column="row_number", start=10, step=1, named_input="input", named_output="result", name="name", description="description", strict=True)],
 
-    ["TestRule", dict(named_output="result", name="name", description="description", strict=True)],
+    ["SomeTestRule", dict(named_output="result", name="name", description="description", strict=True)],
 ]
 
 
 def get_rule_instance(rule_cls_str, rule_args_dict, bk):
-    if rule_cls_str == "TestRule":
-        rule_cls = TestRule
+    if rule_cls_str == "SomeTestRule":
+        rule_cls = SomeTestRule
     else:
         rule_cls = getattr(bk.rules, rule_cls_str)
     if rule_cls_str == "RulesBlock":
