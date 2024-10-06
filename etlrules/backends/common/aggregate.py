@@ -39,7 +39,6 @@ class AggregateRule(UnaryOpBaseRule):
                 first: The first value in the group
                 last: The last value in the group
                 list: Produces a python list with all the values in the group, excluding NA
-                tuple: Like list above but produces a tuple
                 csv: Produces a comma separated string of values, exluding NA
 
         aggregation_expressions: A mapping {column_name: aggregation_expression} which specifies how to aggregate
