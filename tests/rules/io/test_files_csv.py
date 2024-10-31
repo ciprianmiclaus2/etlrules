@@ -89,7 +89,7 @@ EXPECTED = [
 ]
 
 def test_read_csv_file_via_http(backend):
-    url = "https://raw.githubusercontent.com/ciprianmiclaus/etlrules/main/examples/csv2db/csv_sample.csv"
+    url = "https://raw.githubusercontent.com/ciprianmiclaus2/etlrules/main/examples/csv2db/csv_sample.csv"
     with get_test_data(None, named_inputs={}, named_output="result") as data:
         read_rule = backend.rules.ReadCSVFileRule(file_name=url, header=True, named_output="result")
         read_rule.apply(data)
@@ -99,7 +99,7 @@ def test_read_csv_file_via_http(backend):
 
 
 def test_read_csv_file_via_http_regex(backend):
-    url = "https://raw.githubusercontent.com/ciprianmiclaus/etlrules/main/examples/csv2db/.*.csv"
+    url = "https://raw.githubusercontent.com/ciprianmiclaus2/etlrules/main/examples/csv2db/.*.csv"
     with get_test_data(None, named_inputs={}, named_output="result") as data:
         with pytest.raises(ValueError) as exc:
             backend.rules.ReadCSVFileRule(file_name=url, regex=True, header=False, named_output="result")

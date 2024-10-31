@@ -10,7 +10,7 @@
     ".vscode",
     "docs",
     "**/__pycache__",
-    "ciprianmiclaus_etlrules.egg-info"
+    "ciprianmiclaus2_etlrules.egg-info"
   ],
 
   "ignore": [

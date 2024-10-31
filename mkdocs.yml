@@ -1,6 +1,6 @@
 site_name: ETLrules
 # site_url: http://www.jieyu.ai
-repo_url: https://github.com/ciprianmiclaus/etlrules
+repo_url: https://github.com/ciprianmiclaus2/etlrules
 repo_name: etlrules
 #strict: true
 nav:
@@ -75,7 +75,7 @@ extra:
       link: http://www.jieyu.ai
       name: Facebook
     - icon: fontawesome/brands/github
-      link: https://github.com/ciprianmiclaus/etlrules
+      link: https://github.com/ciprianmiclaus2/etlrules
       name: Github
     - icon: material/email
       link: "mailto:ciprianm@gmail.com"

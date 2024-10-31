@@ -68,10 +68,10 @@ docs = [
 
 
 [project.urls]
-homepage = "https://github.com/ciprianmiclaus/etlrules"
-documentation = "https://ciprianmiclaus.github.io/etlrules/"
-repository = "https://github.com/ciprianmiclaus/etlrules"
-history = "https://github.com/ciprianmiclaus/etlrules/blob/main/HISTORY.md"
+homepage = "https://github.com/ciprianmiclaus2/etlrules"
+documentation = "https://ciprianmiclaus2.github.io/etlrules/"
+repository = "https://github.com/ciprianmiclaus2/etlrules"
+history = "https://github.com/ciprianmiclaus2/etlrules/blob/main/HISTORY.md"
 
 [tool.setuptools]
 packages = ["etlrules"]

@@ -22,13 +22,13 @@ the [Github repo][].
 You can either clone the public repository:
 
 ``` console
-git clone git://github.com/ciprianmiclaus/etlrules
+git clone git://github.com/ciprianmiclaus2/etlrules
 ```
 
 Or download the [tarball][]:
 
 ``` console
-curl -OJL https://github.com/ciprianmiclaus/etlrules/tarball/master
+curl -OJL https://github.com/ciprianmiclaus2/etlrules/tarball/master
 ```
 
 Once you have a copy of the source, you can install it with:
@@ -39,5 +39,5 @@ pip install .
 
   [pip]: https://pip.pypa.io
   [Python installation guide]: http://docs.python-guide.org/en/latest/starting/installation/
-  [Github repo]: https://github.com/ciprianmiclaus/etlrules
-  [tarball]: https://github.com/ciprianmiclaus/etlrules/tarball/master
+  [Github repo]: https://github.com/ciprianmiclaus2/etlrules
+  [tarball]: https://github.com/ciprianmiclaus2/etlrules/tarball/master
