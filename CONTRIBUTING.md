@@ -61,7 +61,7 @@ Ready to contribute? Here's how to set up `etlrules` for local development.
 4. Install dependencies and start your virtualenv:
 
 ```
-    $ poetry install -E test -E doc -E dev
+    $ pip install etlrules
 ```
 
 5. Create a branch for local development:
