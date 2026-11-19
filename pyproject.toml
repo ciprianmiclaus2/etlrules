@@ -1,25 +1,29 @@
+[build-system]
+requires = ["setuptools>=77", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "etlrules"
-version = "0.3.3"
+dynamic = ["version"]
 description = "A python ETL rule engine operating with data frames."
 authors = [{name = "Ciprian Miclaus", email = "ciprianm@gmail.com"}]
 readme = "README.md"
-license = {file = "LICENSE"}
-requires-python = ">=3.9"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.11"
 classifiers=[
     'Development Status :: 4 - Beta',
     'Intended Audience :: Developers',
-    'License :: OSI Approved :: MIT License',
     'Natural Language :: English',
     'Programming Language :: Python :: 3',
-    'Programming Language :: Python :: 3.9',
-    'Programming Language :: Python :: 3.10',
     'Programming Language :: Python :: 3.11',
     'Programming Language :: Python :: 3.12',
+    'Programming Language :: Python :: 3.13',
+    'Programming Language :: Python :: 3.14',
 ]
 
 dependencies = [
-    "pandas>2",
+    "pandas>=2,<3",
     "pyyaml>=6.0.1",
     "pyarrow>=13.0.0",
     "sqlalchemy>=2.0.0"
@@ -28,13 +32,13 @@ dependencies = [
 
 [project.optional-dependencies]
 polars = [
-    "polars>1",
-    #"polars-lts-cpu>1",
+    "polars>=1,<1.32",
+    "greenlet",  # polars.read_database imports sqlalchemy.ext.asyncio, which needs greenlet since SQLAlchemy 2.1
 ]
 
 dask = [
     "aiohttp",
-    "dask",
+    "dask[dataframe]",
     "requests"
 ]
 
@@ -73,5 +77,11 @@ documentation = "https://ciprianmiclaus2.github.io/etlrules/"
 repository = "https://github.com/ciprianmiclaus2/etlrules"
 history = "https://github.com/ciprianmiclaus2/etlrules/blob/main/HISTORY.md"
 
-[tool.setuptools]
-packages = ["etlrules"]
+[project.scripts]
+etlrules = "etlrules.runner:run"
+
+[tool.setuptools.dynamic]
+version = {attr = "etlrules.__version__"}
+
+[tool.setuptools.packages.find]
+include = ["etlrules", "etlrules.*"]

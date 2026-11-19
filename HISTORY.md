@@ -1,5 +1,16 @@
 # History
 
+## 0.3.4 (unreleased)
+
+* Fix packaging: the 0.3.3 wheel did not include the `etlrules.backends` subpackages, so no backend could be imported
+  from a PyPI install
+* Require Python >= 3.11 and add support for Python 3.13 and 3.14
+* Pin `pandas<3` and `polars<1.32`; newer major/minor versions are not supported yet
+* Add an `etlrules` console script (equivalent to `python -m etlrules.runner`)
+* Fix `etlrules.__version__`, which still reported 0.3.2; it is now the single source of the package version
+* Known issue: the dask backend has a few failing scenarios with current dask/numpy/pyarrow releases
+  (type conversion dtypes, row-level expression fallback, dedupe with keep='none', missing parquet columns)
+
 ## 0.3.3 (2024-10-31)
 
 * Upgrade polars support to 1.9
