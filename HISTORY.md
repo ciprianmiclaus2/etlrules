@@ -9,6 +9,12 @@
 * Security: the dask `StrSplitRule` and `StrSplitRejoinRule` called `eval()` on the cell values when
   `ETLRULES_ENABLE_PYARROW_STRING` was set, so a crafted value in the input data could execute code.
   The values are now only split/joined as strings
+* Remove the `ETLRULES_ENABLE_PYARROW_STRING` environment variable. Importing the dask backend no longer
+  changes dask's global `dataframe.convert-string` setting (it used to disable it unless the variable was set).
+  The dask backend now follows dask's own configuration: pyarrow backed strings by default, which can be
+  disabled with dask's config (e.g. `DASK_DATAFRAME__CONVERT_STRING=False`). Both modes are tested
+* Fix the dask backend with pyarrow backed strings: `list`/`csv` aggregations, and the row level fallback of
+  expressions (e.g. adding an int and a string column) with pandas 2.x
 * Fix `ReplaceRule` with `regex=True` in the pandas and dask backends, which only applied the first of the
   values/new_values pairs
 * Fix `ReplaceRule` with `regex=True` in the polars backend, which only replaced the first match in each value

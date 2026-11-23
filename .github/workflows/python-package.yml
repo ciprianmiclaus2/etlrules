@@ -65,6 +65,13 @@ jobs:
     - name: Test with pytest
       run: |
         pytest --cov=etlrules --cov-report=xml --cov-report term-missing tests/
+    - name: Test with dask's pyarrow string conversion disabled
+      # dask converts strings to pyarrow by default (dataframe.convert-string); users can disable it in their config
+      if: matrix.python-version == '3.14'
+      env:
+        DASK_DATAFRAME__CONVERT_STRING: "False"
+      run: |
+        pytest tests/
     - name: Upload coverage reports to Codecov
       uses: codecov/codecov-action@v5
       with:
