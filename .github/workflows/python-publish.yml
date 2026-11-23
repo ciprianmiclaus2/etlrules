@@ -11,6 +11,9 @@ name: Upload Python Package
 on:
   release:
     types: [published]
+  # Allows running the upload manually from the Actions tab.
+  # Pick the release tag (not a branch) in "Use workflow from" so the right version is built.
+  workflow_dispatch:
 
 permissions:
   contents: read
