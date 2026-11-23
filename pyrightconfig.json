@@ -18,5 +18,5 @@
 
   "reportMissingImports": true,
   "reportMissingTypeStubs": false,
-  "pythonVersion": "3.9"
+  "pythonVersion": "3.11"
 }
