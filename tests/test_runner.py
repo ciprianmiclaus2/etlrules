@@ -58,3 +58,41 @@ def test_runner_with_cli_overrides(backend_str):
             assert rows == EXPECTED
     finally:
         os.remove(Path("tests") / db_name)
+
+
+@pytest.mark.parametrize("backend_str", [
+    "pandas",
+    "polars",
+    "dask",
+])
+def test_run_plan_programmatic_ignores_command_line(backend_str, tmp_path):
+    # run_plan is a library function: it must not parse sys.argv (which belongs to the caller's program)
+    from etlrules import run_plan
+    db_file = tmp_path / "progdb.db"
+    with patch.object(sys, 'argv', ["some_other_program.py", "--unrelated", "arg"]):
+        data = run_plan("./tests/csv2db.yml", backend_str, context={
+            "sql_engine": f"sqlite:///{db_file}",
+            "sql_table": "ProgTable",
+        })
+    assert data.get_context()["sql_table"] == "ProgTable"
+    import sqlalchemy as sa
+    engine = SQLAlchemyEngines.get_engine(f"sqlite:///{db_file}")
+    with engine.connect() as connection:
+        rows = connection.execute(sa.text("SELECT * FROM ProgTable")).fetchall()
+    assert rows == EXPECTED
+
+
+def test_get_args_parser_context_types():
+    from etlrules.plan import Plan
+    from etlrules.runner import get_args_parser
+    plan = Plan(context={"flag": False, "other_flag": True, "count": 1, "ratio": 0.5, "name": "x"})
+    args = get_args_parser(plan, args=[
+        "-p", "plan.yml", "--flag", "true", "--other_flag", "no", "--count", "3", "--ratio", "1.5",
+    ])
+    assert args["flag"] is True
+    assert args["other_flag"] is False
+    assert args["count"] == 3
+    assert args["ratio"] == 1.5
+    assert args["name"] == "x"
+    with pytest.raises(SystemExit):
+        get_args_parser(plan, args=["-p", "plan.yml", "--flag", "maybe"])

@@ -226,7 +226,17 @@ def test_dedupe_rule_raises_missing_column(backend):
         [{"A": "agagd", "B": 3}, {"A": "aad", "B": 1}],
         [{"A": "new_gag_", "B": 3}, {"A": "new_a_", "B": 1}]
     ],
-    ["Z", ["a", "b"], ["new_a", "bb"], False, None, 
+    # multiple regex values: all of them are applied, in order
+    ["A", [r"^a", r"(\d+)$", r"x+"], ["A", r"<$1>", "X"], True, None,
+        [{"A": "ab12", "B": 3}, {"A": "xxba7", "B": 1}],
+        [{"A": "Ab<12>", "B": 3}, {"A": "Xba<7>", "B": 1}]
+    ],
+    # all the matches in a value are replaced
+    ["A", [r"a"], ["1"], True, None,
+        [{"A": "aba", "B": 3}, {"A": "bab", "B": 1}],
+        [{"A": "1b1", "B": 3}, {"A": "b1b", "B": 1}]
+    ],
+    ["Z", ["a", "b"], ["new_a", "bb"], False, None,
         [{"A": "a", "B": 3}, {"A": "aa", "B": 1}],
         MissingColumnError
     ],

@@ -1,5 +1,7 @@
 import logging
-from numpy import nan
+
+import numpy as np
+import pandas as pd
 from pandas import NA, isnull
 
 from etlrules.backends.common.strings import (
@@ -13,7 +15,7 @@ from etlrules.backends.common.strings import (
     StrExtractRule as StrExtractRuleBase,
 )
 
-from .base import DaskMixin, is_pyarrow_string_enabled
+from .base import DaskMixin
 
 perf_logger = logging.getLogger("etlrules.perf")
 
@@ -33,34 +35,46 @@ class StrCapitalizeRule(StrCapitalizeRuleBase, DaskMixin):
         return col.str.capitalize()
 
 
+def _split_partition(series, separator, limit):
+    # returns python lists (object dtype), whatever the storage of the strings is (python or pyarrow)
+    split = series.str.split(pat=separator, n=limit, regex=False)
+    return pd.Series(
+        [list(val) if not _is_na(val) else val for val in split],
+        index=series.index, name=series.name, dtype="object"
+    )
+
+
+def _split_rejoin_partition(series, separator, limit, new_separator, sort):
+    split = _split_partition(series, separator, limit)
+    if sort is None:
+        func = lambda val: new_separator.join(val)
+    else:
+        func = lambda val: new_separator.join(sorted(val, reverse=sort == StrSplitRejoinRuleBase.SORT_DESCENDING))
+    return pd.Series(
+        [func(val) if not _is_na(val) else NA for val in split],
+        index=series.index, name=series.name, dtype="string"
+    )
+
+
+def _is_na(val):
+    return not isinstance(val, (list, tuple, np.ndarray)) and isnull(val)
+
+
 class StrSplitRule(StrSplitRuleBase, DaskMixin):
     def do_apply(self, df, col):
         perf_logger.warning("StrSplitRule is not vectorized and might hurt the overall performance.")
-        new_col = col.str.split(pat=self.separator, n=self.limit)
-        pyarrow_string_enabled = is_pyarrow_string_enabled()
-        if pyarrow_string_enabled:
-            return new_col.apply(lambda val: eval(val) if not isnull(val) else val, meta=(col.name, "object"))
-        return new_col.apply(lambda val: val if val not in (nan, NA, None) else val, meta=(col.name, "object"))
+        return col.map_partitions(
+            _split_partition, self.separator, self.limit, meta=(col.name, "object")
+        )
 
 
 class StrSplitRejoinRule(StrSplitRejoinRuleBase, DaskMixin):
     def do_apply(self, df, col):
         perf_logger.warning("StrSplitRejoinRule is not vectorized and might hurt the overall performance.")
-        new_col = col.str.split(pat=self.separator, n=self.limit)
-        new_separator = self.new_separator
-        pyarrow_string_enabled = is_pyarrow_string_enabled()
-        if self.sort is not None:
-            reverse = self.sort==self.SORT_DESCENDING
-            if pyarrow_string_enabled:
-                func = lambda val: new_separator.join(sorted(eval(val), reverse=reverse)) if not isnull(val) else val
-            else:
-                func = lambda val: new_separator.join(sorted(val, reverse=reverse)) if val not in (nan, NA, None) else val
-        else:
-            if pyarrow_string_enabled:
-                func = lambda val: new_separator.join(eval(val)) if not isnull(val) else val
-            else:
-                func = lambda val: new_separator.join(val) if val not in (nan, NA, None) else val
-        return new_col.apply(func, meta=(col.name, "string")).astype({col.name: 'string'})
+        return col.map_partitions(
+            _split_rejoin_partition, self.separator, self.limit, self.new_separator, self.sort,
+            meta=(col.name, "string")
+        )
 
 
 class StrStripRule(StrStripRuleBase, DaskMixin):
