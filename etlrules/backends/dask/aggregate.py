@@ -1,10 +1,22 @@
 import dask.dataframe as dd
 import itertools
-from pandas import isnull
+from pandas import Series
 from typing import Iterable, Mapping, Optional
 
 from etlrules.backends.common.aggregate import AggregateRule as AggregateRuleBase
 from etlrules.backends.dask.types import MAP_TYPES
+
+
+def _group_values(values):
+    # tolist() returns python scalars (not numpy/arrow scalars) whatever the storage of the column
+    return values.dropna().tolist()
+
+
+def _concat_group_values(lists_of_values):
+    # the partial lists from each partition can come back as numpy arrays (e.g. with pyarrow strings)
+    return Series(list(itertools.chain(*lists_of_values)), dtype=object).dropna().map(
+        lambda value: value.item() if hasattr(value, "item") else value
+    ).tolist()
 
 
 class AggregateRule(AggregateRuleBase):
@@ -20,13 +32,13 @@ class AggregateRule(AggregateRuleBase):
         "last": "last",
         "list": dd.Aggregation(
             'list',
-            chunk=lambda v: v.apply(lambda v: [value for value in v if not isnull(value)]),
-            agg=lambda v: v.apply(lambda v: [value for value in itertools.chain(*v) if not isnull(value)]),
+            chunk=lambda v: v.apply(_group_values),
+            agg=lambda v: v.apply(_concat_group_values),
         ),
         "csv": dd.Aggregation(
             'csv',
-            chunk=lambda v: v.apply(lambda v: [value for value in v if not isnull(value)]),
-            agg=lambda v: v.apply(lambda values: ",".join(str(elem) for elem in itertools.chain(*values) if not isnull(elem))),
+            chunk=lambda v: v.apply(_group_values),
+            agg=lambda v: v.apply(lambda values: ",".join(str(elem) for elem in _concat_group_values(values))),
         ),
     }
 

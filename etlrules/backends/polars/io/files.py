@@ -1,6 +1,10 @@
+import bz2
+import gzip
+import lzma
 import os
-import polars as pl
 import zipfile
+
+import polars as pl
 
 from etlrules.exceptions import MissingColumnError
 
@@ -12,13 +16,7 @@ from etlrules.backends.common.io.files import (
 )
 
 
-COMPRESSION_MAP = {
-    'zip': zipfile.ZIP_DEFLATED,
-    'gzip': zipfile.ZIP_DEFLATED,
-    'bz2': zipfile.ZIP_BZIP2,
-    'xz': zipfile.ZIP_LZMA,
-}
-
+# file extension -> compression
 COMPRESSION_EXT = {
     '.zip': 'zip',
     '.gz': 'gzip',
@@ -26,25 +24,40 @@ COMPRESSION_EXT = {
     '.xz': 'xz',
 }
 
+# single file compressions (zip is an archive and is handled separately)
+COMPRESSION_OPEN = {
+    'gzip': gzip.open,
+    'bz2': bz2.open,
+    'xz': lzma.open,
+}
+
+
 class ReadCSVFileRule(ReadCSVFileRuleBase):
+
+    def _read_csv(self, source) -> pl.DataFrame:
+        return pl.read_csv(
+            source, separator=self.separator, has_header=self.header,
+            skip_rows=self.skip_header_rows or 0
+        )
+
+    def _read_zip(self, file_path: str) -> pl.DataFrame:
+        with zipfile.ZipFile(file_path, 'r') as zarch:
+            arch_files = zarch.namelist()
+            if len(arch_files) != 1:
+                raise RuntimeError(f"Only a single csv file can be read from an archive. {file_path} has {len(arch_files)} files.")
+            with zarch.open(arch_files[0]) as zf:
+                return self._read_csv(zf.read())
 
     def do_read(self, file_path: str) -> pl.DataFrame:
         _, ext = os.path.splitext(file_path)
-        compression = COMPRESSION_EXT.get(ext)
-        if compression is not None:
-            with zipfile.ZipFile(file_path, 'r', compression=COMPRESSION_MAP[compression]) as zarch:
-                arch_files = zarch.namelist()
-                if len(arch_files) != 1:
-                    raise RuntimeError(f"One a single csv file can be read from an archive. {file_path} has {len(arch_files)} files.")
-                with zarch.open(arch_files[0]) as zf:
-                    return pl.read_csv(
-                        zf, separator=self.separator, has_header=self.header,
-                        skip_rows=self.skip_header_rows or 0
-                    )
-        return pl.read_csv(
-            file_path, separator=self.separator, has_header=self.header,
-            skip_rows=self.skip_header_rows or 0
-        )
+        compression = COMPRESSION_EXT.get(ext.lower())
+        if compression is None or self._is_uri():
+            return self._read_csv(file_path)
+        if compression == 'zip' or zipfile.is_zipfile(file_path):
+            # etlrules < 0.3.5 wrote zip archives for all the compressions with the polars backend
+            return self._read_zip(file_path)
+        with COMPRESSION_OPEN[compression](file_path, 'rb') as f:
+            return self._read_csv(f.read())
 
 
 class ReadParquetFileRule(ReadParquetFileRuleBase):
@@ -65,20 +78,17 @@ class WriteCSVFileRule(WriteCSVFileRuleBase):
 
     def do_write(self, file_name: str, file_dir: str, df: pl.DataFrame) -> None:
         file_path = os.path.join(file_dir, file_name)
-        if self.compression is not None:
-            fname, _ = os.path.splitext(file_name)
-            fname_csv = fname + ".csv"
-            with zipfile.ZipFile(file_path, 'w', compression=COMPRESSION_MAP[self.compression]) as zarch:
+        if self.compression == 'zip':
+            # name the csv file inside the archive like pandas does: output.csv.zip -> output.csv
+            fname_csv, _ = os.path.splitext(file_name)
+            with zipfile.ZipFile(file_path, 'w', compression=zipfile.ZIP_DEFLATED) as zarch:
                 with zarch.open(fname_csv, "w") as zf:
-                    df.write_csv(zf,
-                        separator=self.separator,
-                        include_header=self.header,
-                    )
+                    df.write_csv(zf, separator=self.separator, include_header=self.header)
+        elif self.compression is not None:
+            with COMPRESSION_OPEN[self.compression](file_path, 'wb') as f:
+                df.write_csv(f, separator=self.separator, include_header=self.header)
         else:
-            df.write_csv(file_path,
-                separator=self.separator,
-                include_header=self.header,
-            )
+            df.write_csv(file_path, separator=self.separator, include_header=self.header)
 
 
 class WriteParquetFileRule(WriteParquetFileRuleBase):

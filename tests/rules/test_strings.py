@@ -382,3 +382,29 @@ def test_extract_scenarios(input_column, regular_expression, keep_original_value
                 rule.apply(data)
         else:
             assert False
+
+
+PAYLOAD = "__import__('sys').modules.__setitem__('etlrules_pwned', 1) or 'x'"
+
+
+@pytest.mark.parametrize("pyarrow_strings", [False, True])
+@pytest.mark.parametrize("rule_name", ["StrSplitRule", "StrSplitRejoinRule"])
+def test_split_values_are_not_evaluated(rule_name, pyarrow_strings, backend):
+    # cell values must be treated as data: they used to be passed to eval() in the dask backend
+    import sys
+    import dask
+    if pyarrow_strings and backend.name != "dask":
+        pytest.skip("dask specific config")
+    sys.modules.pop("etlrules_pwned", None)
+    with dask.config.set({"dataframe.convert-string": pyarrow_strings}):
+        input_df = backend.DataFrame([{"A": "[1, 2]"}, {"A": PAYLOAD}], astype={"A": "string"})
+        with get_test_data(input_df, named_inputs={"input": input_df}, named_output="result") as data:
+            rule = getattr(backend.rules, rule_name)("A", separator=",", named_input="input", named_output="result")
+            rule.apply(data)
+            result = data.get_named_output("result")
+            values = result["A"].compute().tolist() if backend.name == "dask" else list(result["A"])
+    assert "etlrules_pwned" not in sys.modules
+    if rule_name == "StrSplitRule":
+        assert [list(v) for v in values] == [["[1", " 2]"], ["__import__('sys').modules.__setitem__('etlrules_pwned'", " 1) or 'x'"]]
+    else:
+        assert values == ["[1, 2]", PAYLOAD]

@@ -46,7 +46,8 @@ class ReplaceRule(ReplaceRuleBase, PandasMixin):
         if self.regex:
             for old_val, new_val in zip(self.values, self.new_values):
                 old_val, new_val = self._get_old_new_regex(old_val, new_val)
-                return col.replace(to_replace=old_val, value=new_val, regex=self.regex)
+                col = col.replace(to_replace=old_val, value=new_val, regex=True)
+            return col
         return col.replace(to_replace=self.values, value=self.new_values, regex=self.regex)
 
 

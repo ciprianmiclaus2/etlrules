@@ -1,5 +1,30 @@
 # History
 
+## 0.3.5 (unreleased)
+
+* Support pandas 3 and polars 2: remove the `pandas<3` and `polars<1.32` pins. The minimum versions are now
+  pandas 2.2.2 and polars 1.3
+* Fix the test suite and the backends for pandas 3, polars 2, dask 2026.x and Python 3.14, which also fixes
+  the dask known issues listed in 0.3.4
+* Security: the dask `StrSplitRule` and `StrSplitRejoinRule` called `eval()` on the cell values when
+  `ETLRULES_ENABLE_PYARROW_STRING` was set, so a crafted value in the input data could execute code.
+  The values are now only split/joined as strings
+* Remove the `ETLRULES_ENABLE_PYARROW_STRING` environment variable. Importing the dask backend no longer
+  changes dask's global `dataframe.convert-string` setting (it used to disable it unless the variable was set).
+  The dask backend now follows dask's own configuration: pyarrow backed strings by default, which can be
+  disabled with dask's config (e.g. `DASK_DATAFRAME__CONVERT_STRING=False`). Both modes are tested
+* Fix the dask backend with pyarrow backed strings: `list`/`csv` aggregations, and the row level fallback of
+  expressions (e.g. adding an int and a string column) with pandas 2.x
+* Fix `ReplaceRule` with `regex=True` in the pandas and dask backends, which only applied the first of the
+  values/new_values pairs
+* Fix `ReplaceRule` with `regex=True` in the polars backend, which only replaced the first match in each value
+* Fix `WriteCSVFileRule` in the polars backend writing zip archives for the gzip, bz2 and xz compressions:
+  the files are now written in the format matching their extension, readable by other tools and backends.
+  `ReadCSVFileRule` still reads the zip archives with a .gz/.bz2/.xz extension written by earlier versions
+* `run_plan` no longer parses the command line arguments (`sys.argv`), which made it exit when called from
+  a program. It takes a new optional `context` argument to override the plan's context values
+* Fix boolean plan context values given on the command line (e.g. `--my_flag false`)
+
 ## 0.3.4 (2026-11-26)
 
 * Fix packaging: the 0.3.3 wheel did not include the `etlrules.backends` subpackages, so no backend could be imported

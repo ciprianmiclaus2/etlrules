@@ -1,6 +1,7 @@
 import datetime
 
 import pytest
+import dask
 import dask.dataframe as dd
 import pandas as pd
 import polars as pl
@@ -95,12 +96,22 @@ class BackendFixture:
                 df = df.astype({k: TYPE_MAPPING["pd"].get(v, v) for k, v in astype.items()})
         elif self.impl_pckg == dd:
             df = pd.DataFrame(data, dtype=TYPE_MAPPING["pd"].get(dtype, dtype))
-            df = dd.from_pandas(df, npartitions=1)
             if astype is not None:
-                # Apply the types on the dask side: dask's tokenize ignores the dtype of pandas
+                astype = {k: TYPE_MAPPING["pd"].get(v, v) for k, v in astype.items()}
+                # Convert in pandas first: with dask's dataframe.convert-string enabled (the default),
+                # from_pandas converts all object columns (e.g. bools mixed with None) to strings.
+                df = df.astype(astype)
+            if any(isinstance(val, (list, tuple)) for col in df.columns for val in df[col] if df[col].dtype == object):
+                # dask's dataframe.convert-string (the default) would turn the lists into their string representation
+                with dask.config.set({"dataframe.convert-string": False}):
+                    df = dd.from_pandas(df, npartitions=1)
+            else:
+                df = dd.from_pandas(df, npartitions=1)
+            if astype is not None:
+                # Convert again on the dask side: dask's tokenize ignores the dtype of pandas
                 # masked arrays, so from_pandas of two frames with the same values but e.g. Int8 vs Int64
                 # would resolve to the same (cached) dask expression.
-                df = df.astype({k: TYPE_MAPPING["pd"].get(v, v) for k, v in astype.items()})
+                df = df.astype(astype)
         elif self.impl_pckg == pl:
             schema = None
             if dtype is not None:
