@@ -1,6 +1,6 @@
 # History
 
-## 0.3.4 (unreleased)
+## 0.3.4 (2026-11-26)
 
 * Fix packaging: the 0.3.3 wheel did not include the `etlrules.backends` subpackages, so no backend could be imported
   from a PyPI install
