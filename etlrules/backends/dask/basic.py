@@ -15,11 +15,11 @@ class DedupeRule(DedupeRuleBase):
     def do_dedupe(self, df):
         if self.keep == DedupeRule.KEEP_NONE:
             # dask's drop_duplicates doesn't support this
-            result = df.groupby(by=self.columns, group_keys=True).size().reset_index()
-            result = result[result[0] > 1]
-            result = df.merge(result, how="left", on=self.columns, suffixes=[None, "_y"], indicator=True)
-            result = result[result["_merge"] == "left_only"]
-            return result[df.columns]
+            count_col = "__etlrules_dedupe_count"
+            counts = df.groupby(by=self.columns, dropna=False).size().to_frame(count_col).reset_index()
+            result = df.merge(counts, how="left", on=self.columns)
+            result = result[result[count_col] == 1]
+            return result[list(df.columns)]
         return df.drop_duplicates(subset=self.columns, keep=self.keep, ignore_index=True)
 
 

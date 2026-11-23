@@ -5,10 +5,17 @@ except ImportError:
     HAS_SQL_ALCHEMY = False
 from typing import Mapping, Optional
 
+from pandas.errors import DatabaseError as PandasDatabaseError
+
 from etlrules.backends.common.substitution import subst_string
 from etlrules.backends.common.types import SUPPORTED_TYPES
 from etlrules.exceptions import SQLError, UnsupportedTypeError
 from etlrules.rule import BaseRule, UnaryOpBaseRule
+
+
+# Errors raised when running SQL statements which are translated into etlrules' SQLError.
+# pandas (also used by polars to write to databases) wraps sqlalchemy errors in its own DatabaseError.
+SQL_ERRORS = ((sa.exc.SQLAlchemyError, PandasDatabaseError) if HAS_SQL_ALCHEMY else (PandasDatabaseError, ))
 
 
 class SQLAlchemyEngines:
@@ -131,7 +138,7 @@ class ReadSQLQueryRule(BaseRule):
         with engine.connect() as connection:
             try:
                 result = self._do_apply(connection)
-            except sa.exc.SQLAlchemyError as exc:
+            except SQL_ERRORS as exc:
                 raise SQLError(str(exc))
         self._set_output_df(data, result)
 

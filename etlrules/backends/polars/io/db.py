@@ -3,6 +3,7 @@ import polars as pl
 from etlrules.backends.common.io.db import (
     ReadSQLQueryRule as ReadSQLQueryRuleBase,
     WriteSQLTableRule as WriteSQLTableRuleBase,
+    SQL_ERRORS,
 )
 from etlrules.backends.polars.types import MAP_TYPES
 from etlrules.exceptions import SQLError
@@ -25,12 +26,11 @@ class WriteSQLTableRule(WriteSQLTableRuleBase):
     def apply(self, data):
         super().apply(data)
         df = self._get_input_df(data)
-        import sqlalchemy as sa
         try:
             df.write_database(
                 self._get_sql_table(),
                 self._get_sql_engine(),
                 if_table_exists=self.if_exists
             )
-        except sa.exc.SQLAlchemyError as exc:
+        except SQL_ERRORS as exc:
             raise SQLError(str(exc))

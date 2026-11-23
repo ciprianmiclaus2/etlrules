@@ -27,12 +27,12 @@ from etlrules.backends.common.datetime import (
 
 ROUND_TRUNC_UNITS_MAPPED = {
     "day": "D",
-    "hour": "H",
-    "minute": "T",
-    "second": "S",
-    "millisecond": "L",
-    "microsecond": "U",
-    "nanosecond": "N",
+    "hour": "h",
+    "minute": "min",
+    "second": "s",
+    "millisecond": "ms",
+    "microsecond": "us",
+    "nanosecond": "ns",
 }
 
 
@@ -74,7 +74,7 @@ class DateTimeExtractComponentRule(DaskMixin, DateTimeExtractComponentRuleBase):
         "second": "second",
         "microsecond": "microsecond",
         "nanosecond": "nanosecond",
-        "weekday": "weekday",
+        "weekday": "day_of_week",
         "day_name": "day_name",
         "month_name": "month_name",
     }
@@ -117,7 +117,7 @@ DT_TIMEDELTA_UNITS = set(["days", "hours", "minutes", "seconds", "milliseconds",
 FOLL_MONDAY_ADJ_WEEKEND_OFFSETS = {0: np.nan, 1: np.nan, 2: np.nan, 3: np.nan, 4: np.nan, 5: 2, 6: 1}
 PREV_FRIDAY_ADJ_WEEKEND_OFFSETS = {0: np.nan, 1: np.nan, 2: np.nan, 3: np.nan, 4: np.nan, 5: -1, 6: -2}
 def dt_adjust_weekends(dt_col, offset, strict=True):
-    weekdays = dt_col.dt.weekday
+    weekdays = dt_col.dt.day_of_week
     if not is_scalar(offset):
         offset = offset.fillna(0)
         # -1 -> 0 | 0, 1 -> 3
@@ -135,7 +135,7 @@ def business_day_offset(dt_col, offset, strict=True):
     else:
         offset = offset or 0
     dt_col2 = dt_adjust_weekends(dt_col, offset, strict=strict)
-    col = dt_col2.dt.weekday.fillna(0)
+    col = dt_col2.dt.day_of_week.fillna(0)
     col2 =  col + offset
     col3 = (
         (col2 // 5) * 7 + (col2 % 5)
@@ -277,7 +277,7 @@ class DateTimeUTCNowRule(DateTimeUTCNowRuleBase):
         df = self._get_input_df(data)
         if self.strict and self.output_column in df.columns:
             raise ColumnAlreadyExistsError(f"{self.output_column} already exists in the input dataframe.")
-        df = df.assign(**{self.output_column: datetime.datetime.utcnow()})
+        df = df.assign(**{self.output_column: datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)})
         self._set_output_df(data, df)
 
 

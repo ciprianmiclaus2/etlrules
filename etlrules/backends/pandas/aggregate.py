@@ -1,4 +1,4 @@
-from pandas import isnull
+from pandas import Series, isnull
 
 from etlrules.backends.common.aggregate import AggregateRule as AggregateRuleBase
 from etlrules.backends.pandas.types import MAP_TYPES
@@ -21,6 +21,10 @@ class AggregateRule(AggregateRuleBase):
 
     def do_aggregate(self, df, aggs):
         result = df.groupby(by=self.group_by, as_index=False, dropna=False).agg(aggs)
+        for col, agg in aggs.items():
+            if agg is self.AGGREGATIONS["list"] and result[col].dtype != object:
+                # newer pandas infer an arrow list dtype for lists of strings; keep python lists consistently
+                result[col] = Series(result[col].tolist(), index=result.index, dtype=object)
         if self.aggregation_types:
             result = result.astype({col: MAP_TYPES[col_type] for col, col_type in self.aggregation_types.items()})
         return result

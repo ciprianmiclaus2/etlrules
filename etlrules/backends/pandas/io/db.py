@@ -3,6 +3,7 @@ import pandas as pd
 from etlrules.backends.common.io.db import (
     ReadSQLQueryRule as ReadSQLQueryRuleBase,
     WriteSQLTableRule as WriteSQLTableRuleBase,
+    SQL_ERRORS,
     SQLAlchemyEngines,
 )
 from etlrules.backends.pandas.types import MAP_TYPES
@@ -39,10 +40,9 @@ class WriteSQLTableRule(WriteSQLTableRuleBase):
         super().apply(data)
         df = self._get_input_df(data)
         engine = SQLAlchemyEngines.get_engine(self._get_sql_engine())
-        import sqlalchemy as sa
         with engine.connect() as connection:
             try:
                 self._do_apply(connection, df)
-            except sa.exc.SQLAlchemyError as exc:
+            except SQL_ERRORS as exc:
                 raise SQLError(str(exc))
             connection.commit()

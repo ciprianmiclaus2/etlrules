@@ -19,7 +19,7 @@ def test_utcnow_rule(backend):
         rule.apply(data)
         result = data.get_named_output("result")
         assert list(result.columns) == ["A", "TimeNow"]
-        assert all((x - datetime.datetime.utcnow()).total_seconds() < 5 for x in result["TimeNow"])
+        assert all((x - datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)).total_seconds() < 5 for x in result["TimeNow"])
 
 
 def test_utcnow_existing_column_strict(backend):

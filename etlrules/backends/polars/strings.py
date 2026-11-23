@@ -36,7 +36,7 @@ class StrSplitRule(StrSplitRuleBase, PolarsMixin):
         if self.limit is not None:
             # self.limit + 1 to mimic pandas
             struct_col = col.str.splitn(by=self.separator, n=self.limit + 1)
-            df = pl.DataFrame().with_columns(
+            df = pl.select(
                 pl.concat_list(struct_col.struct[i] for i in range(self.limit + 1)).list.drop_nulls().alias("fld_0")
             ).with_columns(
                 # replace empty lists with null
@@ -52,7 +52,7 @@ class StrSplitRejoinRule(StrSplitRejoinRuleBase, PolarsMixin):
         if self.limit is not None:
             # self.limit + 1 to mimic pandas
             struct_col = col.str.splitn(by=self.separator, n=self.limit + 1)
-            df = pl.DataFrame().with_columns(
+            df = pl.select(
                 pl.concat_list(
                     struct_col.struct[i] for i in range(self.limit + 1)
                 ).list.drop_nulls().alias("fld_0")

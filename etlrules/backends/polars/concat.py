@@ -33,12 +33,12 @@ class HConcatRule(HConcatRuleBase):
         if left_df_len != right_df_len:
             if left_df_len > right_df_len:
                 diff = left_df_len - right_df_len
-                right_df = pl.DataFrame().with_columns_seq(
-                    *[right_df[col].extend_constant(None, diff).alias(col) for col in right_df.columns]
+                right_df = pl.DataFrame(
+                    [right_df[col].extend_constant(None, diff).alias(col) for col in right_df.columns]
                 )
             else:
                 diff = right_df_len - left_df_len
-                left_df = pl.DataFrame().with_columns_seq(
-                    *[left_df[col].extend_constant(None, diff).alias(col) for col in left_df.columns]
+                left_df = pl.DataFrame(
+                    [left_df[col].extend_constant(None, diff).alias(col) for col in left_df.columns]
                 )
         return left_df.hstack(right_df, in_place=False)

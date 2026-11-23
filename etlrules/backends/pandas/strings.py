@@ -77,7 +77,7 @@ class StrExtractRule(StrExtractRuleBase, PandasMixin):
             new_col = df[col].str.extract(self._compiled_expr, expand=True)
             if self.keep_original_value:
                 # only the first new column keeps the value (in case of multiple groups)
-                new_col[0].fillna(value=df[col], inplace=True)
+                new_col[0] = new_col[0].fillna(value=df[col])
             for group in range(groups):
                 new_cols_dict[output_columns[idx * groups + group]] = new_col[group]
         df = df.assign(**new_cols_dict)

@@ -326,7 +326,7 @@ class DateTimeUTCNowRule(DateTimeUTCNowRuleBase):
         if self.strict and self.output_column in df.columns:
             raise ColumnAlreadyExistsError(f"{self.output_column} already exists in the input dataframe.")
         df = df.with_columns(
-            pl.lit(datetime.datetime.utcnow()).alias(self.output_column)
+            pl.lit(datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)).alias(self.output_column)
         )
         self._set_output_df(data, df)
 
