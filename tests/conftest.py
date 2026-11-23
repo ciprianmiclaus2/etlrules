@@ -1,3 +1,5 @@
+import datetime
+
 import pytest
 import dask.dataframe as dd
 import pandas as pd
@@ -7,6 +9,10 @@ from etlrules.backends import dask as dd_rules
 from etlrules.backends import pandas as pd_rules
 from etlrules.backends import polars as pl_rules
 
+
+# The datetime/timedelta resolution pandas infers from python objects ("ns" in pandas 2, "us" in pandas 3)
+PD_DATETIME_DTYPE = str(pd.Series([datetime.datetime(2000, 1, 1)]).dtype)
+PD_TIMEDELTA_DTYPE = str(pd.Series([datetime.timedelta(days=1)]).dtype)
 
 TYPE_MAPPING = {
     "pl": {
@@ -38,17 +44,17 @@ TYPE_MAPPING = {
     },
     "pd": {
         "boolean": "boolean",
-        "datetime": "datetime64[ns]",
+        "datetime": PD_DATETIME_DTYPE,
         "list_strings": "object",
         "list_int64s": "object",
-        "timedelta": "timedelta64[ns]",
+        "timedelta": PD_TIMEDELTA_DTYPE,
     },
     "dd": {
         "boolean": "boolean",
-        "datetime": "datetime64[ns]",
+        "datetime": PD_DATETIME_DTYPE,
         "list_strings": "object",
         "list_int64s": "object",
-        "timedelta": "timedelta64[ns]",
+        "timedelta": PD_TIMEDELTA_DTYPE,
     }
 }
 
@@ -89,9 +95,12 @@ class BackendFixture:
                 df = df.astype({k: TYPE_MAPPING["pd"].get(v, v) for k, v in astype.items()})
         elif self.impl_pckg == dd:
             df = pd.DataFrame(data, dtype=TYPE_MAPPING["pd"].get(dtype, dtype))
-            if astype is not None:
-                df = df.astype({k: TYPE_MAPPING["pd"].get(v, v) for k, v in astype.items()})
             df = dd.from_pandas(df, npartitions=1)
+            if astype is not None:
+                # Apply the types on the dask side: dask's tokenize ignores the dtype of pandas
+                # masked arrays, so from_pandas of two frames with the same values but e.g. Int8 vs Int64
+                # would resolve to the same (cached) dask expression.
+                df = df.astype({k: TYPE_MAPPING["pd"].get(v, v) for k, v in astype.items()})
         elif self.impl_pckg == pl:
             schema = None
             if dtype is not None:
@@ -121,8 +130,14 @@ class BackendFixture:
             }
             return df.astype(astype)
         elif self.impl_pckg == pl:
+            def cast(col, dtype):
+                pl_type = TYPE_MAPPING["pl"][dtype]
+                if df.schema[col] == pl.Utf8 and pl_type == pl.Datetime:
+                    # polars doesn't support casting strings to datetime
+                    return pl.col(col).str.to_datetime(time_unit="us")
+                return pl.col(col).cast(pl_type)
             return df.with_columns(
-                *[pl.col(col).cast(TYPE_MAPPING["pl"][dtype]) for col, dtype in astype.items()]
+                *[cast(col, dtype) for col, dtype in astype.items()]
             )
         assert False, f"unknown impl_pckg: {self.impl_pckg}"
 

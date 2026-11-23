@@ -17,7 +17,7 @@ from tests.utils.data import assert_frame_equal, get_test_data
 @pytest.fixture
 def sqlite3_db():
     import sqlite3
-    file_name = f"test_etlrules_{datetime.datetime.utcnow():%Y_%m_%d_%H_%M_%s_%f}.db"
+    file_name = f"test_etlrules_{datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None):%Y_%m_%d_%H_%M_%s_%f}.db"
     con = sqlite3.connect(file_name)
     cur = con.cursor()
     cur.execute("CREATE TABLE Author (Id INTEGER, FirstName TEXT, LastName TEXT, PRIMARY KEY(Id))")

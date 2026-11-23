@@ -41,6 +41,11 @@ class ReadParquetFileRule(ReadParquetFileRuleBase):
             if "The following columns were not found in the dataset" in str(exc):
                 raise MissingColumnError(str(exc))
             raise
+        except KeyError as exc:
+            # newer dask versions: KeyError("... ['M'] not in index")
+            if "not in index" in str(exc):
+                raise MissingColumnError(str(exc))
+            raise
 
 
 class WriteCSVFileRule(WriteCSVFileRuleBase):

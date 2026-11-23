@@ -6,6 +6,7 @@ import tempfile
 from etlrules.backends.common.io.db import (
     ReadSQLQueryRule as ReadSQLQueryRuleBase,
     WriteSQLTableRule as WriteSQLTableRuleBase,
+    SQL_ERRORS,
 )
 from etlrules.backends.dask.types import MAP_TYPES
 from etlrules.data import context
@@ -50,7 +51,6 @@ class WriteSQLTableRule(WriteSQLTableRuleBase):
     def apply(self, data):
         super().apply(data)
         df = self._get_input_df(data)
-        import sqlalchemy as sa
         try:
             df.to_sql(
                 self._get_sql_table(),
@@ -59,5 +59,5 @@ class WriteSQLTableRule(WriteSQLTableRuleBase):
                 index=False,
                 method=self.METHOD
             )
-        except sa.exc.SQLAlchemyError as exc:
+        except SQL_ERRORS as exc:
             raise SQLError(str(exc))

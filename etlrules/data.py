@@ -70,6 +70,10 @@ class Context:
 
 
     def __getattr__(self, attr_name: str) -> Union[str, int, float, bool]:
+        if attr_name.startswith("__") and attr_name.endswith("__"):
+            # special/protocol lookups (e.g. hasattr(obj, "__dask_tokenize__"), copy, pickle)
+            # must fail with AttributeError rather than be looked up in the context
+            raise AttributeError(attr_name)
         return self._do_get_attr(attr_name)
 
     def __getitem__(self, attr_name: str) -> Union[str, int, float, bool]:

@@ -12,7 +12,7 @@ class Expression(ExpressionBase):
     def eval(self, df):
         try:
             expr_series = eval(self._compiled_expr, {}, {'df': df, 'context': context})
-        except (TypeError, pl.exceptions.SchemaError):
+        except (TypeError, pl.exceptions.SchemaError, pl.exceptions.InvalidOperationError):
             # attempt to run a slower apply
             expr = self._compiled_expr
             if df.is_empty():
