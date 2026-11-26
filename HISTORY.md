@@ -1,11 +1,12 @@
 # History
 
-## 0.4.0 (unreleased)
+## 0.4.0 (2026-11-26)
 
 * Add the pyarrow backend (`etlrules.backends.pyarrow`), where the rules operate on `pyarrow.Table`s. All the rules
   are supported, with the same behaviour as the other backends. It can also be used from the command line runner
   with `-b pyarrow`. See the "Backend differences" section of the API reference for the differences
   (expressions, regular expressions and SQL)
+* The pyarrow backend doesn't need any extra dependencies: pyarrow (>= 14.0.1) is already a dependency of etlrules
 * Update the README with the list of supported backends
 
 ## 0.3.6 (2026-11-26)
