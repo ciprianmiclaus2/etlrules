@@ -1,6 +1,22 @@
 # History
 
-## 0.3.5 (unreleased)
+## 0.3.6 (2026-11-26)
+
+* Fix `AddNewColumnRule` with a `column_type` in the polars backend: with polars 2, a failed conversion raised
+  polars' `InvalidOperationError` instead of the documented `TypeError`
+* Fix `AddNewColumnRule` with a `column_type` in the dask backend: a failed conversion now raises `TypeError`
+  as documented (dask evaluates lazily, so it is raised when the result is computed)
+* Fix `ReadSQLQueryRule` in the dask backend returning different types than the pandas backend, e.g. integer
+  columns with nulls were read as floats. The result now has the same nullable types (`Int64`, `string`,
+  `Float64`, ...), including when a column only has nulls in some of the batches read
+* Raise the minimum versions to the oldest versions tested: `pyarrow>=14.0.1` and `dask>=2025.5` for the
+  dask backend. The minimum versions of all the dependencies are now tested in CI on Python 3.11
+* Documentation: upgrade the docs to mkdocs 1.6, Material for MkDocs 9 and mkdocstrings 1, add an API reference
+  page for each group of rules and publish the docs to https://ciprianmiclaus2.github.io/etlrules/ on each release
+* Fix docstrings which didn't render correctly in the API reference
+* Fix the tox environments (the test environments didn't install the polars and dask backends)
+
+## 0.3.5 (2026-11-23)
 
 * Support pandas 3 and polars 2: remove the `pandas<3` and `polars<1.32` pins. The minimum versions are now
   pandas 2.2.2 and polars 1.3
