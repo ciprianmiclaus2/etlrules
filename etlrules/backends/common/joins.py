@@ -2,6 +2,7 @@ from typing import Iterable, Optional
 
 from etlrules.exceptions import MissingColumnError
 from etlrules.rule import BinaryOpBaseRule
+from etlrules.backends.common.dataframe import get_column_names
 
 
 class BaseJoinRule(BinaryOpBaseRule):
@@ -28,10 +29,10 @@ class BaseJoinRule(BinaryOpBaseRule):
         left_df = self._get_input_df_left(data)
         right_df = self._get_input_df_right(data)
         left_on, right_on = self._get_key_columns()
-        if not set(left_on) <= set(left_df.columns):
-            raise MissingColumnError(f"Missing columns in join in the left dataframe: {set(left_on) - set(left_df.columns)}")
-        if not set(right_on) <= set(right_df.columns):
-            raise MissingColumnError(f"Missing columns in join in the right dataframe: {set(right_on) - set(right_df.columns)}")
+        if not set(left_on) <= set(get_column_names(left_df)):
+            raise MissingColumnError(f"Missing columns in join in the left dataframe: {set(left_on) - set(get_column_names(left_df))}")
+        if not set(right_on) <= set(get_column_names(right_df)):
+            raise MissingColumnError(f"Missing columns in join in the right dataframe: {set(right_on) - set(get_column_names(right_df))}")
         df = self.do_apply(left_df, right_df)
         self._set_output_df(data, df)
 

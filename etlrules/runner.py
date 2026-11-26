@@ -44,7 +44,7 @@ def get_args_parser(plan: Optional[Plan]=None, args: Optional[Sequence[str]]=Non
         "-b",
         "--backend",
         help="The backend to use for running the plan.",
-        choices=["pandas", "polars", "dask"],
+        choices=["pandas", "polars", "dask", "pyarrow"],
         required=False,
         default="pandas"
     )
@@ -82,7 +82,7 @@ def load_plan(plan_file: str, backend: str) -> Plan:
 
     Args:
         plan_file: A path to a yaml file with the plan definition
-        backend: One of the supported backends (e.g. pandas, polars, etc.)
+        backend: One of the supported backends: pandas, polars, dask or pyarrow
 
     Returns:
         A Plan instance deserialized from the yaml file.
@@ -148,7 +148,7 @@ def run_plan(
 
     Note:
         The supported backends:
-            pandas, polars, dask
+            pandas, polars, dask, pyarrow
 
     Note:
         Unlike the command line runner, run_plan doesn't read the command line arguments (sys.argv).

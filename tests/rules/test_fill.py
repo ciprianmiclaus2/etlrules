@@ -1,6 +1,7 @@
 import pytest
 
 from etlrules.exceptions import MissingColumnError
+from etlrules.backends.common.dataframe import get_column_names, select_columns
 from tests.utils.data import assert_frame_equal, get_test_data
 
 
@@ -129,14 +130,14 @@ SAMPLE_GROUPING_DF = [
 def test_forward_fill_rule_simple(rule_cls_str, input_sample, columns, sort_by, sort_ascending, group_by, expected, backend):
     sample_df = backend.DataFrame(input_sample)
     expected = backend.DataFrame(expected) if isinstance(expected, (list, dict)) else expected
-    before_column_order = [col for col in sample_df.columns]
+    before_column_order = get_column_names(sample_df)
     with get_test_data(sample_df, named_inputs={"payload": sample_df}, named_output="result") as data:
         rule_cls = getattr(backend.rules, rule_cls_str)
         rule = rule_cls(columns, sort_by, sort_ascending, group_by, named_input="payload", named_output="result")
         rule.apply(data)
-        expected = expected[before_column_order]
+        expected = select_columns(expected, before_column_order)
         result = data.get_named_output("result")
-        after_column_order = [col for col in result.columns]
+        after_column_order = get_column_names(result)
         assert before_column_order == after_column_order
         assert_frame_equal(result, expected, ignore_row_ordering=True)
 

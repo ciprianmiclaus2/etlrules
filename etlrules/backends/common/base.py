@@ -2,6 +2,7 @@ from typing import Optional
 
 from etlrules.data import RuleData
 from etlrules.rule import ColumnsInOutMixin, UnaryOpBaseRule
+from etlrules.backends.common.dataframe import get_column_names
 
 
 class BaseAssignColumnRule(UnaryOpBaseRule, ColumnsInOutMixin):
@@ -18,6 +19,6 @@ class BaseAssignColumnRule(UnaryOpBaseRule, ColumnsInOutMixin):
 
     def apply(self, data: RuleData):
         df = self._get_input_df(data)
-        input_column, output_column = self.validate_in_out_columns(df.columns, self.input_column, self.output_column, self.strict)
+        input_column, output_column = self.validate_in_out_columns(get_column_names(df), self.input_column, self.output_column, self.strict)
         df = self.assign_do_apply(df, input_column, output_column)
         self._set_output_df(data, df)

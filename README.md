@@ -80,8 +80,14 @@ The rule data can have some input dataframes or they can start as empty canvases
 
 ### Backend
 
-The underlying dataframe library to use for executing the plan. For example: pandas, vaex, polars, etc.
-At the moment, only pandas is supported.
+The underlying dataframe library to use for executing the plan. The supported backends are:
+
+* pandas: `etlrules.backends.pandas`
+* polars: `etlrules.backends.polars`
+* dask: `etlrules.backends.dask`
+* pyarrow: `etlrules.backends.pyarrow`
+
+The rules are the same in all the backends: import them from the package of the backend you want to use.
 
 ### Runner
 

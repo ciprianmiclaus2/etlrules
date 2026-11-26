@@ -1,4 +1,5 @@
 import bz2
+import csv
 import datetime
 import gzip
 import lzma
@@ -64,7 +65,8 @@ def test_write_csv_file_compression_format(compression, backend, tmp_path):
     else:
         with STDLIB_OPENERS[compression](file_path) as f:
             contents = f.read()
-    assert contents.splitlines()[0] == "A,B,C,D"
+    # parse the header as csv: some backends quote the column names
+    assert next(csv.reader(contents.splitlines())) == ["A", "B", "C", "D"]
     assert len(contents.splitlines()) == len(TEST_DF) + 1
 
 

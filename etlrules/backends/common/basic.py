@@ -5,6 +5,7 @@ from etlrules.rule import BaseRule, UnaryOpBaseRule, ColumnsInOutMixin
 from etlrules.exceptions import MissingColumnError, UnsupportedTypeError
 from etlrules.backends.common.base import BaseAssignColumnRule
 from etlrules.backends.common.types import SUPPORTED_TYPES
+from etlrules.backends.common.dataframe import get_column_names, select_columns
 
 
 class DedupeRule(UnaryOpBaseRule):
@@ -60,8 +61,8 @@ class DedupeRule(UnaryOpBaseRule):
     def apply(self, data):
         super().apply(data)
         df = self._get_input_df(data)
-        if not set(self.columns) <= set(df.columns):
-            raise MissingColumnError(f"Missing column(s) to dedupe on: {set(self.columns) - set(df.columns)}")
+        if not set(self.columns) <= set(get_column_names(df)):
+            raise MissingColumnError(f"Missing column(s) to dedupe on: {set(self.columns) - set(get_column_names(df))}")
         df = self.do_dedupe(df)
         self._set_output_df(data, df)
 
@@ -119,8 +120,8 @@ class ProjectRule(UnaryOpBaseRule):
     def apply(self, data):
         super().apply(data)
         df = self._get_input_df(data)
-        remaining_columns = self._get_remaining_columns(df.columns)
-        df = df[remaining_columns]
+        remaining_columns = self._get_remaining_columns(get_column_names(df))
+        df = select_columns(df, remaining_columns)
         self._set_output_df(data, df)
 
 
@@ -160,7 +161,7 @@ class RenameRule(UnaryOpBaseRule):
         super().apply(data)
         df = self._get_input_df(data)
         mapper = self.mapper
-        df_columns = set(df.columns)
+        df_columns = set(get_column_names(df))
         if not set(self.mapper.keys()) <= df_columns:
             if self.strict:
                 raise MissingColumnError(f"Missing columns to rename: {set(self.mapper.keys()) - df_columns}")
@@ -276,8 +277,8 @@ class SortRule(UnaryOpBaseRule):
     def apply(self, data):
         super().apply(data)
         df = self._get_input_df(data)
-        if not set(self.sort_by) <= set(df.columns):
-            raise MissingColumnError(f"Column(s) {set(self.sort_by) - set(df.columns)} are missing from the input dataframe.")
+        if not set(self.sort_by) <= set(get_column_names(df)):
+            raise MissingColumnError(f"Column(s) {set(self.sort_by) - set(get_column_names(df))} are missing from the input dataframe.")
         df = self.do_sort(df)
         self._set_output_df(data, df)
 
@@ -391,5 +392,5 @@ class ExplodeValuesRule(UnaryOpBaseRule, ColumnsInOutMixin):
             raise UnsupportedTypeError(f"Type '{self.column_type}' is not supported.")
 
     def _validate_input_column(self, df):
-        if self.input_column not in df.columns:
+        if self.input_column not in get_column_names(df):
             raise MissingColumnError(f"Column '{self.input_column}' is not present in the input dataframe.")

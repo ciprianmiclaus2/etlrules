@@ -2,6 +2,7 @@ from typing import Iterable, Optional
 
 from etlrules.exceptions import ColumnAlreadyExistsError, MissingColumnError, SchemaError
 from etlrules.rule import BinaryOpBaseRule
+from etlrules.backends.common.dataframe import get_column_names, select_columns
 
 
 class VConcatRule(BinaryOpBaseRule):
@@ -74,15 +75,15 @@ class VConcatRule(BinaryOpBaseRule):
         left_df = self._get_input_df_left(data)
         right_df = self._get_input_df_right(data)
         if self.subset_columns:
-            if not set(self.subset_columns) <= set(left_df.columns):
-                raise MissingColumnError(f"Missing columns in the left dataframe of the concat operation: {set(self.subset_columns) - set(left_df.columns)}")
-            if not set(self.subset_columns) <= set(right_df.columns):
-                raise MissingColumnError(f"Missing columns in the right dataframe of the concat operation: {set(self.subset_columns) - set(right_df.columns)}")
-            left_df = left_df[self.subset_columns]
-            right_df = right_df[self.subset_columns]
+            if not set(self.subset_columns) <= set(get_column_names(left_df)):
+                raise MissingColumnError(f"Missing columns in the left dataframe of the concat operation: {set(self.subset_columns) - set(get_column_names(left_df))}")
+            if not set(self.subset_columns) <= set(get_column_names(right_df)):
+                raise MissingColumnError(f"Missing columns in the right dataframe of the concat operation: {set(self.subset_columns) - set(get_column_names(right_df))}")
+            left_df = select_columns(left_df, self.subset_columns)
+            right_df = select_columns(right_df, self.subset_columns)
         if self.strict:
-            if set(left_df.columns) != set(right_df.columns):
-                raise SchemaError(f"VConcat needs both dataframe have the same schema. Missing columns in the right df: {set(right_df.columns) - set(left_df.columns)}. Missing columns in the left df: {set(left_df.columns) - set(right_df.columns)}")
+            if set(get_column_names(left_df)) != set(get_column_names(right_df)):
+                raise SchemaError(f"VConcat needs both dataframe have the same schema. Missing columns in the right df: {set(get_column_names(right_df)) - set(get_column_names(left_df))}. Missing columns in the left df: {set(get_column_names(left_df)) - set(get_column_names(right_df))}")
         df = self.do_concat(left_df, right_df)
         self._set_output_df(data, df)
 
@@ -147,7 +148,7 @@ class HConcatRule(BinaryOpBaseRule):
         super().apply(data)
         left_df = self._get_input_df_left(data)
         right_df = self._get_input_df_right(data)
-        overlapping_names = set(left_df.columns) & set(right_df.columns)
+        overlapping_names = set(get_column_names(left_df)) & set(get_column_names(right_df))
         if overlapping_names:
             raise ColumnAlreadyExistsError(f"Column(s) {overlapping_names} exist in both dataframes.")
         if self.strict:

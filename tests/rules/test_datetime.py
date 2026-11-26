@@ -5,7 +5,8 @@ import pytest
 import sys
 
 from etlrules.exceptions import ColumnAlreadyExistsError, MissingColumnError
-from tests.utils.data import assert_frame_equal, get_test_data
+from etlrules.backends.common.dataframe import get_column_names, select_columns
+from tests.utils.data import assert_frame_equal, column_values, get_test_data
 
 
 def test_utcnow_rule(backend):
@@ -18,8 +19,8 @@ def test_utcnow_rule(backend):
         rule = backend.rules.DateTimeUTCNowRule(output_column='TimeNow', named_input="input", named_output="result")
         rule.apply(data)
         result = data.get_named_output("result")
-        assert list(result.columns) == ["A", "TimeNow"]
-        assert all((x - datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)).total_seconds() < 5 for x in result["TimeNow"])
+        assert get_column_names(result) == ["A", "TimeNow"]
+        assert all((x - datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)).total_seconds() < 5 for x in column_values(result, "TimeNow"))
 
 
 def test_utcnow_existing_column_strict(backend):
@@ -44,8 +45,8 @@ def test_utcnow_existing_column_non_strict(backend):
         rule = backend.rules.DateTimeUTCNowRule(output_column='A', named_input="input", named_output="result", strict=False)
         rule.apply(data)
         result = data.get_named_output("result")
-        assert list(result.columns) == ["A"]
-        assert all((x - datetime.datetime.now()).total_seconds() < 5 for x in result["A"])
+        assert get_column_names(result) == ["A"]
+        assert all((x - datetime.datetime.now()).total_seconds() < 5 for x in column_values(result, "A"))
 
 
 def test_localnow_rule(backend):
@@ -58,8 +59,8 @@ def test_localnow_rule(backend):
         rule = backend.rules.DateTimeLocalNowRule(output_column='TimeNow', named_input="input", named_output="result")
         rule.apply(data)
         result = data.get_named_output("result")
-        assert list(result.columns) == ["A", "TimeNow"]
-        assert all((x - datetime.datetime.now()).total_seconds() < 5 for x in result["TimeNow"])
+        assert get_column_names(result) == ["A", "TimeNow"]
+        assert all((x - datetime.datetime.now()).total_seconds() < 5 for x in column_values(result, "TimeNow"))
 
 
 def test_localnow_existing_column_strict(backend):
@@ -84,8 +85,8 @@ def test_localnow_existing_column_non_strict(backend):
         rule = backend.rules.DateTimeLocalNowRule(output_column='A', named_input="input", named_output="result", strict=False)
         rule.apply(data)
         result = data.get_named_output("result")
-        assert list(result.columns) == ["A"]
-        assert all((x - datetime.datetime.now()).total_seconds() < 5 for x in result["A"])
+        assert get_column_names(result) == ["A"]
+        assert all((x - datetime.datetime.now()).total_seconds() < 5 for x in column_values(result, "A"))
 
 
 @pytest.mark.parametrize("input_column,format,output_column,input_df,input_astype,expected,expected_astype", [
@@ -841,7 +842,7 @@ def test_business_day_offset_col(strict, backend):
     assert_frame_equal(df_p[["E"]], expected_df)
 
     expected_df = backend.DataFrame(data=expected)
-    actual = df[["E"]]
+    actual = select_columns(df, ["E"])
     assert_frame_equal(actual, expected_df)
 
 
@@ -903,7 +904,7 @@ def test_business_day_offset_scalar(input_df, scalar_offset, expected, backend):
     assert_frame_equal(df_p[["E"]], expected_df)
 
     expected_df = backend.DataFrame(data=expected)
-    actual = df[["E"]]
+    actual = select_columns(df, ["E"])
     assert_frame_equal(actual, expected_df)
 
 
@@ -959,5 +960,5 @@ def test_months_offset(input_df, expected, backend):
     df = backend.assign(df, "E", backend.months_offset(df["A"], df["C"]))
     
     expected_df = backend.DataFrame(data=expected)
-    actual = df[["E"]]
+    actual = select_columns(df, ["E"])
     assert_frame_equal(actual, expected_df)

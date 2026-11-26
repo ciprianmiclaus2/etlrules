@@ -1,5 +1,13 @@
 # History
 
+## 0.4.0 (unreleased)
+
+* Add the pyarrow backend (`etlrules.backends.pyarrow`), where the rules operate on `pyarrow.Table`s. All the rules
+  are supported, with the same behaviour as the other backends. It can also be used from the command line runner
+  with `-b pyarrow`. See the "Backend differences" section of the API reference for the differences
+  (expressions, regular expressions and SQL)
+* Update the README with the list of supported backends
+
 ## 0.3.6 (2026-11-26)
 
 * Fix `AddNewColumnRule` with a `column_type` in the polars backend: with polars 2, a failed conversion raised

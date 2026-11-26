@@ -1,14 +1,23 @@
 import datetime
+import types
 
 import pytest
 import dask
 import dask.dataframe as dd
 import pandas as pd
 import polars as pl
+import pyarrow as pa
+import pyarrow.compute as pc
 
 from etlrules.backends import dask as dd_rules
 from etlrules.backends import pandas as pd_rules
 from etlrules.backends import polars as pl_rules
+from etlrules.backends import pyarrow as pa_rules
+
+
+# pyarrow has no DataFrame class (it's a Table) and no Int64 type object: the tests use backend.impl.DataFrame
+# and backend.impl.Int64, so the pyarrow backend fixture exposes them via this namespace
+pa_impl = types.SimpleNamespace(DataFrame=pa.Table, Int64=pa.int64())
 
 
 # The datetime/timedelta resolution pandas infers from python objects ("ns" in pandas 2, "us" in pandas 3)
@@ -49,6 +58,34 @@ TYPE_MAPPING = {
         "list_strings": "object",
         "list_int64s": "object",
         "timedelta": PD_TIMEDELTA_DTYPE,
+    },
+    "pa": {
+        "string": pa.string(),
+        "int8": pa.int8(),
+        "Int8": pa.int8(),
+        "int16": pa.int16(),
+        "Int16": pa.int16(),
+        "int32": pa.int32(),
+        "Int32": pa.int32(),
+        "int64": pa.int64(),
+        "Int64": pa.int64(),
+        "uint8": pa.uint8(),
+        "UInt8": pa.uint8(),
+        "uint16": pa.uint16(),
+        "UInt16": pa.uint16(),
+        "uint32": pa.uint32(),
+        "UInt32": pa.uint32(),
+        "uint64": pa.uint64(),
+        "UInt64": pa.uint64(),
+        "boolean": pa.bool_(),
+        "float32": pa.float32(),
+        "Float32": pa.float32(),
+        "float64": pa.float64(),
+        "Float64": pa.float64(),
+        "list_strings": pa.list_(pa.string()),
+        "list_int64s": pa.list_(pa.int64()),
+        "datetime": pa.timestamp("us"),
+        "timedelta": pa.duration("us"),
     },
     "dd": {
         "boolean": "boolean",
@@ -112,6 +149,26 @@ class BackendFixture:
                 # masked arrays, so from_pandas of two frames with the same values but e.g. Int8 vs Int64
                 # would resolve to the same (cached) dask expression.
                 df = df.astype(astype)
+        elif self.impl_pckg == pa_impl:
+            keys = get_data_keys(data)
+            types_ = {}
+            if dtype is not None:
+                types_ = {k: TYPE_MAPPING["pa"][dtype] for k in keys}
+            elif astype is not None:
+                types_ = {k: TYPE_MAPPING["pa"][v] for k, v in astype.items() if k in keys}
+            if isinstance(data, dict):
+                columns = {k: data[k] for k in keys}
+            else:
+                columns = {k: [row.get(k) for row in data] for k in keys}
+            def to_array(values, type_):
+                try:
+                    return pa.array(values, type=type_)
+                except (pa.ArrowInvalid, pa.ArrowTypeError):
+                    if type_ is not None:
+                        raise
+                    # mixed types (e.g. strings and floats): convert to strings like polars does
+                    return pa.array([None if v is None else str(v) for v in values], type=pa.string())
+            df = pa.table({k: to_array(values, types_.get(k)) for k, values in columns.items()})
         elif self.impl_pckg == pl:
             schema = None
             if dtype is not None:
@@ -140,6 +197,11 @@ class BackendFixture:
                 col: TYPE_MAPPING["pd"][dtype] for col, dtype in astype.items()
             }
             return df.astype(astype)
+        elif self.impl_pckg == pa_impl:
+            for col, dtype in astype.items():
+                column = pc.cast(df[col], TYPE_MAPPING["pa"][dtype])
+                df = df.set_column(df.column_names.index(col), col, column)
+            return df
         elif self.impl_pckg == pl:
             def cast(col, dtype):
                 pl_type = TYPE_MAPPING["pl"][dtype]
@@ -153,6 +215,8 @@ class BackendFixture:
         assert False, f"unknown impl_pckg: {self.impl_pckg}"
 
     def assign(self, df, column_name, column):
+        if self.impl_pckg == pa_impl:
+            return df.append_column(column_name, column if isinstance(column, (pa.Array, pa.ChunkedArray)) else pa.array(column))
         if self.impl_pckg == pl:
             return df.with_columns(**{column_name: column})
         return df.assign(**{column_name: column})
@@ -162,6 +226,11 @@ class BackendFixture:
             return df.rename(columns=rename_dict)
         elif self.impl_pckg == dd:
             return df.rename(columns=rename_dict)
+        elif self.impl_pckg == pa_impl:
+            columns = list(df.column_names)
+            return df.rename_columns([
+                rename_dict.get(idx, rename_dict.get(col, col)) for idx, col in enumerate(columns)
+            ])
         elif self.impl_pckg == pl:
             columns = list(df.columns)
             if all(isinstance(key, int) and 0 <= key < len(columns) for key in rename_dict.keys()):
@@ -178,11 +247,17 @@ class BackendFixture:
             return dd.concat([df1, df2], axis=1)
         elif self.impl_pckg == pl:
             return df1.hstack(df2, in_place=False)
+        elif self.impl_pckg == pa_impl:
+            for name in df2.column_names:
+                df1 = df1.append_column(name, df2[name])
+            return df1
         assert False, f"unknown impl_pckg: {self.impl_pckg}"
 
     def empty_df(self, df):
         if self.impl_pckg in (pd, pl):
             return df[:0]
+        elif self.impl_pckg == pa_impl:
+            return df.slice(0, 0)
         elif self.impl_pckg == dd:
             return dd.from_pandas(df.head(0), npartitions=1)
         assert False, f"unknown impl_pckg: {self.impl_pckg}"
@@ -197,6 +272,9 @@ class BackendFixture:
         elif self.impl_pckg == pl:
             from etlrules.backends.polars.datetime import business_day_offset
             return business_day_offset(dt_col, offset, strict=strict)
+        elif self.impl_pckg == pa_impl:
+            from etlrules.backends.pyarrow.datetime import business_day_offset
+            return business_day_offset(dt_col, offset, strict=strict)
         assert False, "Not implemented for backend."
 
     def months_offset(self, dt_col, offset, strict=True):
@@ -209,12 +287,16 @@ class BackendFixture:
         elif self.impl_pckg == pl:
             from etlrules.backends.polars.datetime import months_offset
             return months_offset(dt_col, offset, strict=strict)
+        elif self.impl_pckg == pa_impl:
+            from etlrules.backends.pyarrow.datetime import months_offset
+            return months_offset(dt_col, offset, strict=strict)
         assert False, "Not implemented for backend."
 
 @pytest.fixture(params=[
     ('pandas', pd, pd_rules),
     ('polars', pl, pl_rules),
     ('dask', dd, dd_rules),
+    ('pyarrow', pa_impl, pa_rules),
 ])
 def backend(request):
     return BackendFixture(*request.param)

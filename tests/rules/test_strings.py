@@ -6,7 +6,7 @@ from etlrules.backends.pandas import (
     StrLowerRule, StrUpperRule, StrCapitalizeRule, StrStripRule, StrPadRule,
     StrSplitRule, StrSplitRejoinRule, StrExtractRule
 )
-from tests.utils.data import assert_frame_equal, get_test_data
+from tests.utils.data import assert_frame_equal, column_values, get_test_data
 
 
 INPUT_DF = [
@@ -402,7 +402,7 @@ def test_split_values_are_not_evaluated(rule_name, pyarrow_strings, backend):
             rule = getattr(backend.rules, rule_name)("A", separator=",", named_input="input", named_output="result")
             rule.apply(data)
             result = data.get_named_output("result")
-            values = result["A"].compute().tolist() if backend.name == "dask" else list(result["A"])
+            values = column_values(result, "A")
     assert "etlrules_pwned" not in sys.modules
     if rule_name == "StrSplitRule":
         assert [list(v) for v in values] == [["[1", " 2]"], ["__import__('sys').modules.__setitem__('etlrules_pwned'", " 1) or 'x'"]]

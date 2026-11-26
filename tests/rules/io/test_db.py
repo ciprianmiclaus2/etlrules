@@ -11,7 +11,7 @@ from etlrules.data import context
 from etlrules.exceptions import SQLError, UnsupportedTypeError
 from etlrules.backends.common.io.db import SQLAlchemyEngines
 
-from tests.utils.data import assert_frame_equal, get_test_data
+from tests.utils.data import assert_frame_equal, column_values, get_test_data
 
 
 @pytest.fixture
@@ -209,10 +209,13 @@ def test_read_sql_query_nullable_ints_in_batches(backend, tmp_path):
         result = data.get_named_output("result")
         if backend.name == "dask":
             result = result.compute()
-        if backend.name == "polars":
+        if backend.name == "pyarrow":
+            assert result["Value"].type == backend.impl.Int64
+            assert result["Value"].to_pylist() == values
+        elif backend.name == "polars":
             assert result["Value"].dtype == backend.impl.Int64
             assert result["Value"].to_list() == values
         else:
             assert str(result["Value"].dtype) == "Int64"
             assert [None if v is pd.NA else v for v in result["Value"].tolist()] == values
-        assert list(result["Id"]) == list(range(len(values)))
+        assert column_values(result, "Id") == list(range(len(values)))

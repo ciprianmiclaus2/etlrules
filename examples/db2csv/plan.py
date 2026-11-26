@@ -7,7 +7,7 @@ from etlrules.plan import Plan
 
 
 def get_backend(backend: str) -> ModuleType:
-    assert backend in ("pandas", "polars")
+    assert backend in ("pandas", "polars", "pyarrow")
     return importlib.import_module("etlrules.backends." + backend)
 
 

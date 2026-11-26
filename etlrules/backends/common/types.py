@@ -2,6 +2,7 @@ from typing import Mapping, Optional
 
 from etlrules.exceptions import MissingColumnError, UnsupportedTypeError
 from etlrules.rule import UnaryOpBaseRule
+from etlrules.backends.common.dataframe import get_column_names
 
 
 SUPPORTED_TYPES = {
@@ -62,7 +63,7 @@ class TypeConversionRule(UnaryOpBaseRule):
     def apply(self, data):
         super().apply(data)
         df = self._get_input_df(data)
-        columns_set = set(df.columns)
+        columns_set = set(get_column_names(df))
         for column_name in self.mapper:
             if column_name not in columns_set:
                 raise MissingColumnError(f"Column '{column_name}' is missing in the data frame. Available columns: {sorted(columns_set)}")

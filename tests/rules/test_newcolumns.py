@@ -134,6 +134,10 @@ def test_add_new_column(column_name, expression, expression_type, input_df_in, e
     input_df = backend.DataFrame(INPUT_DF, astype=INPUT_DF_TYPES)
     if input_df_in is None:
         input_df = backend.empty_df(input_df)
+    if backend.name == "pyarrow" and column_name in ("BitwiseShiftRightEmpty", "BitwiseShiftLeftEmpty"):
+        # pandas/polars evaluate shifts row by row, so an empty result has no type information (string);
+        # pyarrow evaluates them on the whole columns, so the result keeps the int type
+        expected_dtype = "Int64"
     expected = backend.DataFrame(expected, dtype=expected_dtype) if isinstance(expected, (list, dict)) else expected
     with context.set({"str_val": "STR1", "int_val": 2, "float_val": 3.5, "bool_val": True}):
         with get_test_data(input_df, named_inputs={"copy": input_df}, named_output="result") as data:

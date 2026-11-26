@@ -21,6 +21,10 @@ try:
 except:
     dask_DataFrame = None
     dask_assert_frame_equal = None
+try:
+    import pyarrow as pa
+except ImportError:
+    pa = None
 import shutil
 
 from etlrules.data import RuleData, context
@@ -48,6 +52,8 @@ def assert_frame_equal(df, df2, ignore_row_ordering=False, ignore_column_orderin
         df = df.compute()
         df2 = df2.compute()
         dask_assert_frame_equal(df, df2)
+    elif pa is not None and isinstance(df, pa.Table) and isinstance(df2, pa.Table):
+        pyarrow_assert_table_equal(df, df2, ignore_row_ordering=ignore_row_ordering, ignore_column_ordering=ignore_column_ordering)
     elif polars_DataFrame is not None and isinstance(df, polars_DataFrame) and isinstance(df2, polars_DataFrame):
         assert polars_assert_frame_equal is not None
         if ignore_row_ordering:
@@ -59,6 +65,30 @@ def assert_frame_equal(df, df2, ignore_row_ordering=False, ignore_column_orderin
         polars_assert_frame_equal(df, df2)
     else:
         assert False
+
+
+def column_values(df, column_name) -> list:
+    """ Returns the values of a column as a list of python values, for any backend. """
+    column = df[column_name]
+    if pa is not None and isinstance(column, (pa.Array, pa.ChunkedArray)):
+        return column.to_pylist()
+    if hasattr(column, "compute"):  # dask
+        column = column.compute()
+    return list(column)
+
+
+def pyarrow_assert_table_equal(df, df2, ignore_row_ordering=False, ignore_column_ordering=False):
+    if ignore_column_ordering:
+        df = df.select(sorted(df.column_names))
+        df2 = df2.select(sorted(df2.column_names))
+    if ignore_row_ordering:
+        df = df.sort_by([(col, "ascending") for col in df.column_names])
+        df2 = df2.sort_by([(col, "ascending") for col in df2.column_names])
+    assert df.column_names == df2.column_names, f"Different columns: {df.column_names} != {df2.column_names}"
+    for col in df.column_names:
+        left, right = df[col], df2[col]
+        assert left.type == right.type, f"Column {col} has different types: {left.type} != {right.type}"
+        assert left.to_pylist() == right.to_pylist(), f"Column {col} has different values:\n{left.to_pylist()}\n!=\n{right.to_pylist()}"
 
 
 @contextmanager

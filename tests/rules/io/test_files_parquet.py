@@ -6,6 +6,7 @@ import pytest
 
 from etlrules.exceptions import MissingColumnError
 from etlrules.backends.pandas import ReadParquetFileRule, WriteParquetFileRule
+from etlrules.backends.common.dataframe import select_columns
 from tests.utils.data import assert_frame_equal, get_test_data
 
 
@@ -59,7 +60,7 @@ def test_write_read_parquet_file(compression, backend):
             read_rule.apply(data)
             actual = data.get_named_output("result")
             assert_frame_equal(actual, test_df)
-            assert_frame_equal(data.get_named_output("result2"), test_df[["A", "C"]])
+            assert_frame_equal(data.get_named_output("result2"), select_columns(test_df, ["A", "C"]))
             assert_frame_equal(data.get_named_output("result3"), result3_df)
             assert_frame_equal(data.get_named_output("result4"), result4_df)
             assert_frame_equal(data.get_named_output("result5"), result5_df)

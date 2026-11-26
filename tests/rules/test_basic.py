@@ -1,5 +1,6 @@
 import pytest
 from etlrules.exceptions import ColumnAlreadyExistsError, MissingColumnError, UnsupportedTypeError
+from etlrules.backends.common.dataframe import get_column_names
 from tests.utils.data import assert_frame_equal, get_test_data
 
 
@@ -26,7 +27,7 @@ def test_project_rule_scenarios(columns, exclude, main_input, named_inputs, name
 
 def test_project_rule_unknown_column_strict(backend):
     df = backend.DataFrame(data=[{"A": 1, "B": "b", "C": 3, "D": 4, "E": "e", "F": "f"}])
-    assert list(df.columns) == ["A", "B", "C", "D", "E", "F"]
+    assert get_column_names(df) == ["A", "B", "C", "D", "E", "F"]
     with get_test_data(df) as data:
         rule = backend.rules.ProjectRule(["A", "C", "UNKNOWN", "E"])
         with pytest.raises(MissingColumnError):
@@ -35,7 +36,7 @@ def test_project_rule_unknown_column_strict(backend):
 
 def test_project_rule_unknown_column_not_strict(backend):
     df = backend.DataFrame(data=[{"A": 1, "B": "b", "C": 3, "D": 4, "E": "e", "F": "f"}])
-    assert list(df.columns) == ["A", "B", "C", "D", "E", "F"]
+    assert get_column_names(df) == ["A", "B", "C", "D", "E", "F"]
     with get_test_data(df) as data:
         rule = backend.rules.ProjectRule(["A", "C", "UNKNOWN", "E"], strict=False)
         rule.apply(data)
@@ -45,7 +46,7 @@ def test_project_rule_unknown_column_not_strict(backend):
 
 def test_project_rule_unknown_column_exclude_strict(backend):
     df = backend.DataFrame(data=[{"A": 1, "B": "b", "C": 3, "D": 4, "E": "e", "F": "f"}])
-    assert list(df.columns) == ["A", "B", "C", "D", "E", "F"]
+    assert get_column_names(df) == ["A", "B", "C", "D", "E", "F"]
     with get_test_data(df) as data:
         rule = backend.rules.ProjectRule(["A", "C", "UNKNOWN", "E"], exclude=True)
         with pytest.raises(MissingColumnError):
@@ -54,7 +55,7 @@ def test_project_rule_unknown_column_exclude_strict(backend):
 
 def test_project_rule_unknown_column_exclude_not_strict(backend):
     df = backend.DataFrame(data=[{"A": 1, "B": "b", "C": 3, "D": 4, "E": "e", "F": "f"}])
-    assert list(df.columns) == ["A", "B", "C", "D", "E", "F"]
+    assert get_column_names(df) == ["A", "B", "C", "D", "E", "F"]
     with get_test_data(df) as data:
         rule = backend.rules.ProjectRule(["A", "C", "UNKNOWN", "E"], exclude=True, strict=False)
         rule.apply(data)

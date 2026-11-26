@@ -2,6 +2,7 @@ from typing import Iterable, Optional
 
 from etlrules.exceptions import MissingColumnError
 from etlrules.rule import UnaryOpBaseRule
+from etlrules.backends.common.dataframe import get_column_names
 
 
 class BaseFillRule(UnaryOpBaseRule):
@@ -30,7 +31,7 @@ class BaseFillRule(UnaryOpBaseRule):
     def apply(self, data):
         super().apply(data)
         df = self._get_input_df(data)
-        df_columns = [col for col in df.columns]
+        df_columns = [col for col in get_column_names(df)]
         if self.sort_by:
             if not set(self.sort_by) <= set(df_columns):
                 raise MissingColumnError(f"Missing sort_by column(s) in fill operation: {set(self.sort_by) - set(df_columns)}")

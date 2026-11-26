@@ -12,6 +12,7 @@ from etlrules.exceptions import (
 )
 from etlrules.backends.common.types import SUPPORTED_TYPES
 from etlrules.rule import UnaryOpBaseRule
+from etlrules.backends.common.dataframe import get_column_names
 
 perf_logger = logging.getLogger("etlrules.perf")
 
@@ -166,7 +167,7 @@ class AggregateRule(UnaryOpBaseRule):
     def apply(self, data):
         super().apply(data)
         df = self._get_input_df(data)
-        df_columns_set = set(df.columns)
+        df_columns_set = set(get_column_names(df))
         if not set(self._aggs) <= df_columns_set:
             if self.strict:
                 raise MissingColumnError(f"Missimg columns to aggregate by: {set(self._aggs) - df_columns_set}.")
