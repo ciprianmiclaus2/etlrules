@@ -1543,8 +1543,9 @@ Together with the name, the description acts as the documentation of the rule.</
             </td>
             <td>
               <div class="doc-md-description">
-                <p>raised if an operation is not supported between the types involved. raised when the column type is specified
-but the conversion to that type fails.</p>
+                <p>raised if an operation is not supported between the types involved. Also raised when the column type
+is specified but the conversion to that type fails. With the dask backend, which evaluates lazily, the conversion
+error is raised when the result is computed.</p>
               </div>
             </td>
           </tr>
