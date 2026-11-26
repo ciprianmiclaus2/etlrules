@@ -146,3 +146,17 @@ PyPI rejects uploading a version that already exists, so bump the version before
 
 The upload uses the `PYPI_API_TOKEN` repository secret. If the upload step fails with a 403,
 create a new API token on PyPI and update the secret in the repository settings.
+
+### Documentation
+
+Publishing the release also triggers the "Documentation" workflow, which builds the docs and publishes them
+to https://ciprianmiclaus2.github.io/etlrules/ (the `gh-pages` branch, using mike). Each minor version (e.g. 0.3)
+gets its own version of the docs and `latest` points to the most recent one. It can also be run manually
+from the Actions tab, choosing the release tag in "Use workflow from".
+
+To build and preview the docs locally:
+
+```
+    $ pip install -e ".[docs]"
+    $ mkdocs serve
+```

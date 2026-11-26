@@ -54,19 +54,19 @@ class LeftJoinRule(BaseJoinRule):
 
     Example:
 
-    left dataframe::
+    left dataframe:
 
         | A  | B  |
         | 1  | a  |
         | 2  | b  |
 
-    right dataframe::
+    right dataframe:
 
         | A  | C  |
         | 1  | c  |
         | 3  | d  |
 
-    result (key columns=["A"])::
+    result (key columns=["A"]):
 
         | A  | B  | C  |
         | 1  | a  | c  |
@@ -118,19 +118,19 @@ class InnerJoinRule(BaseJoinRule):
 
     Example:
 
-    left dataframe::
+    left dataframe:
 
         | A  | B  |
         | 1  | a  |
         | 2  | b  |
 
-    right dataframe::
+    right dataframe:
 
         | A  | C  |
         | 1  | c  |
         | 3  | d  |
 
-    result (key columns=["A"])::
+    result (key columns=["A"]):
 
         | A  | B  | C  |
         | 1  | a  | c  |
@@ -182,19 +182,19 @@ class OuterJoinRule(BaseJoinRule):
 
     Example:
 
-    left dataframe::
+    left dataframe:
 
         | A  | B  |
         | 1  | a  |
         | 2  | b  |
 
-    right dataframe::
+    right dataframe:
 
         | A  | C  |
         | 1  | c  |
         | 3  | d  |
 
-    result (key columns=["A"])::
+    result (key columns=["A"]):
 
         | A  | B  | C  |
         | 1  | a  | c  |
@@ -248,19 +248,19 @@ class RightJoinRule(BaseJoinRule):
 
     Example:
 
-    left dataframe::
+    left dataframe:
 
         | A  | B  |
         | 1  | a  |
         | 2  | b  |
 
-    right dataframe::
+    right dataframe:
 
         | A  | C  |
         | 1  | c  |
         | 3  | d  |
 
-    result (key columns=["A"])::
+    result (key columns=["A"]):
 
         | A  | B  | C  |
         | 1  | a  | c  |

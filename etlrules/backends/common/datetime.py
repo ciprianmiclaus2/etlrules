@@ -10,7 +10,7 @@ ROUND_TRUNC_UNITS = {"day", "hour", "minute", "second", "millisecond", "microsec
 class DateTimeRoundRule(BaseAssignColumnRule):
     """ Rounds a set of datetime columns to the specified granularity (day, hour, minute, etc.).
 
-    Basic usage::
+    Basic usage:
 
         # rounds the A column to the nearest second
         rule = DateTimeRoundRule("A", "second")
@@ -69,7 +69,7 @@ class DateTimeRoundRule(BaseAssignColumnRule):
 class DateTimeRoundDownRule(BaseAssignColumnRule):
     """ Rounds down (truncates) a set of datetime columns to the specified granularity (day, hour, minute, etc.).
 
-    Basic usage::
+    Basic usage:
 
         # rounds the A column to the nearest second
         rule = DateTimeRoundDownRule("A", "second")
@@ -127,7 +127,7 @@ class DateTimeRoundDownRule(BaseAssignColumnRule):
 class DateTimeRoundUpRule(BaseAssignColumnRule):
     """ Rounds up a set of datetime columns to the specified granularity (day, hour, minute, etc.).
 
-    Basic usage::
+    Basic usage:
 
         # rounds the A column to the nearest second
         rule = DateTimeRoundUpRule("A", "second")
@@ -185,7 +185,7 @@ class DateTimeRoundUpRule(BaseAssignColumnRule):
 class DateTimeExtractComponentRule(BaseAssignColumnRule):
     """ Extract an individual component of a date/time (e.g. year, month, day, hour, etc.).
 
-    Basic usage::
+    Basic usage:
 
         # extracts the year component from col_A. E.g. 2023-05-05 10:00:00 will extract 2023
         rule = DateTimeExtractComponentRule("col_A", component="year")
@@ -270,7 +270,7 @@ DT_ARITHMETIC_UNITS = {
 class DateTimeAddRule(BaseAssignColumnRule):
     """ Adds a number of units (days, hours, minutes, etc.) to a datetime column.
 
-    Basic usage::
+    Basic usage:
 
         # adds 2 days the A column
         rule = DateTimeAddRule("A", 2, "days")
@@ -336,7 +336,7 @@ class DateTimeAddRule(BaseAssignColumnRule):
 class DateTimeSubstractRule(BaseAssignColumnRule):
     """ Substracts a number of units (days, hours, minutes, etc.) from a datetime column.
 
-    Basic usage::
+    Basic usage:
 
         # substracts 2 days the A column
         rule = DateTimeSubstractRule("A", 2, "days")
@@ -400,7 +400,7 @@ class DateTimeSubstractRule(BaseAssignColumnRule):
 class DateTimeDiffRule(BaseAssignColumnRule):
     """ Calculates the difference between two datetime columns, optionally extracting it in the specified unit.
 
-    Basic usage::
+    Basic usage:
 
         # calculates the A - B in days
         rule = DateTimeDiffRule("A", "B", unit="days")
@@ -469,7 +469,7 @@ class DateTimeDiffRule(BaseAssignColumnRule):
 class DateTimeUTCNowRule(UnaryOpBaseRule):
     """ Adds a new column with the UTC date/time.
 
-    Basic usage::
+    Basic usage:
 
         rule = DateTimeUTCNowRule(output_column="UTCTimeNow")
         rule.apply(data)
@@ -499,7 +499,7 @@ class DateTimeUTCNowRule(UnaryOpBaseRule):
         In non-strict mode, if the output_column exists in the input dataframe, it will be overwritten.
     """
 
-    def __init__(self, output_column, named_input:Optional[str]=None, named_output:Optional[str]=None, name:Optional[str]=None, description:Optional[str]=None, strict:bool=True):
+    def __init__(self, output_column: str, named_input:Optional[str]=None, named_output:Optional[str]=None, name:Optional[str]=None, description:Optional[str]=None, strict:bool=True):
         super().__init__(named_input=named_input, named_output=named_output, name=name, description=description, strict=strict)
         assert output_column and isinstance(output_column, str)
         self.output_column = output_column
@@ -508,7 +508,7 @@ class DateTimeUTCNowRule(UnaryOpBaseRule):
 class DateTimeLocalNowRule(UnaryOpBaseRule):
     """ Adds a new column with the local date/time.
 
-    Basic usage::
+    Basic usage:
 
         rule = DateTimeLocalNowRule(output_column="LocalTimeNow")
         rule.apply(data)
@@ -538,7 +538,7 @@ class DateTimeLocalNowRule(UnaryOpBaseRule):
         In non-strict mode, if the output_column exists in the input dataframe, it will be overwritten.
     """
 
-    def __init__(self, output_column, named_input:Optional[str]=None, named_output:Optional[str]=None, name:Optional[str]=None, description:Optional[str]=None, strict:bool=True):
+    def __init__(self, output_column: str, named_input:Optional[str]=None, named_output:Optional[str]=None, name:Optional[str]=None, description:Optional[str]=None, strict:bool=True):
         super().__init__(named_input=named_input, named_output=named_output, name=name, description=description, strict=strict)
         assert output_column and isinstance(output_column, str)
         self.output_column = output_column
@@ -547,7 +547,7 @@ class DateTimeLocalNowRule(UnaryOpBaseRule):
 class DateTimeToStrFormatRule(BaseAssignColumnRule):
     """ Formats a datetime column to a string representation according to a specified format.
 
-    Basic usage::
+    Basic usage:
 
         # displays the dates in column col_A in the %Y-%m-%d format, e.g. 2023-05-19
         rule = DateTimeToStrFormatRule("col_A", format="%Y-%m-%d")

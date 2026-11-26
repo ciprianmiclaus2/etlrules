@@ -34,7 +34,7 @@ class SQLAlchemyEngines:
 class ReadSQLQueryRule(BaseRule):
     """ Runs a SQL query and reads the results back into a dataframe.
 
-    Basic usage::
+    Basic usage:
 
         # reads all the data from a sqlite db called mydb.db, from the table MyTable
         # saves the dataframe as the main output of the rule which subsequent rules can use as their main input
@@ -150,7 +150,7 @@ class WriteSQLTableRule(UnaryOpBaseRule):
     outputs and writes it to the DB. If the named_input is specified, the input with that name
     is written, otherwise, it takes the main output of the preceding rule.
 
-    Basic usage::
+    Basic usage:
 
         # writes the main input to a table called MyTable in a sqlite DB called mydb.db
         # If the table already exists, it replaces it

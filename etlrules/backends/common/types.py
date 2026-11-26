@@ -16,7 +16,7 @@ SUPPORTED_TYPES = {
 class TypeConversionRule(UnaryOpBaseRule):
     """ Converts the type of a given set of columns to other types.
 
-    Basic usage::
+    Basic usage:
 
         # converts column A to int64, B to string and C to datetime
         rule = TypeConversionRule({"A": "int64", "B": "string", "C": "datetime"})

@@ -8,7 +8,7 @@ from etlrules.backends.common.types import SUPPORTED_TYPES
 class AddNewColumnRule(UnaryOpBaseRule):
     """ Adds a new column and sets it to the value of an evaluated expression.
 
-    Example::
+    Example:
 
         Given df:
         | A   | B  |
@@ -18,7 +18,7 @@ class AddNewColumnRule(UnaryOpBaseRule):
 
     > AddNewColumnRule("Sum", "df['A'] + df['B']").apply(df)
 
-    Result::
+    Result:
 
         | A   | B  | Sum |
         | 1   | 2  | 3   |
@@ -85,7 +85,7 @@ class AddNewColumnRule(UnaryOpBaseRule):
 class AddRowNumbersRule(UnaryOpBaseRule):
     """ Adds a new column with row numbers.
 
-    Example::
+    Example:
 
         Given df:
         | A   | B  |
@@ -95,7 +95,7 @@ class AddRowNumbersRule(UnaryOpBaseRule):
 
     > AddRowNumbersRule("Row_Number").apply(df)
 
-    Result::
+    Result:
 
         | A   | B  | Row_Number |
         | 1   | 2  | 0          |

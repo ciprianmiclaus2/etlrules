@@ -38,14 +38,14 @@ class Plan:
     the plan. By comparison, pipelines implement a single input/single output mode where rules are
     executed in the order they are added to the plan.
 
-    Pipeline example::
+    Pipeline example:
 
         plan = Plan()
         plan.add_rule(SortRule(['A']))
         plan.add_rule(ProjectRule(['A', 'B']))
         plan.add_rule(RenameRule({'A': 'AA', 'B': 'BB'}))
     
-    Graph example::
+    Graph example:
 
         plan = Plan()
         plan.add_rule(SortRule(['A'], named_input="input", named_output="sorted_data"))

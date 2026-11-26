@@ -7,7 +7,7 @@ from etlrules.rule import UnaryOpBaseRule
 class IfThenElseRule(UnaryOpBaseRule):
     """ Calculates the ouput based on a condition (If Cond is true Then use then_value Else use else_value).
 
-    Example::
+    Example:
 
         Given df:
         | A   | B  |
@@ -18,7 +18,7 @@ class IfThenElseRule(UnaryOpBaseRule):
         rule = IfThenElseRule("df['A'] > df['B']", output_column="C", then_value="A is greater", else_value="B is greater")
         rule.apply(df)
 
-    Result::
+    Result:
 
         | A   | B  | C            |
         | 1   | 2  | B is greater |
@@ -86,7 +86,7 @@ class IfThenElseRule(UnaryOpBaseRule):
 class FilterRule(UnaryOpBaseRule):
     """ Exclude rows based on a condition.
 
-    Example::
+    Example:
 
         Given df:
         | A   | B  |
@@ -97,17 +97,17 @@ class FilterRule(UnaryOpBaseRule):
         rule = FilterRule("df['A'] > df['B']")
         rule.apply(df)
 
-    Result::
+    Result:
 
         | A   | B  |
         | 5   | 3  |
 
-    Same example using discarded_matching_rows=True::
+    Same example using discarded_matching_rows=True:
 
         rule = FilterRule("df['A'] > df['B']", discard_matching_rows=True)
         rule.apply(df)
 
-    Result::
+    Result:
 
         | A   | B  |
         | 1   | 2  |

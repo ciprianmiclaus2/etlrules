@@ -173,7 +173,7 @@ class RenameRule(UnaryOpBaseRule):
 class ReplaceRule(BaseAssignColumnRule):
     """ Replaces some some values (or regular expressions) with another set of values (or regular expressions).
 
-    Basic usage::
+    Basic usage:
 
         # replaces A with new_A and b with new_b in col_A
         rule = ReplaceRule("col_A", values=["A", "b"], new_values=["new_A", "new_b"])
@@ -218,7 +218,7 @@ class ReplaceRule(BaseAssignColumnRule):
         In non-strict mode, overwriting existing columns is ignored.
     """
 
-    def __init__(self, input_column: str, values: Iterable[Union[int,float,str]], new_values: Iterable[Union[int,float,str]], regex=False, output_column:Optional[str]=None, named_input: Optional[str]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
+    def __init__(self, input_column: str, values: Iterable[Union[int,float,str]], new_values: Iterable[Union[int,float,str]], regex: bool=False, output_column:Optional[str]=None, named_input: Optional[str]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
         super().__init__(input_column=input_column, output_column=output_column, named_input=named_input, named_output=named_output, 
                          name=name, description=description, strict=strict)
         self.values = [val for val in values]
@@ -340,7 +340,7 @@ class RulesBlock(UnaryOpBaseRule):
 class ExplodeValuesRule(UnaryOpBaseRule, ColumnsInOutMixin):
     """ Explode a list of values into multiple rows with each value on a separate row
 
-    Example::
+    Example:
 
         Given df:
         | A         |
@@ -351,7 +351,7 @@ class ExplodeValuesRule(UnaryOpBaseRule, ColumnsInOutMixin):
 
     > ExplodeValuesRule("A").apply(df)
 
-    Result::
+    Result:
 
         | A   |
         |-----|

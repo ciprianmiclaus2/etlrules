@@ -8,7 +8,7 @@ from etlrules.rule import ColumnsInOutMixin, UnaryOpBaseRule
 class StrLowerRule(BaseAssignColumnRule):
     """ Converts the values in a string column to lower case.
 
-    Basic usage::
+    Basic usage:
 
         rule = StrLowerRule("col_A")
         rule.apply(data)
@@ -43,7 +43,7 @@ class StrLowerRule(BaseAssignColumnRule):
 class StrUpperRule(BaseAssignColumnRule):
     """ Converts the values in a string columns to upper case.
 
-    Basic usage::
+    Basic usage:
 
         rule = StrUpperRule("col_A")
         rule.apply(data)
@@ -81,7 +81,7 @@ class StrCapitalizeRule(BaseAssignColumnRule):
     Capitalization will convert the first letter in the string to upper case and the rest of the letters
     to lower case.
 
-    Basic usage::
+    Basic usage:
 
         rule = StrCapitalizeRule("col_A")
         rule.apply(data)
@@ -122,7 +122,7 @@ class StrSplitRule(BaseAssignColumnRule):
         If you need the output to be a string, perhaps joined on a different separator and optionally sorted
         then use the StrSplitRejoinRule rule.
 
-    Basic usage::
+    Basic usage:
 
         # splits the col_A column on ,
         # "a,b;c,d" will be split as ["a", "b;c", "d"]
@@ -173,7 +173,7 @@ class StrSplitRejoinRule(BaseAssignColumnRule):
         The output is an array of substrings which can optionally be limited via the limit parameter to only
         include the first <limit> number of substrings.
 
-    Basic usage::
+    Basic usage:
 
         # splits the col_A column on ,
         # "b,d;a,c" will be split and rejoined as "b|c|d;a"
@@ -231,7 +231,7 @@ class StrSplitRejoinRule(BaseAssignColumnRule):
 class StrStripRule(BaseAssignColumnRule):
     """ Strips leading, trailing or both whitespaces or other characters from the values in the input column.
 
-    Basic usage::
+    Basic usage:
 
         rule = StrStripRule("col_A", how="both")
         rule.apply(data)
@@ -281,7 +281,7 @@ class StrStripRule(BaseAssignColumnRule):
 class StrPadRule(BaseAssignColumnRule):
     """ Makes strings of a given width (justifies) by padding left or right with a fill character.
 
-    Basic usage::
+    Basic usage:
 
         # a value of ABCD will ABCD....
         rule = StrPadRule("col_A", width=8, fill_character=".", how="right")
@@ -332,7 +332,7 @@ class StrPadRule(BaseAssignColumnRule):
 class StrExtractRule(UnaryOpBaseRule, ColumnsInOutMixin):
     r""" Extract substrings from strings columns using regular expressions.
 
-    Basic usage::
+    Basic usage:
 
         # extracts the number between start_ and _end
         # ie: for an input value of start_1234_end - will extract 1234 in col_A

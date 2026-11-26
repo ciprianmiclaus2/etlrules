@@ -44,21 +44,21 @@ class BaseFillRule(UnaryOpBaseRule):
 class ForwardFillRule(BaseFillRule):
     """ Replaces NAs/missing values with the next non-NA value, optionally sorting and grouping the data.
 
-    Example::
+    Example:
 
         | A   | B  |
         | a   | 1  |
         | b   | NA |
         | a   | NA |
 
-    After a fill forward::
+    After a fill forward:
 
         | A   | B  |
         | a   | 1  |
         | b   | 1  |
         | a   | 1  |  
 
-    After a fill forward with group_by=["A"]::
+    After a fill forward with group_by=["A"]:
 
         | A   | B  |
         | a   | 1  |
@@ -86,7 +86,7 @@ class ForwardFillRule(BaseFillRule):
             When set to a name (string), the result will be available as that named output.
         name (Optional[str]): Give the rule a name. Optional.
             Named rules are more descriptive as to what they're trying to do/the intent.
-        description Optional[str]: Describe in detail what the rules does, how it does it. Optional.
+        description (Optional[str]): Describe in detail what the rules does, how it does it. Optional.
             Together with the name, the description acts as the documentation of the rule.
         strict (bool): When set to True, the rule does a stricter valiation. Default: True
 
@@ -98,21 +98,21 @@ class ForwardFillRule(BaseFillRule):
 class BackFillRule(BaseFillRule):
     """ Replaces NAs/missing values with the next non-NA value, optionally sorting and grouping the data.
 
-    Example::
+    Example:
 
         | A   | B  |
         | a   | NA |
         | b   | 2  |
         | a   | NA |
 
-    After a fill forward::
+    After a fill forward:
 
         | A   | B  |
         | a   | 2  |
         | b   | 2  |
         | a   | NA |  
 
-    After a fill forward with group_by=["A"]::
+    After a fill forward with group_by=["A"]:
 
         | A   | B  |
         | a   | NA |

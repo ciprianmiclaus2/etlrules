@@ -9,7 +9,7 @@ class VConcatRule(BinaryOpBaseRule):
 
     The rows of the right dataframe are added at the bottom of the rows from the left dataframe in the result dataframe.
 
-    Example::
+    Example:
 
         Left dataframe:
         | A   | B  |
@@ -23,7 +23,7 @@ class VConcatRule(BinaryOpBaseRule):
         | e   | 5  |
         | f   | 6  |  
 
-    After a concat(left, right), the result will look like::
+    After a concat(left, right), the result will look like:
 
         | A   | B  |
         | a   | 1  |
@@ -93,7 +93,7 @@ class HConcatRule(BinaryOpBaseRule):
     The columns from the left dataframe will be followed by the columns from the right dataframe in the result dataframe.
     The two dataframes must not have columns with the same name.
 
-    Example::
+    Example:
 
         Left dataframe:
         | A   | B  |
@@ -107,7 +107,7 @@ class HConcatRule(BinaryOpBaseRule):
         | e   | 5  |
         | f   | 6  |  
 
-    After a concat(left, right), the result will look like::
+    After a concat(left, right), the result will look like:
 
         | A   | B  | C   | D  |
         | a   | 1  | d   | 4  |

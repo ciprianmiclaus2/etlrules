@@ -57,7 +57,7 @@ class BaseReadFileRule(BaseRule):
 class ReadCSVFileRule(BaseReadFileRule):
     r""" Reads one or multiple csv files from a directory and persists it as a dataframe for subsequent rules to operate on.
 
-    Basic usage::
+    Basic usage:
 
         # reads a file data.csv and persists it as the main output of the rule
         rule = ReadCSVFileRule("data.csv", "/home/myuser/")
@@ -119,7 +119,7 @@ class ReadCSVFileRule(BaseReadFileRule):
 class ReadParquetFileRule(BaseReadFileRule):
     r""" Reads one or multiple parquet files from a directory and persists it as a dataframe for subsequent rules to operate on.
 
-    Basic usage::
+    Basic usage:
 
         # reads a file data.csv and persists it as the main output of the rule
         rule = ReadParquetFileRule("data.parquet", "/home/myuser/")
@@ -264,7 +264,7 @@ class WriteCSVFileRule(BaseWriteFileRule):
 
     The rule is a final rule, which means it produces no additional outputs, it takes any of the existing outputs and writes it to disk.
 
-    Basic usage::
+    Basic usage:
 
         # writes a file data.csv and persists the main output of the previous rule to it
         rule = WriteCSVFileRule("data.csv", "/home/myuser/")
@@ -324,7 +324,7 @@ class WriteParquetFileRule(BaseWriteFileRule):
 
     The rule is a final rule, which means it produces no additional outputs, it takes any of the existing outputs and writes it to disk.
 
-    Basic usage::
+    Basic usage:
 
         # writes a file data.parquet and persists the main output of the previous rule to it
         rule = WriteParquetFileRule("data.parquet", "/home/myuser/")

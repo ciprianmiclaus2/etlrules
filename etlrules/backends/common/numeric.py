@@ -6,7 +6,7 @@ from etlrules.backends.common.base import BaseAssignColumnRule
 class RoundRule(BaseAssignColumnRule):
     """ Rounds a set of columns to specified decimal places.
 
-    Basic usage::
+    Basic usage:
 
         # rounds Col_A to 2dps
         rule = RoundRule("Col_A", 2)
@@ -52,7 +52,7 @@ class RoundRule(BaseAssignColumnRule):
 class AbsRule(BaseAssignColumnRule):
     """ Converts numbers to absolute values.
 
-    Basic usage::
+    Basic usage:
 
         rule = AbsRule("col_A")
         rule.apply(data)

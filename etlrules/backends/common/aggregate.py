@@ -28,7 +28,7 @@ class AggregateRule(UnaryOpBaseRule):
         group_by: A list of columns to group the result by
         aggregations: A mapping {column_name: aggregation_function} which specifies how to aggregate
             columns which are not in the group_by list.  
-            The following list of aggregation functions are supported::
+            The following list of aggregation functions are supported:
 
                 min: minimum of the values in the group
                 max: minimum of the values in the group
@@ -46,7 +46,7 @@ class AggregateRule(UnaryOpBaseRule):
             The aggregation expression is a string representing a valid Python expression which gets evaluated.  
             The input will be in a variable `values`. `isnull` can be used to filter out NA.
 
-            Example::
+            Example:
 
                 {"C": "';'.join(str(v) for v in values if not isnull(v))"}
 
