@@ -1,5 +1,15 @@
 # History
 
+## 0.5.0 (unreleased)
+
+* Add `StrToDateTimeRule` to parse strings to datetime values with a given format (the reverse of
+  `DateTimeToStrFormatRule`). In non-strict mode, the values which don't match the format become NA
+* Add `FillNullRule` to replace the missing values in a set of columns with a given value
+* Add `DropNullRowsRule` to remove the rows with missing values (in any or all of a set of columns)
+* Add `CoalesceRule` to create a column with the first non-missing value from a list of columns
+* Fix the documentation of `TypeConversionRule`, which listed datetime and timedelta as supported types
+  (use `StrToDateTimeRule` to convert strings to datetime values)
+
 ## 0.4.0 (2026-11-26)
 
 * Add the pyarrow backend (`etlrules.backends.pyarrow`), where the rules operate on `pyarrow.Table`s. All the rules

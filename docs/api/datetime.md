@@ -46,3 +46,7 @@ Rules operating on datetime columns.
 ::: etlrules.backends.common.datetime.DateTimeToStrFormatRule
     options:
       members: false
+
+::: etlrules.backends.common.datetime.StrToDateTimeRule
+    options:
+      members: false

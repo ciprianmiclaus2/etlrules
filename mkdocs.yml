@@ -18,6 +18,7 @@ nav:
       - Conditional rules: api/conditions.md
       - Datetime rules: api/datetime.md
       - Fill rules: api/fill.md
+      - Missing values rules: api/nulls.md
       - Join rules: api/joins.md
       - New column rules: api/newcolumns.md
       - Numeric rules: api/numeric.md

@@ -588,3 +588,60 @@ class DateTimeToStrFormatRule(BaseAssignColumnRule):
         super().__init__(input_column=input_column, output_column=output_column, named_input=named_input, named_output=named_output, 
                          name=name, description=description, strict=strict)
         self.format = format
+
+
+class StrToDateTimeRule(BaseAssignColumnRule):
+    """ Parses a string column to datetime values according to a specified format.
+
+    This is the reverse of DateTimeToStrFormatRule.
+
+    Basic usage:
+
+        # parses the values in column col_A, e.g. 2023-05-19 10:30:45
+        rule = StrToDateTimeRule("col_A", format="%Y-%m-%d %H:%M:%S")
+        rule.apply(data)
+
+        # parses dates like 19/05/2023 into a new column, in non-strict mode the invalid values become NA
+        rule = StrToDateTimeRule("col_A", format="%d/%m/%Y", output_column="col_date", strict=False)
+        rule.apply(data)
+
+    Args:
+        input_column (str): The string column with the values to parse.
+        format: The format of the date/time values in the input column.
+            E.g. %Y-%m-%d %H:%M:%S
+            For the directives accepted in the format, have a look at:
+            https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior
+            The pyarrow backend doesn't support %f (fractions of a second).
+        output_column (Optional[str]): An optional column to hold the parsed datetime values.
+            If provided, the existing column is unchanged, and a new column with this name is created.
+            If not provided, the result is updated in place.
+
+        named_input (Optional[str]): Which dataframe to use as the input. Optional.
+            When not set, the input is taken from the main output.
+            Set it to a string value, the name of an output dataframe of a previous rule.
+        named_output (Optional[str]): Give the output of this rule a name so it can be used by another rule as a named input. Optional.
+            When not set, the result of this rule will be available as the main output.
+            When set to a name (string), the result will be available as that named output.
+        name (Optional[str]): Give the rule a name. Optional.
+            Named rules are more descriptive as to what they're trying to do/the intent.
+        description (Optional[str]): Describe in detail what the rules does, how it does it. Optional.
+            Together with the name, the description acts as the documentation of the rule.
+        strict (bool): When set to True, the rule does a stricter validation. Default: True
+            In strict mode, a value which doesn't match the format raises a ValueError.
+            In non-strict mode, the values which don't match the format become NA.
+
+    Raises:
+        MissingColumnError: raised if the input column doesn't exist in the input dataframe.
+        ColumnAlreadyExistsError: raised in strict mode only if the output_column already exists in the dataframe.
+        ValueError: raised in strict mode if a value doesn't match the format.
+            With the dask backend, which evaluates lazily, the error is raised when the result is computed.
+
+    Note:
+        In non-strict mode, overwriting existing columns is ignored.
+    """
+
+    def __init__(self, input_column: str, format: str, output_column: Optional[str]=None, named_input: Optional[str]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
+        super().__init__(input_column=input_column, output_column=output_column, named_input=named_input, named_output=named_output,
+                         name=name, description=description, strict=strict)
+        assert format and isinstance(format, str), "StrToDateTimeRule: format must be a non-empty string."
+        self.format = format

@@ -962,3 +962,60 @@ def test_months_offset(input_df, expected, backend):
     expected_df = backend.DataFrame(data=expected)
     actual = select_columns(df, ["E"])
     assert_frame_equal(actual, expected_df)
+
+
+STR_DT_DF = [
+    {"A": "2023-05-19 10:30:45", "B": "19/05/2023"},
+    {"A": "2024-02-29 23:59:59", "B": "01/12/2024"},
+    {},
+]
+
+
+@pytest.mark.parametrize("input_column,format,output_column,expected", [
+    ["A", "%Y-%m-%d %H:%M:%S", None, {"A": [datetime.datetime(2023, 5, 19, 10, 30, 45), datetime.datetime(2024, 2, 29, 23, 59, 59), None], "B": ["19/05/2023", "01/12/2024", None]}],
+    ["A", "%Y-%m-%d %H:%M:%S", "C", {"A": ["2023-05-19 10:30:45", "2024-02-29 23:59:59", None], "B": ["19/05/2023", "01/12/2024", None], "C": [datetime.datetime(2023, 5, 19, 10, 30, 45), datetime.datetime(2024, 2, 29, 23, 59, 59), None]}],
+    ["B", "%d/%m/%Y", None, {"A": ["2023-05-19 10:30:45", "2024-02-29 23:59:59", None], "B": [datetime.datetime(2023, 5, 19), datetime.datetime(2024, 12, 1), None]}],
+])
+def test_str_to_datetime(input_column, format, output_column, expected, backend):
+    input_df = backend.DataFrame(STR_DT_DF, astype={"A": "string", "B": "string"})
+    types = {col: "datetime" if isinstance(values[0], datetime.datetime) else "string" for col, values in expected.items()}
+    expected = backend.DataFrame(expected, astype=types)
+    with get_test_data(input_df, named_inputs={"input": input_df}, named_output="result") as data:
+        rule = backend.rules.StrToDateTimeRule(input_column, format, output_column=output_column, named_input="input", named_output="result")
+        rule.apply(data)
+        assert_frame_equal(data.get_named_output("result"), expected)
+
+
+def test_str_to_datetime_invalid_values(backend):
+    input_df = backend.DataFrame([{"A": "2023-05-19"}, {"A": "not a date"}, {}], astype={"A": "string"})
+    # strict: raises ValueError (dask evaluates lazily: on compute)
+    with get_test_data(input_df, named_inputs={"input": input_df}, named_output="result") as data:
+        rule = backend.rules.StrToDateTimeRule("A", "%Y-%m-%d", named_input="input", named_output="result")
+        with pytest.raises(ValueError):
+            rule.apply(data)
+            if backend.name == "dask":
+                data.get_named_output("result").compute()
+    # non strict: the invalid values become nulls
+    expected = backend.DataFrame({"A": [datetime.datetime(2023, 5, 19), None, None]}, astype={"A": "datetime"})
+    with get_test_data(input_df, named_inputs={"input": input_df}, named_output="result") as data:
+        rule = backend.rules.StrToDateTimeRule("A", "%Y-%m-%d", named_input="input", named_output="result", strict=False)
+        rule.apply(data)
+        assert_frame_equal(data.get_named_output("result"), expected)
+
+
+def test_str_to_datetime_empty_df(backend):
+    input_df = backend.DataFrame({"A": []}, astype={"A": "string"})
+    expected = backend.DataFrame({"A": []}, astype={"A": "datetime"})
+    with get_test_data(input_df, named_inputs={"input": input_df}, named_output="result") as data:
+        rule = backend.rules.StrToDateTimeRule("A", "%Y-%m-%d", named_input="input", named_output="result")
+        rule.apply(data)
+        assert_frame_equal(data.get_named_output("result"), expected)
+
+
+def test_str_to_datetime_errors(backend):
+    input_df = backend.DataFrame(STR_DT_DF, astype={"A": "string", "B": "string"})
+    with get_test_data(input_df, named_inputs={"input": input_df}, named_output="result") as data:
+        with pytest.raises(MissingColumnError):
+            backend.rules.StrToDateTimeRule("Z", "%Y-%m-%d", named_input="input", named_output="result").apply(data)
+        with pytest.raises(ColumnAlreadyExistsError):
+            backend.rules.StrToDateTimeRule("A", "%Y-%m-%d", output_column="B", named_input="input", named_output="result").apply(data)

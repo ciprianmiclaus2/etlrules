@@ -24,6 +24,7 @@ When a plan is loaded from yaml, the backend is chosen when loading it (e.g. `lo
 * [Conditional rules](conditions.md)
 * [Datetime rules](datetime.md)
 * [Fill rules](fill.md)
+* [Missing values rules](nulls.md)
 * [Join rules](joins.md)
 * [New column rules](newcolumns.md)
 * [Numeric rules](numeric.md)

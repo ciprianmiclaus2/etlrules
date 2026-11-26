@@ -16,6 +16,7 @@ from etlrules.backends.common.datetime import (
     DateTimeAddRule as DateTimeAddRuleBase,
     DateTimeSubstractRule as DateTimeSubstractRuleBase,
     DateTimeDiffRule as DateTimeDiffRuleBase,
+    StrToDateTimeRule as StrToDateTimeRuleBase,
 )
 
 
@@ -347,3 +348,12 @@ class DateTimeToStrFormatRule(PolarsMixin, DateTimeToStrFormatRuleBase):
 
     def do_apply(self, df, col):
         return col.dt.strftime(self.format)
+
+
+class StrToDateTimeRule(PolarsMixin, StrToDateTimeRuleBase):
+
+    def do_apply(self, df, col):
+        try:
+            return col.str.to_datetime(self.format, strict=self.strict, time_unit="us")
+        except (pl.exceptions.InvalidOperationError, pl.exceptions.ComputeError) as exc:
+            raise ValueError(str(exc)) from exc

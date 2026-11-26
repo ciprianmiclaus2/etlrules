@@ -14,6 +14,7 @@ from etlrules.backends.common.datetime import (
     DateTimeAddRule as DateTimeAddRuleBase,
     DateTimeSubstractRule as DateTimeSubstractRuleBase,
     DateTimeDiffRule as DateTimeDiffRuleBase,
+    StrToDateTimeRule as StrToDateTimeRuleBase,
 )
 from etlrules.backends.pyarrow.base import PyArrowMixin, set_column, to_column
 from etlrules.exceptions import ColumnAlreadyExistsError, MissingColumnError
@@ -358,3 +359,12 @@ class DateTimeToStrFormatRule(PyArrowMixin, DateTimeToStrFormatRuleBase):
             # arrow's %S includes the fractions of a second for sub-second timestamps (python's doesn't)
             col = pc.cast(pc.floor_temporal(col, unit="second"), pa.timestamp("s", tz=col.type.tz))
         return pc.strftime(col, format=self.format)
+
+
+class StrToDateTimeRule(PyArrowMixin, StrToDateTimeRuleBase):
+
+    def do_apply(self, df, col):
+        try:
+            return pc.strptime(col, format=self.format, unit="us", error_is_null=not self.strict)
+        except (pa.ArrowInvalid, pa.ArrowNotImplementedError) as exc:
+            raise ValueError(str(exc)) from exc

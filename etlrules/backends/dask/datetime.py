@@ -23,6 +23,7 @@ from etlrules.backends.common.datetime import (
     DateTimeAddRule as DateTimeAddRuleBase,
     DateTimeSubstractRule as DateTimeSubstractRuleBase,
     DateTimeDiffRule as DateTimeDiffRuleBase,
+    StrToDateTimeRule as StrToDateTimeRuleBase,
 )
 
 ROUND_TRUNC_UNITS_MAPPED = {
@@ -295,3 +296,15 @@ class DateTimeToStrFormatRule(DaskMixin, DateTimeToStrFormatRuleBase):
 
     def do_apply(self, df, col):
         return col.dt.strftime(self.format).astype('string')
+
+
+def _str_to_datetime_partition(partition, format, strict):
+    from etlrules.backends.pandas.datetime import str_to_datetime
+    return str_to_datetime(partition, format, strict)
+
+
+class StrToDateTimeRule(DaskMixin, StrToDateTimeRuleBase):
+
+    def do_apply(self, df, col):
+        meta = _str_to_datetime_partition(col._meta, self.format, self.strict)
+        return col.map_partitions(_str_to_datetime_partition, self.format, self.strict, meta=meta)

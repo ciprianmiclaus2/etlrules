@@ -19,14 +19,15 @@ class TypeConversionRule(UnaryOpBaseRule):
 
     Basic usage:
 
-        # converts column A to int64, B to string and C to datetime
-        rule = TypeConversionRule({"A": "int64", "B": "string", "C": "datetime"})
+        # converts column A to int64 and B to string
+        rule = TypeConversionRule({"A": "int64", "B": "string"})
         rule.apply(data)
 
     Args:
         mapper: A dict with columns names as keys and the new types as values.
             The supported types are: int8, int16, int32, int64, uint8, uint16,
-            uint32, uint64, float32, float64, string, boolean, datetime and timedelta.
+            uint32, uint64, float32, float64, string and boolean.
+            To convert strings to datetime values, use StrToDateTimeRule.
 
         named_input: Which dataframe to use as the input. Optional.
             When not set, the input is taken from the main output.

@@ -8,9 +8,10 @@ from .datetime import (
     DateTimeLocalNowRule, DateTimeUTCNowRule, DateTimeToStrFormatRule,
     DateTimeRoundRule, DateTimeRoundDownRule, DateTimeRoundUpRule,
     DateTimeExtractComponentRule, DateTimeAddRule, DateTimeSubstractRule,
-    DateTimeDiffRule,
+    DateTimeDiffRule, StrToDateTimeRule,
 )
 from .fill import ForwardFillRule, BackFillRule
+from .nulls import FillNullRule, DropNullRowsRule, CoalesceRule
 from .joins import LeftJoinRule, InnerJoinRule, OuterJoinRule, RightJoinRule
 from .newcolumns import AddNewColumnRule, AddRowNumbersRule
 from .numeric import AbsRule, RoundRule
@@ -34,8 +35,9 @@ __all__ = [
     'DateTimeLocalNowRule', 'DateTimeUTCNowRule', 'DateTimeToStrFormatRule',
     'DateTimeRoundRule', 'DateTimeRoundDownRule', 'DateTimeRoundUpRule',
     'DateTimeExtractComponentRule', 'DateTimeAddRule', 'DateTimeSubstractRule',
-    'DateTimeDiffRule',
+    'DateTimeDiffRule', 'StrToDateTimeRule',
     'ForwardFillRule', 'BackFillRule',
+    'FillNullRule', 'DropNullRowsRule', 'CoalesceRule',
     'LeftJoinRule', 'InnerJoinRule', 'OuterJoinRule', 'RightJoinRule',
     'AddNewColumnRule', 'AddRowNumbersRule',
     'AbsRule', 'RoundRule',

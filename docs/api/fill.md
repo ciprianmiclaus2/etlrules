@@ -1,6 +1,7 @@
 # Fill rules
 
-Rules to fill missing values (NA) with values from other rows.
+Rules to fill missing values (NA) with values from other rows. To fill them with a given value, see the
+[missing values rules](nulls.md).
 
 !!! note "Importing the rules"
     The rules are implemented by each backend. Import them from the package of the backend you use, e.g.

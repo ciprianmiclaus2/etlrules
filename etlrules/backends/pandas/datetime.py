@@ -6,7 +6,7 @@ try:
     from pandas._config.localization import can_set_locale
 except:
     can_set_locale = None
-from pandas import to_timedelta, isnull, to_datetime
+from pandas import Series, to_timedelta, isnull, to_datetime
 from pandas.tseries.offsets import DateOffset, BusinessDay
 from pandas.api.types import is_scalar, is_timedelta64_dtype, is_datetime64_any_dtype
 
@@ -24,6 +24,7 @@ from etlrules.backends.common.datetime import (
     DateTimeAddRule as DateTimeAddRuleBase,
     DateTimeSubstractRule as DateTimeSubstractRuleBase,
     DateTimeDiffRule as DateTimeDiffRuleBase,
+    StrToDateTimeRule as StrToDateTimeRuleBase,
 )
 
 perf_logger = logging.getLogger("etlrules.perf")
@@ -301,3 +302,21 @@ class DateTimeToStrFormatRule(PandasMixin, DateTimeToStrFormatRuleBase):
 
     def do_apply(self, df, col):
         return col.dt.strftime(self.format).astype('string')
+
+
+# the datetime resolution pandas uses for python datetimes ("ns" in pandas 2, "us" in pandas 3)
+DEFAULT_DATETIME_DTYPE = Series([datetime.datetime(2000, 1, 1)]).dtype
+
+
+def str_to_datetime(series, format, strict):
+    result = to_datetime(series, format=format, errors='raise' if strict else 'coerce')
+    # the resolution inferred by to_datetime can depend on the values (e.g. seconds for an empty series)
+    if result.dtype != DEFAULT_DATETIME_DTYPE:
+        result = result.astype(DEFAULT_DATETIME_DTYPE)
+    return result
+
+
+class StrToDateTimeRule(PandasMixin, StrToDateTimeRuleBase):
+
+    def do_apply(self, df, col):
+        return str_to_datetime(col, self.format, self.strict)
