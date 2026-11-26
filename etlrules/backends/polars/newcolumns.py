@@ -23,8 +23,9 @@ class AddNewColumnRule(AddNewColumnRuleBase):
         if self.column_type:
             try:
                 result = result.cast(MAP_TYPES[self.column_type])
-            except pl.exceptions.ComputeError as exc:
-                raise TypeError(exc)
+            except (pl.exceptions.ComputeError, pl.exceptions.InvalidOperationError) as exc:
+                # polars 2 raises InvalidOperationError for failed casts (ComputeError in earlier versions)
+                raise TypeError(str(exc)) from exc
         df = df.with_columns(**{self.output_column: result})
         self._set_output_df(data, df)
 

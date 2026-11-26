@@ -38,7 +38,7 @@ polars = [
 
 dask = [
     "aiohttp",
-    "dask[dataframe]",
+    "dask[dataframe]>=2025.5",
     "requests"
 ]
 
