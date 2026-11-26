@@ -50,8 +50,9 @@ class AddNewColumnRule(UnaryOpBaseRule):
         ColumnAlreadyExistsError: raised in strict mode only if a column with the same name already exists in the dataframe.
         ExpressionSyntaxError: raised if the column expression has a Python syntax error.
         UnsupportedTypeError: raised if the column_type parameter is specified and not supported.
-        TypeError: raised if an operation is not supported between the types involved. raised when the column type is specified
-            but the conversion to that type fails.
+        TypeError: raised if an operation is not supported between the types involved. Also raised when the column type
+            is specified but the conversion to that type fails. With the dask backend, which evaluates lazily, the conversion
+            error is raised when the result is computed.
         NameError: raised if an unknown variable is used
         KeyError: raised if you try to use an unknown column (i.e. df['ANY_UNKNOWN_COLUMN'])
 

@@ -1,4 +1,5 @@
 import dask.array as da
+from pyarrow.lib import ArrowException
 
 from etlrules.backends.common.newcolumns import (
     AddNewColumnRule as AddNewColumnRuleBase,
@@ -6,6 +7,13 @@ from etlrules.backends.common.newcolumns import (
 )
 from etlrules.backends.dask.expressions import Expression
 from etlrules.backends.dask.types import MAP_TYPES
+
+
+def _convert_partition(partition, dtype):
+    try:
+        return partition.astype(dtype)
+    except (ValueError, TypeError, ArrowException) as exc:
+        raise TypeError(str(exc)) from exc
 
 
 class AddNewColumnRule(AddNewColumnRuleBase):
@@ -18,10 +26,13 @@ class AddNewColumnRule(AddNewColumnRuleBase):
         self._validate_columns(df.columns)
         result = self._column_expression.eval(df)
         if self.column_type:
+            dtype = MAP_TYPES[self.column_type]
             try:
-                result = result.astype(MAP_TYPES[self.column_type])
+                # dask is lazy: a failed conversion is raised when the result is computed,
+                # so the conversion of each partition maps the errors to TypeError
+                result = result.map_partitions(_convert_partition, dtype, meta=result._meta.astype(dtype))
             except ValueError as exc:
-                raise TypeError(str(exc))
+                raise TypeError(str(exc)) from exc
         df = df.assign(**{self.output_column: result})
         self._set_output_df(data, df)
 

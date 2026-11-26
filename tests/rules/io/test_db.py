@@ -191,3 +191,28 @@ def test_sql_engine_context_substitution(backend):
         assert rule._get_sql_engine() == "sqlite:///user=testUser&pswd=testPassword"
         rule = backend.rules.ReadSQLQueryRule("sqlite:///user={context.DB_USER}", f"SELECT * FROM MyTable", named_output="result")
         assert rule._get_sql_engine() == "sqlite:///user=testUser"
+
+
+def test_read_sql_query_nullable_ints_in_batches(backend, tmp_path):
+    # integer columns with nulls are read as nullable ints (not floats) by all the backends, also when the data
+    # is read in batches where some batches have only nulls; the order of the rows is kept (more than 10 batches)
+    import sqlite3
+    import pandas as pd
+    db_file = tmp_path / "nullable.db"
+    values = [None, 1, None, 3, 4, None, 6, 7, 8, 9, None, 11]
+    with sqlite3.connect(db_file) as conn:
+        conn.execute("CREATE TABLE T (Id INTEGER, Value INTEGER)")
+        conn.executemany("INSERT INTO T (Id, Value) VALUES (?, ?)", list(enumerate(values)))
+    with get_test_data(None, named_inputs={}, named_output="result") as data:
+        rule = backend.rules.ReadSQLQueryRule(f"sqlite:///{db_file}", "SELECT * FROM T ORDER BY Id", batch_size=1, named_output="result")
+        rule.apply(data)
+        result = data.get_named_output("result")
+        if backend.name == "dask":
+            result = result.compute()
+        if backend.name == "polars":
+            assert result["Value"].dtype == backend.impl.Int64
+            assert result["Value"].to_list() == values
+        else:
+            assert str(result["Value"].dtype) == "Int64"
+            assert [None if v is pd.NA else v for v in result["Value"].tolist()] == values
+        assert list(result["Id"]) == list(range(len(values)))

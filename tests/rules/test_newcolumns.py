@@ -218,8 +218,7 @@ def test_add_row_numbers(output_column, start, step, strict, input_df_in, expect
 
 def test_add_new_column_type_conversion_error(backend):
     # a failed conversion to column_type raises TypeError (as documented) in all backends
-    if backend.name == "dask":
-        pytest.xfail("dask converts lazily: the error is raised on compute and not mapped to TypeError yet")
+    # (dask is lazy: the error is raised when the result is computed)
     input_df = backend.DataFrame([{"A": "x"}, {"A": "y"}], astype={"A": "string"})
     with get_test_data(input_df, named_inputs={"copy": input_df}, named_output="result") as data:
         rule = backend.rules.AddNewColumnRule("B", "df['A']", column_type="int64", named_input="copy", named_output="result")
