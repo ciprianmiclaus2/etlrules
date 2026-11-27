@@ -8,7 +8,7 @@ import pytest
 import zipfile
 
 from etlrules.backends.common.io.files import WriteCSVFileRule
-from tests.utils.data import assert_frame_equal, get_test_data
+from tests.utils.data import assert_frame_equal, column_values, get_test_data
 
 
 TEST_DF = [
@@ -149,3 +149,17 @@ def test_read_csv_file_via_http_regex(backend):
         with pytest.raises(ValueError) as exc:
             backend.rules.ReadCSVFileRule(file_name=url, regex=True, header=False, named_output="result")
         assert str(exc.value) == "Regex read not supported for URIs."
+
+
+def test_read_csv_dates_are_strings(backend, tmp_path):
+    # values which look like dates, times or timestamps are read as strings in all the backends
+    # (pyarrow's csv reader converts them) and can be parsed with StrToDateTimeRule
+    (tmp_path / "dates.csv").write_text("Id,Joined,D,T\n1,2023-05-19 10:30:45,2023-05-19,10:30:45\n2,,2024-01-02,\n")
+    expected = backend.DataFrame({"Id": [1, 2], "Joined": ["2023-05-19 10:30:45", None], "D": ["2023-05-19", "2024-01-02"], "T": ["10:30:45", None]},
+                                 astype={"Id": "Int64", "Joined": "string", "D": "string", "T": "string"})
+    with get_test_data(None, named_inputs={}, named_output="result") as data:
+        backend.rules.ReadCSVFileRule("dates.csv", str(tmp_path), named_output="dates").apply(data)
+        result = data.get_named_output("dates")
+        assert [column_values(result, col) for col in ("Joined", "D", "T")] == [column_values(expected, col) for col in ("Joined", "D", "T")]
+        backend.rules.StrToDateTimeRule("Joined", "%Y-%m-%d %H:%M:%S", named_input="dates", named_output="result").apply(data)
+        assert column_values(data.get_named_output("result"), "Joined") == [datetime.datetime(2023, 5, 19, 10, 30, 45), None]

@@ -12,7 +12,7 @@ from .runner import load_plan, run_plan
 
 __author__ = """Ciprian Miclaus"""
 __email__ = "ciprianm@gmail.com"
-__version__ = "0.4.0"
+__version__ = "0.5.0"
 
 
 __all__ = [

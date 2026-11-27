@@ -63,12 +63,25 @@ class ReadCSVFileRule(ReadCSVFileRuleBase):
             autogenerate_column_names=not self.header,
         )
         parse_options = pacsv.ParseOptions(delimiter=self.separator)
-        # like the other backends, empty values are nulls (also for strings)
-        convert_options = pacsv.ConvertOptions(strings_can_be_null=True)
-        return pacsv.read_csv(
-            _read_source(file_path, self._is_uri()),
-            read_options=read_options, parse_options=parse_options, convert_options=convert_options,
-        )
+        source = _read_source(file_path, self._is_uri())
+        if isinstance(source, pa.BufferReader):
+            data = source.read_buffer()
+            make_source = lambda: pa.BufferReader(data)  # noqa: E731
+        else:
+            make_source = lambda: source  # noqa: E731
+
+        def read(column_types=None):
+            # like the other backends, empty values are nulls (also for strings)
+            convert_options = pacsv.ConvertOptions(strings_can_be_null=True, column_types=column_types)
+            return pacsv.read_csv(make_source(), read_options=read_options, parse_options=parse_options, convert_options=convert_options)
+
+        table = read()
+        # pyarrow converts the values which look like dates, times and timestamps: read them as strings, like the
+        # other backends (they can be converted with StrToDateTimeRule)
+        temporal = [field.name for field in table.schema if pa.types.is_temporal(field.type)]
+        if temporal:
+            table = read({col: pa.string() for col in temporal})
+        return table
 
     def do_concat(self, left_df, right_df):
         return concat_tables([left_df, right_df])

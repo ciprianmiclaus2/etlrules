@@ -1,7 +1,14 @@
 # History
 
-## 0.5.0 (unreleased)
+## 0.5.0 (2026-11-27)
 
+* Changes in behaviour to check when upgrading (they are bug fixes, but existing plans may rely on the old
+  behaviour): `%f` in the formats of the polars backend is now the microseconds (like python, it was the
+  nanoseconds); with the polars backend, `DateTimeDiffRule` rounds the components and `total_seconds` down, like the
+  other backends (they were rounded towards zero for negative differences); reading files with `regex=True` raises
+  FileNotFoundError when no files match; the dask backend writes the parquet files as `data_part_0.parquet`
+  (instead of `data_part_0..parquet`, which are still read); `ReadCSVFileRule` in the pyarrow backend reads the
+  dates and times as strings (like the other backends)
 * Add `StrToDateTimeRule` to parse strings to datetime values with a given format (the reverse of
   `DateTimeToStrFormatRule`). In non-strict mode, the values which don't match the format become NA
 * Add `FillNullRule` to replace the missing values in a set of columns with a given value
@@ -41,6 +48,8 @@
   could not be read back with `regex=True`
 * Reading files with `regex=True` raises FileNotFoundError when no files match (the output used to be None, which
   failed in the next rule)
+* Fix `ReadCSVFileRule` in the pyarrow backend converting the values which look like dates, times or timestamps
+  (the other backends read them as strings, which can be converted with `StrToDateTimeRule`)
 * Fix the documentation of `TypeConversionRule`, which listed datetime and timedelta as supported types
   (use `StrToDateTimeRule` to convert strings to datetime values)
 
