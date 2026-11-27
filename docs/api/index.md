@@ -49,3 +49,5 @@ The pyarrow backend operates on `pyarrow.Table`s.
   backend: look-around assertions and back references are not supported.
 * `ReadSQLQueryRule` and `WriteSQLTableRule` use pandas (and SQLAlchemy) to read and write the data.
 * `WriteCSVFileRule` quotes the column names and the string values.
+* `WriteJSONFileRule` writes the rows with python's json module (pyarrow has no JSON writer), which is slower than
+  the other backends for large dataframes.

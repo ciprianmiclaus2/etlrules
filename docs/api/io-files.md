@@ -15,10 +15,18 @@ Rules to read (extract) dataframes from files and write (load) them to files.
     options:
       members: false
 
+::: etlrules.backends.common.io.files.ReadJSONFileRule
+    options:
+      members: false
+
 ::: etlrules.backends.common.io.files.WriteCSVFileRule
     options:
       members: false
 
 ::: etlrules.backends.common.io.files.WriteParquetFileRule
+    options:
+      members: false
+
+::: etlrules.backends.common.io.files.WriteJSONFileRule
     options:
       members: false

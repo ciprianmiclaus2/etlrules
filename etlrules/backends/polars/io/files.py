@@ -1,5 +1,6 @@
 import bz2
 import gzip
+import io
 import lzma
 import os
 import zipfile
@@ -7,12 +8,15 @@ import zipfile
 import polars as pl
 
 from etlrules.exceptions import MissingColumnError
+from etlrules.backends.polars.types import MAP_TYPES
 
 from etlrules.backends.common.io.files import (
     ReadCSVFileRule as ReadCSVFileRuleBase,
     ReadParquetFileRule as ReadParquetFileRuleBase,
     WriteCSVFileRule as WriteCSVFileRuleBase,
     WriteParquetFileRule as WriteParquetFileRuleBase,
+    ReadJSONFileRule as ReadJSONFileRuleBase,
+    WriteJSONFileRule as WriteJSONFileRuleBase,
 )
 
 
@@ -32,7 +36,34 @@ COMPRESSION_OPEN = {
 }
 
 
-class ReadCSVFileRule(ReadCSVFileRuleBase):
+class ConcatMixin:
+    """ Concatenates the dataframes read from multiple files (regex=True); missing columns are filled with nulls. """
+
+    def do_concat(self, left_df, right_df):
+        return pl.concat([left_df, right_df], how="diagonal_relaxed")
+
+
+def _decompressed_source(file_path: str, is_uri: bool):
+    """ A source polars can read: the path, or the decompressed bytes for URIs and bz2/xz/zip files. """
+    if is_uri:
+        import urllib.request
+        with urllib.request.urlopen(file_path) as response:
+            return io.BytesIO(response.read())
+    _, ext = os.path.splitext(file_path)
+    compression = COMPRESSION_EXT.get(ext.lower())
+    if compression == "zip" or (compression is not None and zipfile.is_zipfile(file_path)):
+        with zipfile.ZipFile(file_path, "r") as archive:
+            names = archive.namelist()
+            if len(names) != 1:
+                raise RuntimeError(f"Only a single file can be read from an archive. {file_path} has {len(names)} files.")
+            return io.BytesIO(archive.read(names[0]))
+    if compression is not None:
+        with COMPRESSION_OPEN[compression](file_path, "rb") as f:
+            return io.BytesIO(f.read())
+    return file_path
+
+
+class ReadCSVFileRule(ConcatMixin, ReadCSVFileRuleBase):
 
     def _read_csv(self, source) -> pl.DataFrame:
         return pl.read_csv(
@@ -60,7 +91,7 @@ class ReadCSVFileRule(ReadCSVFileRuleBase):
             return self._read_csv(f.read())
 
 
-class ReadParquetFileRule(ReadParquetFileRuleBase):
+class ReadParquetFileRule(ConcatMixin, ReadParquetFileRuleBase):
     def do_read(self, file_path: str) -> pl.DataFrame:
         from pyarrow.lib import ArrowInvalid
         try:
@@ -99,3 +130,33 @@ class WriteParquetFileRule(WriteParquetFileRuleBase):
             use_pyarrow=True,
             compression=self.compression or "uncompressed",
         )
+
+
+class ReadJSONFileRule(ConcatMixin, ReadJSONFileRuleBase):
+
+    def do_read(self, file_path: str) -> pl.DataFrame:
+        # infer the types from all the rows (polars only looks at the first 100 rows by default)
+        df = pl.read_ndjson(_decompressed_source(file_path, self._is_uri()), infer_schema_length=None)
+        column_types = self._get_column_types(df.columns)
+        if column_types:
+            df = df.with_columns(pl.col(col).cast(MAP_TYPES[col_type]) for col, col_type in column_types.items())
+        return df
+
+
+class WriteJSONFileRule(WriteJSONFileRuleBase):
+
+    def do_write(self, file_name: str, file_dir: str, df: pl.DataFrame) -> None:
+        # the same datetime format in all the backends: 2023-05-19T10:30:45.000000
+        df = df.with_columns(
+            pl.col(col).dt.strftime("%Y-%m-%dT%H:%M:%S%.6f") for col, dtype in df.schema.items() if dtype == pl.Datetime
+        )
+        file_path = os.path.join(file_dir, file_name)
+        if self.compression == "zip":
+            inner_name, _ = os.path.splitext(file_name)
+            with zipfile.ZipFile(file_path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+                archive.writestr(inner_name, df.write_ndjson())
+        elif self.compression is not None:
+            with COMPRESSION_OPEN[self.compression](file_path, "wb") as f:
+                df.write_ndjson(f)
+        else:
+            df.write_ndjson(file_path)

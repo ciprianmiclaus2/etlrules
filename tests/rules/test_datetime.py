@@ -1019,3 +1019,34 @@ def test_str_to_datetime_errors(backend):
             backend.rules.StrToDateTimeRule("Z", "%Y-%m-%d", named_input="input", named_output="result").apply(data)
         with pytest.raises(ColumnAlreadyExistsError):
             backend.rules.StrToDateTimeRule("A", "%Y-%m-%d", output_column="B", named_input="input", named_output="result").apply(data)
+
+
+@pytest.mark.parametrize("format,expected", [
+    ["%Y-%m-%d %H:%M:%S.%f", ["2024-02-29 23:59:59.123456", "2023-05-19 10:30:45.000000", None]],
+    ["%f|%H", ["123456|23", "000000|10", None]],
+    ["%H:%M:%S", ["23:59:59", "10:30:45", None]],
+    ["100%%f", ["100%f", "100%f", None]],
+])
+def test_str_format_microseconds(format, expected, backend):
+    # %f is the microseconds with 6 digits (like python's) in all the backends
+    values = [datetime.datetime(2024, 2, 29, 23, 59, 59, 123456), datetime.datetime(2023, 5, 19, 10, 30, 45), None]
+    assert [None if v is None else v.strftime(format) for v in values] == expected
+    input_df = backend.DataFrame({"A": values}, astype={"A": "datetime"})
+    expected_df = backend.DataFrame({"A": expected}, astype={"A": "string"})
+    with get_test_data(input_df, named_inputs={"input": input_df}, named_output="result") as data:
+        backend.rules.DateTimeToStrFormatRule("A", format, named_input="input", named_output="result").apply(data)
+        assert_frame_equal(data.get_named_output("result"), expected_df)
+
+
+@pytest.mark.parametrize("format,values", [
+    ["%Y-%m-%d %H:%M:%S.%f", ["2024-02-29 23:59:59.123456", "2023-05-19 10:30:45.000001", None]],
+    ["%d/%m/%Y %H:%M:%S.%f", ["29/02/2024 23:59:59.5", "19/05/2023 10:30:45.000001", None]],
+])
+def test_str_to_datetime_microseconds(format, values, backend):
+    # %f is parsed like python's strptime in all the backends
+    expected = [None if v is None else datetime.datetime.strptime(v, format) for v in values]
+    input_df = backend.DataFrame({"A": values}, astype={"A": "string"})
+    expected_df = backend.DataFrame({"A": expected}, astype={"A": "datetime"})
+    with get_test_data(input_df, named_inputs={"input": input_df}, named_output="result") as data:
+        backend.rules.StrToDateTimeRule("A", format, named_input="input", named_output="result").apply(data)
+        assert_frame_equal(data.get_named_output("result"), expected_df)

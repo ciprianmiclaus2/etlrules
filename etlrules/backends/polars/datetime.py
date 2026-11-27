@@ -344,16 +344,42 @@ class DateTimeLocalNowRule(DateTimeLocalNowRuleBase):
         self._set_output_df(data, df)
 
 
+def to_chrono_format(format: str, parsing: bool = False) -> str:
+    """ Converts a python strftime/strptime format to the format polars uses (chrono's).
+
+    Python's %f is the microseconds: 6 digits when formatting, 1 to 6 digits when parsing. In polars, %f is the
+    nanoseconds: the equivalents are %6f for formatting and, for parsing, %.f (which also consumes the dot before
+    the digits, so .%f is converted to %.f).
+    """
+    result = []
+    idx = 0
+    while idx < len(format):
+        if format[idx] == "%" and idx + 1 < len(format):
+            directive = format[idx:idx + 2]
+            if directive == "%f":
+                if parsing and result and result[-1] == ".":
+                    result[-1] = "%.f"
+                else:
+                    result.append("%6f")
+            else:
+                result.append(directive)
+            idx += 2
+        else:
+            result.append(format[idx])
+            idx += 1
+    return "".join(result)
+
+
 class DateTimeToStrFormatRule(PolarsMixin, DateTimeToStrFormatRuleBase):
 
     def do_apply(self, df, col):
-        return col.dt.strftime(self.format)
+        return col.dt.strftime(to_chrono_format(self.format))
 
 
 class StrToDateTimeRule(PolarsMixin, StrToDateTimeRuleBase):
 
     def do_apply(self, df, col):
         try:
-            return col.str.to_datetime(self.format, strict=self.strict, time_unit="us")
+            return col.str.to_datetime(to_chrono_format(self.format, parsing=True), strict=self.strict, time_unit="us")
         except (pl.exceptions.InvalidOperationError, pl.exceptions.ComputeError) as exc:
             raise ValueError(str(exc)) from exc

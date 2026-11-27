@@ -352,18 +352,64 @@ class DateTimeLocalNowRule(DateTimeLocalNowRuleBase):
         self._set_output_df(data, df)
 
 
+def _split_microseconds(format: str) -> list:
+    """ Splits a python strftime format around the %f directives (e.g. "%H:%M:%S.%f" -> ["%H:%M:%S.", None, ""]). """
+    parts, current, idx = [], [], 0
+    while idx < len(format):
+        if format[idx] == "%" and idx + 1 < len(format):
+            directive = format[idx:idx + 2]
+            if directive == "%f":
+                parts.extend(["".join(current), None])
+                current = []
+            else:
+                current.append(directive)
+            idx += 2
+        else:
+            current.append(format[idx])
+            idx += 1
+    parts.append("".join(current))
+    return parts
+
+
 class DateTimeToStrFormatRule(PyArrowMixin, DateTimeToStrFormatRuleBase):
 
     def do_apply(self, df, col):
-        if "%f" not in self.format and pa.types.is_timestamp(col.type) and col.type.unit != "s":
-            # arrow's %S includes the fractions of a second for sub-second timestamps (python's doesn't)
-            col = pc.cast(pc.floor_temporal(col, unit="second"), pa.timestamp("s", tz=col.type.tz))
-        return pc.strftime(col, format=self.format)
+        # arrow's %S includes the fractions of a second for sub-second timestamps and there's no %f:
+        # format the whole seconds and add the microseconds (6 digits, like python's %f) where %f is
+        seconds = col
+        if pa.types.is_timestamp(col.type) and col.type.unit != "s":
+            seconds = pc.cast(pc.floor_temporal(col, unit="second"), pa.timestamp("s", tz=col.type.tz))
+        parts = _split_microseconds(self.format)
+        if len(parts) == 1:
+            return pc.strftime(seconds, format=self.format)
+        microseconds = pc.utf8_lpad(pc.cast(pc.add(pc.multiply(pc.millisecond(col), 1000), pc.microsecond(col)), pa.string()), 6, "0")
+        values = [
+            microseconds if part is None else pc.strftime(seconds, format=part) if part else pa.scalar("")
+            for part in parts
+        ]
+        return pc.binary_join_element_wise(*values, "")
+
+
+def _strptime_python(col, format, strict):
+    """ Parses the strings with python's strptime (for the formats pyarrow doesn't support, e.g. %f). """
+    def parse(value):
+        if value is None:
+            return None
+        try:
+            return datetime.datetime.strptime(value, format)
+        except ValueError:
+            if strict:
+                raise
+            return None
+    return pa.array([parse(value) for value in col.to_pylist()], type=pa.timestamp("us"))
 
 
 class StrToDateTimeRule(PyArrowMixin, StrToDateTimeRuleBase):
 
     def do_apply(self, df, col):
+        if None in _split_microseconds(self.format):
+            # pyarrow's strptime doesn't support %f
+            return _strptime_python(col, self.format, self.strict)
         try:
             return pc.strptime(col, format=self.format, unit="us", error_is_null=not self.strict)
         except (pa.ArrowInvalid, pa.ArrowNotImplementedError) as exc:

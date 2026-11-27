@@ -611,7 +611,6 @@ class StrToDateTimeRule(BaseAssignColumnRule):
             E.g. %Y-%m-%d %H:%M:%S
             For the directives accepted in the format, have a look at:
             https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior
-            The pyarrow backend doesn't support %f (fractions of a second).
         output_column (Optional[str]): An optional column to hold the parsed datetime values.
             If provided, the existing column is unchanged, and a new column with this name is created.
             If not provided, the result is updated in place.

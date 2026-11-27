@@ -18,6 +18,15 @@
 * Add `FilterValuesRule` to keep (or remove) the rows where a column has one of a list of values
 * Add `AssertNotNullRule` and `AssertUniqueRule` to check the data (missing values, duplicate keys) and stop the
   plan with the new `ValidationError` when the check fails
+* Add `ReadJSONFileRule` and `WriteJSONFileRule` to read and write JSON lines (NDJSON) files, optionally compressed
+  (gzip, bz2, xz, zip). The values are read with the same (nullable) types in all the backends, the strings
+  (including dates) are read as strings and `column_types` can set the types of the columns. The datetime values are
+  written in the same ISO 8601 format in all the backends
+* Fix reading multiple files with `regex=True` (`ReadCSVFileRule`, `ReadParquetFileRule`) in the pandas, polars
+  and dask backends, which failed with NotImplementedError. The matching files are now read in the order of their
+  names
+* Fix `%f` (microseconds) in the formats of `DateTimeToStrFormatRule` and `StrToDateTimeRule` in the polars backend
+  (it was interpreted as nanoseconds) and in the pyarrow backend (it wasn't supported)
 * Fix the documentation of `TypeConversionRule`, which listed datetime and timedelta as supported types
   (use `StrToDateTimeRule` to convert strings to datetime values)
 
