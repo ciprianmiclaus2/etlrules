@@ -4,6 +4,7 @@ import pyarrow.compute as pc
 from etlrules.backends.common.conditions import (
     IfThenElseRule as IfThenElseRuleBase,
     FilterRule as FilterRuleBase,
+    FilterValuesRule as FilterValuesRuleBase,
 )
 from etlrules.backends.pyarrow.base import set_column, to_column
 from etlrules.backends.pyarrow.expressions import Expression, evaluate_to_column
@@ -48,3 +49,18 @@ class FilterRule(FilterRuleBase):
         self._set_output_df(data, df.filter(cond))
         if self.named_output_discarded:
             data.set_named_output(self.named_output_discarded, df.filter(pc.invert(cond)))
+
+
+class FilterValuesRule(FilterValuesRuleBase):
+
+    def do_mask(self, df):
+        col = df[self.input_column]
+        try:
+            values = pa.array(self.values, type=col.type)
+        except (pa.ArrowInvalid, pa.ArrowTypeError) as exc:
+            raise TypeError(f"The values {self.values} are not compatible with column '{self.input_column}' of type {col.type}: {exc}") from exc
+        # a missing value is never in the values
+        return pc.fill_null(pc.is_in(col, value_set=values), False)
+
+    def do_filter(self, df, mask, keep):
+        return df.filter(mask if keep else pc.invert(mask))

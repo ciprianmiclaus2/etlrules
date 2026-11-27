@@ -1,7 +1,8 @@
-from typing import Optional, Union
+from typing import Iterable, Optional, Union
 
 from etlrules.exceptions import ColumnAlreadyExistsError, MissingColumnError
 from etlrules.rule import UnaryOpBaseRule
+from etlrules.backends.common.dataframe import get_column_names
 
 
 class IfThenElseRule(UnaryOpBaseRule):
@@ -150,3 +151,77 @@ class FilterRule(UnaryOpBaseRule):
         self.discard_matching_rows = discard_matching_rows
         self.named_output_discarded = named_output_discarded
         self._condition_expression = self.get_condition_expression()
+
+
+class FilterValuesRule(UnaryOpBaseRule):
+    """ Keeps (or removes) the rows where the value of a column is one of a list of values.
+
+    Basic usage:
+
+        # keeps the rows where Country is UK or IE
+        rule = FilterValuesRule("Country", ["UK", "IE"])
+        rule.apply(data)
+
+        # removes the rows where Status is cancelled or deleted
+        rule = FilterValuesRule("Status", ["cancelled", "deleted"], exclude=True)
+        rule.apply(data)
+
+    Args:
+        input_column (str): The column with the values to check.
+        values (Iterable): The list of values. They should have the same type as the column.
+        exclude (bool): When False (default), the rows with the values in the list are kept.
+            When True, the rows with the values in the list are removed.
+        named_output_discarded (Optional[str]): A named output for the rows which are removed, if those need to be kept
+            for further processing. Default: None, which doesn't keep track of the removed rows.
+
+        named_input (Optional[str]): Which dataframe to use as the input. Optional.
+            When not set, the input is taken from the main output.
+            Set it to a string value, the name of an output dataframe of a previous rule.
+        named_output (Optional[str]): Give the output of this rule a name so it can be used by another rule as a named input. Optional.
+            When not set, the result of this rule will be available as the main output.
+            When set to a name (string), the result will be available as that named output.
+        name (Optional[str]): Give the rule a name. Optional.
+            Named rules are more descriptive as to what they're trying to do/the intent.
+        description (Optional[str]): Describe in detail what the rules does, how it does it. Optional.
+            Together with the name, the description acts as the documentation of the rule.
+        strict (bool): When set to True, the rule does a stricter validation. Default: True
+
+    Raises:
+        MissingColumnError: raised if the input column doesn't exist in the input dataframe.
+
+    Note:
+        The rows with missing values (NA) in the column are removed when exclude is False and kept when exclude
+        is True (a missing value is never one of the values).
+    """
+
+    def __init__(self, input_column: str, values: Iterable[Union[int, float, str, bool]], exclude: bool=False, named_output_discarded: Optional[str]=None, named_input: Optional[str]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
+        super().__init__(named_input=named_input, named_output=named_output, name=name, description=description, strict=strict)
+        assert input_column and isinstance(input_column, str), "FilterValuesRule: input_column must be a non-empty string."
+        self.input_column = input_column
+        self.values = [value for value in values]
+        assert all(value is not None for value in self.values), "FilterValuesRule: values cannot contain None (use DropNullRowsRule to remove missing values)."
+        self.exclude = bool(exclude)
+        self.named_output_discarded = named_output_discarded
+
+    def get_all_named_outputs(self):
+        yield self.named_output
+        if self.named_output_discarded:
+            yield self.named_output_discarded
+
+    def do_mask(self, df):
+        """ Returns a boolean column which is True for the rows with values in the list (False for missing values). """
+        raise NotImplementedError("Have you imported the rules from etlrules.backends.<your_backend> and not common?")
+
+    def do_filter(self, df, mask, keep):
+        raise NotImplementedError("Have you imported the rules from etlrules.backends.<your_backend> and not common?")
+
+    def apply(self, data):
+        super().apply(data)
+        df = self._get_input_df(data)
+        if self.input_column not in get_column_names(df):
+            raise MissingColumnError(f"Column '{self.input_column}' is missing from the input dataframe.")
+        mask = self.do_mask(df)
+        keep = not self.exclude
+        self._set_output_df(data, self.do_filter(df, mask, keep))
+        if self.named_output_discarded:
+            data.set_named_output(self.named_output_discarded, self.do_filter(df, mask, not keep))

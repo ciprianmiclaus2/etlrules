@@ -14,3 +14,7 @@ Rules to filter rows and calculate columns based on conditions.
 ::: etlrules.backends.common.conditions.FilterRule
     options:
       members: false
+
+::: etlrules.backends.common.conditions.FilterValuesRule
+    options:
+      members: false

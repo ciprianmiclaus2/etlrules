@@ -13,6 +13,11 @@
 * Add `StrLengthRule` to calculate the length of the values in a string column
 * Add `StrContainsRule` to check if the values in a string column contain, start with or end with a given
   string; the boolean result can be used to filter rows without backend specific expressions
+* Add `SemiJoinRule` and `AntiJoinRule` to keep (or remove) the rows of a dataframe which have a match in another
+  dataframe, e.g. to find the new records which have not been loaded yet
+* Add `FilterValuesRule` to keep (or remove) the rows where a column has one of a list of values
+* Add `AssertNotNullRule` and `AssertUniqueRule` to check the data (missing values, duplicate keys) and stop the
+  plan with the new `ValidationError` when the check fails
 * Fix the documentation of `TypeConversionRule`, which listed datetime and timedelta as supported types
   (use `StrToDateTimeRule` to convert strings to datetime values)
 

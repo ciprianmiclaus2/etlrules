@@ -6,6 +6,8 @@ from etlrules.backends.common.joins import (
     InnerJoinRule as InnerJoinRuleBase,
     OuterJoinRule as OuterJoinRuleBase,
     RightJoinRule as RightJoinRuleBase,
+    SemiJoinRule as SemiJoinRuleBase,
+    AntiJoinRule as AntiJoinRuleBase,
 )
 
 LEFT_ROW = "__etlrules_left_row"
@@ -71,3 +73,29 @@ class OuterJoinRule(JoinsMixin, OuterJoinRuleBase):
 
 class RightJoinRule(JoinsMixin, RightJoinRuleBase):
     JOIN_TYPE = "right"
+
+
+class FilterJoinMixin:
+    """ Keeps (semi join) or removes (anti join) the left rows with a match in the right dataframe. """
+
+    JOIN_TYPE = None
+
+    def do_apply(self, left_df, right_df):
+        left_on, right_on = self._get_key_columns()
+        keys = [f"__etlrules_key_{idx}" for idx in range(len(left_on))]
+        left_keys = pa.table({key: left_df[col] for key, col in zip(keys, left_on)}).append_column(
+            LEFT_ROW, pa.array(range(left_df.num_rows), type=pa.int64()))
+        right_keys = pa.table({key: right_df[col] for key, col in zip(keys, right_on)})
+        # missing keys don't match in pyarrow's joins (like SQL)
+        joined = left_keys.join(right_keys, keys=keys, join_type=self.JOIN_TYPE)
+        rows = joined[LEFT_ROW]
+        # keep the order of the left rows
+        return left_df.take(pc.take(rows, pc.sort_indices(rows)))
+
+
+class SemiJoinRule(FilterJoinMixin, SemiJoinRuleBase):
+    JOIN_TYPE = "left semi"
+
+
+class AntiJoinRule(FilterJoinMixin, AntiJoinRuleBase):
+    JOIN_TYPE = "left anti"

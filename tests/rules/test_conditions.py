@@ -120,3 +120,33 @@ def test_filter_rule_scenarios(condition_expression, discard_matching_rows, name
                     rule.apply(data)
             else:
                 assert False
+
+FV_DF = [{"A": "UK", "B": 1}, {"A": "FR", "B": 2}, {"B": 3}, {"A": "IE", "B": 4}, {"A": "uk", "B": 5}]
+FV_TYPES = {"A": "string", "B": "Int64"}
+
+
+@pytest.mark.parametrize("input_column,values,exclude,expected,expected_discarded", [
+    ["A", ["UK", "IE"], False, [{"A": "UK", "B": 1}, {"A": "IE", "B": 4}], [{"A": "FR", "B": 2}, {"B": 3}, {"A": "uk", "B": 5}]],
+    # exclude: the rows with missing values are kept (a missing value is never one of the values)
+    ["A", ["UK", "IE"], True, [{"A": "FR", "B": 2}, {"B": 3}, {"A": "uk", "B": 5}], [{"A": "UK", "B": 1}, {"A": "IE", "B": 4}]],
+    ["B", [2, 5, 99], False, [{"A": "FR", "B": 2}, {"A": "uk", "B": 5}], [{"A": "UK", "B": 1}, {"B": 3}, {"A": "IE", "B": 4}]],
+    ["A", ["XX"], False, [], FV_DF],
+])
+def test_filter_values_rule(input_column, values, exclude, expected, expected_discarded, backend):
+    input_df = backend.DataFrame(FV_DF, astype=FV_TYPES)
+    expected = backend.DataFrame(expected, astype=FV_TYPES) if expected else backend.empty_df(input_df)
+    expected_discarded = backend.DataFrame(expected_discarded, astype=FV_TYPES)
+    with get_test_data(input_df, named_inputs={"input": input_df}, named_output="result") as data:
+        rule = backend.rules.FilterValuesRule(input_column, values, exclude=exclude, named_output_discarded="discarded", named_input="input", named_output="result")
+        rule.apply(data)
+        assert_frame_equal(data.get_named_output("result"), expected)
+        assert_frame_equal(data.get_named_output("discarded"), expected_discarded)
+
+
+def test_filter_values_rule_missing_column(backend):
+    input_df = backend.DataFrame(FV_DF, astype=FV_TYPES)
+    with get_test_data(input_df, named_inputs={"input": input_df}, named_output="result") as data:
+        with pytest.raises(MissingColumnError):
+            backend.rules.FilterValuesRule("Z", ["x"], named_input="input", named_output="result").apply(data)
+    with pytest.raises(AssertionError):
+        backend.rules.FilterValuesRule("A", ["x", None])

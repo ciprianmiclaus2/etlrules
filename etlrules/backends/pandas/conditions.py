@@ -2,7 +2,8 @@ import numpy as np
 
 from etlrules.backends.common.conditions import (
     IfThenElseRule as IfThenElseRuleBase,
-    FilterRule as FilterRuleBase
+    FilterRule as FilterRuleBase,
+    FilterValuesRule as FilterValuesRuleBase,
 )
 from .expressions import Expression
 
@@ -39,3 +40,12 @@ class FilterRule(FilterRuleBase):
         self._set_output_df(data, df[cond_series].reset_index(drop=True))
         if self.named_output_discarded:
             data.set_named_output(self.named_output_discarded, df[~cond_series].reset_index(drop=True))
+
+
+class FilterValuesRule(FilterValuesRuleBase):
+
+    def do_mask(self, df):
+        return df[self.input_column].isin(self.values).fillna(False).astype(bool)
+
+    def do_filter(self, df, mask, keep):
+        return df[mask if keep else ~mask].reset_index(drop=True)

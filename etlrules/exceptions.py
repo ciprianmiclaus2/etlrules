@@ -30,3 +30,7 @@ class GraphRuntimeError(RuntimeError):
 
 class SQLError(RuntimeError):
     """ There was an error during the execution of a sql statement. """
+
+
+class ValidationError(Exception):
+    """ The data failed a validation rule (e.g. AssertNotNullRule or AssertUniqueRule). """

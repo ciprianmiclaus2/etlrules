@@ -1,6 +1,7 @@
 # Join rules
 
-Database-style joins of two dataframes.
+Database-style joins of two dataframes, and semi/anti joins which keep or remove the rows of a dataframe
+with a match in another dataframe.
 
 !!! note "Importing the rules"
     The rules are implemented by each backend. Import them from the package of the backend you use, e.g.
@@ -20,5 +21,13 @@ Database-style joins of two dataframes.
       members: false
 
 ::: etlrules.backends.common.joins.RightJoinRule
+    options:
+      members: false
+
+::: etlrules.backends.common.joins.SemiJoinRule
+    options:
+      members: false
+
+::: etlrules.backends.common.joins.AntiJoinRule
     options:
       members: false

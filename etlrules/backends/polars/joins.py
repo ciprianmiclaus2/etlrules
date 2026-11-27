@@ -3,6 +3,8 @@ import polars as pl
 from etlrules.backends.common.joins import (
     LeftJoinRule as LeftJoinRuleBase,
     RightJoinRule as RightJoinRuleBase,
+    SemiJoinRule as SemiJoinRuleBase,
+    AntiJoinRule as AntiJoinRuleBase,
     InnerJoinRule as InnerJoinRuleBase,
     OuterJoinRule as OuterJoinRuleBase,
 )
@@ -81,3 +83,28 @@ class RightJoinRule(JoinsMixin, RightJoinRuleBase):
     def do_apply(self, left_df, right_df):
         suffixes = reversed(self.suffixes)
         return super().do_join(right_df, left_df, suffixes)
+
+
+ROW_INDEX = "__etlrules_row_index"
+
+
+class FilterJoinMixin:
+    """ Keeps (semi join) or removes (anti join) the left rows with a match in the right dataframe. """
+
+    HOW = None
+
+    def do_apply(self, left_df, right_df):
+        left_on, right_on = self._get_key_columns()
+        # missing keys never match (like SQL)
+        right_keys = right_df.select(right_on).drop_nulls().unique()
+        result = left_df.with_row_index(ROW_INDEX).join(right_keys, left_on=left_on, right_on=right_on, how=self.HOW)
+        # keep the order of the left rows
+        return result.sort(ROW_INDEX).drop(ROW_INDEX)
+
+
+class SemiJoinRule(FilterJoinMixin, SemiJoinRuleBase):
+    HOW = "semi"
+
+
+class AntiJoinRule(FilterJoinMixin, AntiJoinRuleBase):
+    HOW = "anti"

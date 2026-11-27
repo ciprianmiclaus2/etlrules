@@ -207,3 +207,70 @@ def test_raises_missing_column_right(backend):
         with pytest.raises(MissingColumnError) as exc:
             rule.apply(data)
         assert str(exc.value) == "Missing columns in join in the right dataframe: {'Z'}"
+
+
+FILTER_LEFT = [
+    {"A": 1, "B": "a"},
+    {"A": 2, "B": "b"},
+    {"A": 3, "B": "c"},
+    {"B": "d"},
+    {"A": 1, "B": "e"},
+]
+FILTER_RIGHT = [
+    {"K": 1, "C": "x"},
+    {"K": 1, "C": "y"},
+    {"K": 3, "C": "z"},
+    {"C": "w"},
+]
+
+
+@pytest.mark.parametrize("rule_cls_str,expected", [
+    # each matching left row once (even if it matches 2 right rows), in the left order, only the left columns
+    ["SemiJoinRule", [{"A": 1, "B": "a"}, {"A": 3, "B": "c"}, {"A": 1, "B": "e"}]],
+    # missing keys never match: the left row with a missing key is kept by the anti join
+    ["AntiJoinRule", [{"A": 2, "B": "b"}, {"B": "d"}]],
+])
+def test_semi_anti_join(rule_cls_str, expected, backend):
+    left_df = backend.DataFrame(FILTER_LEFT, astype={"A": "Int64", "B": "string"})
+    right_df = backend.DataFrame(FILTER_RIGHT, astype={"K": "Int64", "C": "string"})
+    expected = backend.DataFrame(expected, astype={"A": "Int64", "B": "string"})
+    with get_test_data(left_df, named_inputs={"left": left_df, "right": right_df}, named_output="result") as data:
+        rule = getattr(backend.rules, rule_cls_str)("left", "right", key_columns_left=["A"], key_columns_right=["K"], named_output="result")
+        rule.apply(data)
+        assert_frame_equal(data.get_named_output("result"), expected)
+
+
+@pytest.mark.parametrize("rule_cls_str,expected", [
+    ["SemiJoinRule", [{"A": 1, "B": "b"}]],
+    ["AntiJoinRule", [{"A": 1, "B": "a"}, {"A": 2, "B": "a"}]],
+])
+def test_semi_anti_join_multiple_keys(rule_cls_str, expected, backend):
+    left_df = backend.DataFrame([{"A": 1, "B": "a"}, {"A": 1, "B": "b"}, {"A": 2, "B": "a"}], astype={"A": "Int64", "B": "string"})
+    right_df = backend.DataFrame([{"A": 1, "B": "b"}, {"A": 2, "B": "c"}], astype={"A": "Int64", "B": "string"})
+    expected = backend.DataFrame(expected, astype={"A": "Int64", "B": "string"})
+    with get_test_data(left_df, named_inputs={"left": left_df, "right": right_df}, named_output="result") as data:
+        rule = getattr(backend.rules, rule_cls_str)("left", "right", key_columns_left=["A", "B"], named_output="result")
+        rule.apply(data)
+        assert_frame_equal(data.get_named_output("result"), expected)
+
+
+@pytest.mark.parametrize("rule_cls_str", ["SemiJoinRule", "AntiJoinRule"])
+def test_semi_anti_join_empty_right(rule_cls_str, backend):
+    left_df = backend.DataFrame(FILTER_LEFT, astype={"A": "Int64", "B": "string"})
+    right_df = backend.DataFrame({"K": [], "C": []}, astype={"K": "Int64", "C": "string"})
+    expected = backend.empty_df(left_df) if rule_cls_str == "SemiJoinRule" else left_df
+    with get_test_data(left_df, named_inputs={"left": left_df, "right": right_df}, named_output="result") as data:
+        rule = getattr(backend.rules, rule_cls_str)("left", "right", key_columns_left=["A"], key_columns_right=["K"], named_output="result")
+        rule.apply(data)
+        assert_frame_equal(data.get_named_output("result"), expected)
+
+
+@pytest.mark.parametrize("rule_cls_str", ["SemiJoinRule", "AntiJoinRule"])
+def test_semi_anti_join_missing_columns(rule_cls_str, backend):
+    left_df = backend.DataFrame(FILTER_LEFT, astype={"A": "Int64", "B": "string"})
+    right_df = backend.DataFrame(FILTER_RIGHT, astype={"K": "Int64", "C": "string"})
+    with get_test_data(left_df, named_inputs={"left": left_df, "right": right_df}, named_output="result") as data:
+        with pytest.raises(MissingColumnError):
+            getattr(backend.rules, rule_cls_str)("left", "right", key_columns_left=["Z"], key_columns_right=["K"], named_output="result").apply(data)
+        with pytest.raises(MissingColumnError):
+            getattr(backend.rules, rule_cls_str)("left", "right", key_columns_left=["A"], named_output="result").apply(data)

@@ -4,7 +4,7 @@ from .data import RuleData, context
 from .engine import RuleEngine
 from .exceptions import (
     ColumnAlreadyExistsError, ExpressionSyntaxError, GraphRuntimeError,
-    InvalidPlanError, MissingColumnError, SchemaError, UnsupportedTypeError,
+    InvalidPlanError, MissingColumnError, SchemaError, UnsupportedTypeError, ValidationError,
 )
 from .plan import Plan, PlanMode
 from .runner import load_plan, run_plan
@@ -19,7 +19,7 @@ __all__ = [
     "RuleData", "context",
     "RuleEngine",
     "ColumnAlreadyExistsError", "ExpressionSyntaxError", "GraphRuntimeError",
-    "InvalidPlanError", "MissingColumnError", "SchemaError", "UnsupportedTypeError",
+    "InvalidPlanError", "MissingColumnError", "SchemaError", "UnsupportedTypeError", "ValidationError",
     "Plan", "PlanMode",
     "load_plan", "run_plan",
 ]

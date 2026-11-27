@@ -30,6 +30,7 @@ When a plan is loaded from yaml, the backend is chosen when loading it (e.g. `lo
 * [Numeric rules](numeric.md)
 * [String rules](strings.md)
 * [Type conversion rules](types.md)
+* [Validation rules](validation.md)
 * [File rules](io-files.md)
 * [Database rules](io-db.md)
 

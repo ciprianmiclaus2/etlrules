@@ -2,7 +2,8 @@ import polars as pl
 
 from etlrules.backends.common.conditions import (
     IfThenElseRule as IfThenElseRuleBase,
-    FilterRule as FilterRuleBase
+    FilterRule as FilterRuleBase,
+    FilterValuesRule as FilterValuesRuleBase,
 )
 
 from etlrules.backends.polars.expressions import Expression
@@ -46,3 +47,12 @@ class FilterRule(FilterRuleBase):
         if self.named_output_discarded:
             discarded_result = df.filter(~cond_series)
             data.set_named_output(self.named_output_discarded, discarded_result)
+
+
+class FilterValuesRule(FilterValuesRuleBase):
+
+    def do_mask(self, df):
+        return df[self.input_column].is_in(self.values).fill_null(False)
+
+    def do_filter(self, df, mask, keep):
+        return df.filter(mask if keep else ~mask)

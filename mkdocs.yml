@@ -24,6 +24,7 @@ nav:
       - Numeric rules: api/numeric.md
       - String rules: api/strings.md
       - Type conversion rules: api/types.md
+      - Validation rules: api/validation.md
       - File rules: api/io-files.md
       - Database rules: api/io-db.md
   - Contributing: contributing.md
