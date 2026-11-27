@@ -219,3 +219,23 @@ def test_read_sql_query_nullable_ints_in_batches(backend, tmp_path):
             assert str(result["Value"].dtype) == "Int64"
             assert [None if v is pd.NA else v for v in result["Value"].tolist()] == values
         assert column_values(result, "Id") == list(range(len(values)))
+
+
+def test_sql_engine_from_missing_environment_variable(backend):
+    # e.g. sql_engine="{env.DB_URL}" with DB_URL not set: a clear error rather than an obscure sqlalchemy one
+    os.environ.pop("ETLRULES_TEST_MISSING_DB_URL", None)
+    with get_test_data(None, named_inputs={}, named_output="result") as data:
+        with pytest.raises(ValueError) as exc:
+            backend.rules.ReadSQLQueryRule("{env.ETLRULES_TEST_MISSING_DB_URL}", "SELECT 1", named_output="result").apply(data)
+        assert "sql_engine" in str(exc.value)
+    input_df = backend.DataFrame([{"A": 1}])
+    with get_test_data(input_df, named_inputs={"input": input_df}, named_output="result") as data:
+        with pytest.raises(ValueError) as exc:
+            backend.rules.WriteSQLTableRule("{env.ETLRULES_TEST_MISSING_DB_URL}", "T", named_input="input").apply(data)
+        assert "sql_engine" in str(exc.value)
+
+
+def test_write_sql_table_invalid_if_exists(backend):
+    with pytest.raises(ValueError) as exc:
+        backend.rules.WriteSQLTableRule("sqlite:///test.db", "T", if_exists="truncate")
+    assert "'truncate' is not a valid value for the if_exists parameter" in str(exc.value)

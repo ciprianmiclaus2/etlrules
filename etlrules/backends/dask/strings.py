@@ -105,7 +105,8 @@ class StrExtractRule(StrExtractRuleBase, DaskMixin):
         for idx, col in enumerate(columns):
             new_col = df[col].str.extract(self._compiled_expr, expand=True)
             for group in range(groups):
-                new_column = new_col[group]
+                # by position: the columns are named after the groups if the regular expression has named groups
+                new_column = new_col.iloc[:, group]
                 if group == 0 and self.keep_original_value:
                     # only the first new column keeps the value (in case of multiple groups)
                     new_column = new_column.fillna(value=df[col])

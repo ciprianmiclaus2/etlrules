@@ -267,8 +267,6 @@ def add_sub_col(df, col, unit_value, unit, sign, input_column, strict=True):
             else:
                 if unit == "weekdays":
                     return business_day_offset(col, sign * col2, strict=strict)
-                elif unit == "weeks":
-                    return col + pl.duration(weeks=col2.fillna(0) * sign)
                 elif unit == "months":
                     return months_offset(col, sign * col2, strict=strict)
                 elif unit == "years":
@@ -299,13 +297,18 @@ class DateTimeSubstractRule(PolarsMixin, DateTimeSubstractRuleBase):
 
 class DateTimeDiffRule(PolarsMixin, DateTimeDiffRuleBase):
 
+    # the components of the difference, like pandas' Timedelta.components: calculated from the total number of
+    # microseconds (or nanoseconds) with floor divisions, so the days are negative for negative differences and the
+    # other components are always positive (polars' total_* functions round towards zero)
     COMPONENTS = {
-        "days": ("total_days", None),
-        "hours": ("total_hours", 24),
-        "minutes": ("total_minutes", 60),
-        "seconds": ("total_seconds", 60),
-        "microseconds": ("total_microseconds", 1000),
-        "total_seconds": ("total_seconds", None),
+        # unit: (total function, divisor, modulo)
+        "days": ("total_microseconds", 24 * 3600 * 1_000_000, None),
+        "hours": ("total_microseconds", 3600 * 1_000_000, 24),
+        "minutes": ("total_microseconds", 60 * 1_000_000, 60),
+        "seconds": ("total_microseconds", 1_000_000, 60),
+        "microseconds": ("total_microseconds", 1, 1000),
+        "nanoseconds": ("total_nanoseconds", 1, 1000),
+        "total_seconds": ("total_microseconds", 1_000_000, None),
     }
 
     def do_apply(self, df, col):
@@ -313,8 +316,8 @@ class DateTimeDiffRule(PolarsMixin, DateTimeDiffRuleBase):
             raise MissingColumnError(f"Column {self.input_column2} in input_column2 does not exist in the input dataframe.")
         res = add_sub_col(df, col, self.input_column2, self.unit, -1, self.input_column, strict=self.strict)
         if res.dtype == pl.Duration and self.unit:
-            method, mod = self.COMPONENTS[self.unit]
-            res = getattr(res.dt, method)()
+            method, divisor, mod = self.COMPONENTS[self.unit]
+            res = getattr(res.dt, method)() // divisor
             if mod is not None:
                 res = res % mod
         return res

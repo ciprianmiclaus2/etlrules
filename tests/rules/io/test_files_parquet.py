@@ -109,3 +109,31 @@ def test_write_read_parquet_file_invalid_column_in_filters(backend):
     finally:
         for f in glob.glob(os.path.join("/tmp", "tst*.parquet")):
             os.remove(f)
+
+
+def test_read_parquet_multiple_files(backend, tmp_path):
+    # files written by the backend, read back with regex=True and concatenated in the order of their names
+    for idx, values in enumerate(([1, 2], [3])):
+        df = backend.DataFrame({"A": values}, astype={"A": "Int64"})
+        with get_test_data(df, named_inputs={"input": df}, named_output="result") as data:
+            backend.rules.WriteParquetFileRule(f"part{idx}.parquet", str(tmp_path), named_input="input").apply(data)
+    # dask writes one file per partition: part0_part_0.parquet (without a double dot before the extension)
+    assert all(".." not in name for name in os.listdir(tmp_path))
+    expected = backend.DataFrame({"A": [1, 2, 3]}, astype={"A": "Int64"})
+    with get_test_data(None, named_inputs={}, named_output="result") as data:
+        backend.rules.ReadParquetFileRule(r"part\d.*\.parquet", str(tmp_path), regex=True, named_output="result").apply(data)
+        assert_frame_equal(data.get_named_output("result"), expected)
+
+
+def test_read_files_regex_no_match(backend, tmp_path):
+    # no matching files: an error (it used to produce None, which failed in the next rule)
+    (tmp_path / "other.csv").write_text("A\n1\n")
+    with get_test_data(None, named_inputs={}, named_output="result") as data:
+        for rule in (
+            backend.rules.ReadCSVFileRule(r"data_\d+\.csv", str(tmp_path), regex=True, named_output="result"),
+            backend.rules.ReadParquetFileRule(r"data_\d+\.parquet", str(tmp_path), regex=True, named_output="result"),
+            backend.rules.ReadJSONFileRule(r"data_\d+\.json", str(tmp_path), regex=True, named_output="result"),
+        ):
+            with pytest.raises(FileNotFoundError) as exc:
+                rule.apply(data)
+            assert "No files matching" in str(exc.value)

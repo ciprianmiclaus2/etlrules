@@ -229,3 +229,13 @@ def test_hconcat_different_no_rows_non_strict(backend):
         rule.apply(data)
         actual = data.get_named_output("result")
         assert_frame_equal(actual, expected)
+
+
+def test_hconcat_non_strict_right_longer(backend):
+    # the shorter (left) dataframe is padded with missing values
+    left_df = backend.DataFrame({"A": [1]}, astype={"A": "Int64"})
+    right_df = backend.DataFrame({"B": ["x", "y", "z"]}, astype={"B": "string"})
+    expected = backend.DataFrame({"A": [1, None, None], "B": ["x", "y", "z"]}, astype={"A": "Int64", "B": "string"})
+    with get_test_data(left_df, named_inputs={"left": left_df, "right": right_df}, named_output="result") as data:
+        backend.rules.HConcatRule("left", "right", named_output="result", strict=False).apply(data)
+        assert_frame_equal(data.get_named_output("result"), expected)

@@ -271,7 +271,8 @@ class DateTimeDiffRule(PandasMixin, DateTimeDiffRuleBase):
         res = add_sub_col(df, col, self.input_column2, self.unit, -1, strict=self.strict)
         if is_timedelta64_dtype(res) and self.unit:
             if self.unit == "total_seconds":
-                res = res.dt.total_seconds()
+                # the whole seconds, rounded down (like the other components)
+                res = res.dt.total_seconds() // 1
             else:
                 res = res.dt.components[self.COMPONENTS[self.unit]]
             res = res.astype("Int64")

@@ -109,3 +109,24 @@ def test_get_args_parser_context_types():
     assert args["name"] == "x"
     with pytest.raises(SystemExit):
         get_args_parser(plan, args=["-p", "plan.yml", "--flag", "maybe"])
+
+
+def test_run_plan_temp_dir_from_environment(tmp_path, monkeypatch):
+    # an existing ETLRULES_TEMPDIR is used and not deleted after the run (it may have other files in it)
+    from etlrules import run_plan
+    existing = tmp_path / "existing"
+    existing.mkdir()
+    (existing / "keep.txt").write_text("not etlrules'")
+    db_file = tmp_path / "out.db"
+    context = {"sql_engine": f"sqlite:///{db_file}"}
+    monkeypatch.setenv("ETLRULES_TEMPDIR", str(existing))
+    data = run_plan("./tests/csv2db.yml", "pandas", context=context)
+    assert data.get_context()["etlrules_tempdir"] == str(existing)
+    assert (existing / "keep.txt").exists()
+    # a directory which doesn't exist is created for the run and deleted after it
+    new_dir = tmp_path / "new"
+    monkeypatch.setenv("ETLRULES_TEMPDIR", str(new_dir))
+    data = run_plan("./tests/csv2db.yml", "pandas", context={**context, "sql_table": "Other"})
+    assert data.get_context()["etlrules_tempdir"] == str(new_dir)
+    assert not new_dir.exists()
+    _dispose_engine(f"sqlite:///{db_file}")

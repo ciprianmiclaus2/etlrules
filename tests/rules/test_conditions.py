@@ -2,7 +2,7 @@ import pytest
 
 from etlrules.data import context
 from etlrules.exceptions import ColumnAlreadyExistsError, ExpressionSyntaxError, MissingColumnError
-from tests.utils.data import assert_frame_equal, get_test_data
+from tests.utils.data import assert_frame_equal, column_values, get_test_data
 
 
 INPUT_DF = [
@@ -150,3 +150,27 @@ def test_filter_values_rule_missing_column(backend):
             backend.rules.FilterValuesRule("Z", ["x"], named_input="input", named_output="result").apply(data)
     with pytest.raises(AssertionError):
         backend.rules.FilterValuesRule("A", ["x", None])
+
+
+@pytest.mark.parametrize("condition,expected_ids", [
+    # conditions combined with &, | and ~ (the operators work on whole columns in all the backends)
+    ["(df['A'] > 1) & (df['B'] == 'x')", [3]],
+    ["(df['A'] > 2) | (df['B'] == 'y')", [2, 3, 4]],
+    ["~(df['A'] > 2)", [1, 2]],
+    ["~((df['A'] > 1) & (df['B'] == 'x'))", [1, 2, 4]],
+    ["(df['A'] * 2 > 5) & ~(df['B'] == 'y')", [3]],
+    ["-df['A'] < -2", [3, 4]],
+    ["10 - df['A'] >= 8", [1, 2]],
+    ["df['A'] % 2 == 0", [2, 4]],
+])
+def test_filter_combined_conditions(condition, expected_ids, backend):
+    input_df = backend.DataFrame([
+        {"Id": 1, "A": 1, "B": "x"},
+        {"Id": 2, "A": 2, "B": "y"},
+        {"Id": 3, "A": 3, "B": "x"},
+        {"Id": 4, "A": 4, "B": "y"},
+    ], astype={"Id": "Int64", "A": "Int64", "B": "string"})
+    with get_test_data(input_df, named_inputs={"input": input_df}, named_output="result") as data:
+        backend.rules.FilterRule(condition, named_input="input", named_output="result").apply(data)
+        result = data.get_named_output("result")
+        assert column_values(result, "Id") == expected_ids

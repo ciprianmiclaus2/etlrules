@@ -192,3 +192,49 @@ def test_run_produces_output_already_exists_in_input_data(backend):
     assert err is not None
     assert "Named output clashes. The following named outputs are produced by rules in the plan but they also exist in the input data, leading to ambiguity: {'input'}" in err
     assert valid is False
+
+
+def test_run_graph_plan_with_joins_and_discarded_rows(backend):
+    # a graph: the rules are added in a different order than they need to run, the join takes two named inputs
+    # and the rows discarded by the filters are used by other rules (named_output_discarded)
+    customers = backend.DataFrame([
+        {"Id": 1, "Name": "a", "Country": "UK"},
+        {"Id": 2, "Name": "b", "Country": "FR"},
+        {"Id": 3, "Name": "c", "Country": "UK"},
+    ], astype={"Id": "Int64", "Name": "string", "Country": "string"})
+    orders = backend.DataFrame([
+        {"Order": 10, "Id": 1, "Amount": 5},
+        {"Order": 11, "Id": 2, "Amount": 50},
+        {"Order": 12, "Id": 3, "Amount": 500},
+    ], astype={"Order": "Int64", "Id": "Int64", "Amount": "Int64"})
+    data = RuleData(named_inputs={"customers": customers, "orders": orders})
+    plan = Plan()
+    plan.add_rule(backend.rules.SortRule(["Order"], named_input="small_orders", named_output="small_orders_sorted"))
+    plan.add_rule(backend.rules.SortRule(["Id"], named_input="non_uk_customers", named_output="non_uk_customers_sorted"))
+    plan.add_rule(backend.rules.FilterRule("df['Amount'] > 10", named_input="uk_orders", named_output="big_orders",
+                                           named_output_discarded="small_orders"))
+    plan.add_rule(backend.rules.InnerJoinRule("orders", "uk_customers", key_columns_left=["Id"], named_output="uk_orders"))
+    plan.add_rule(backend.rules.FilterValuesRule("Country", ["UK"], named_input="customers", named_output="uk_customers",
+                                                 named_output_discarded="non_uk_customers"))
+    engine = RuleEngine(plan)
+    assert engine.validate(data) == (True, None)
+    engine.run(data)
+    assert_frame_equal(data.get_named_output("big_orders"), backend.DataFrame(
+        [{"Order": 12, "Id": 3, "Amount": 500, "Name": "c", "Country": "UK"}],
+        astype={"Order": "Int64", "Id": "Int64", "Amount": "Int64", "Name": "string", "Country": "string"}))
+    assert_frame_equal(data.get_named_output("small_orders_sorted"), backend.DataFrame(
+        [{"Order": 10, "Id": 1, "Amount": 5, "Name": "a", "Country": "UK"}],
+        astype={"Order": "Int64", "Id": "Int64", "Amount": "Int64", "Name": "string", "Country": "string"}))
+    assert_frame_equal(data.get_named_output("non_uk_customers_sorted"), backend.DataFrame(
+        [{"Id": 2, "Name": "b", "Country": "FR"}], astype={"Id": "Int64", "Name": "string", "Country": "string"}))
+
+
+def test_run_graph_plan_missing_join_input(backend):
+    data = RuleData(named_inputs={"left": backend.DataFrame([{"A": 1}])})
+    plan = Plan()
+    plan.add_rule(backend.rules.LeftJoinRule("left", "right", key_columns_left=["A"], named_output="result"))
+    valid, err = RuleEngine(plan).validate(data)
+    assert valid is False
+    assert "named_input=right" in err
+    with pytest.raises(GraphRuntimeError):
+        RuleEngine(plan).run(data)

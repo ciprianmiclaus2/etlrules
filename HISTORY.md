@@ -27,6 +27,20 @@
   names
 * Fix `%f` (microseconds) in the formats of `DateTimeToStrFormatRule` and `StrToDateTimeRule` in the polars backend
   (it was interpreted as nanoseconds) and in the pyarrow backend (it wasn't supported)
+* Fix `FilterRule` with `named_output_discarded` in graph mode plans: the rules using the discarded rows failed
+  with a GraphRuntimeError (the named output wasn't declared)
+* Fix `DateTimeDiffRule`: `total_seconds` failed in the pandas and dask backends when the difference had fractions
+  of a second (it's now the whole seconds, rounded down, in all the backends); the components of negative
+  differences were different in the polars backend; `nanoseconds` failed in the polars backend and `microseconds`
+  was different in the pyarrow backend
+* Fix `StrExtractRule` with named groups in the regular expression (e.g. `(?P<year>\d{4})`) in the pandas and dask
+  backends
+* Fix `AddNewColumnRule` with a constant expression: a string constant failed in the polars backend and a constant
+  with a `column_type` failed in the pandas and dask backends
+* Fix the names of the parquet files written by the dask backend (`data_part_0..parquet` had a double dot), which
+  could not be read back with `regex=True`
+* Reading files with `regex=True` raises FileNotFoundError when no files match (the output used to be None, which
+  failed in the next rule)
 * Fix the documentation of `TypeConversionRule`, which listed datetime and timedelta as supported types
   (use `StrToDateTimeRule` to convert strings to datetime values)
 

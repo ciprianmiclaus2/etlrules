@@ -166,3 +166,11 @@ def test_aggregate_exc_scenarios(group_by, aggregations, aggregation_expressions
             rule.apply(data)
         if expected_exc_str:
             assert expected_exc_str in str(exc.value)
+
+
+def test_aggregate_expressions_not_supported_by_dask(backend):
+    if backend.name != "dask":
+        pytest.skip("only the dask backend doesn't support aggregation expressions")
+    with pytest.raises(NotImplementedError) as exc:
+        backend.rules.AggregateRule(["A"], aggregation_expressions={"B": "sum(values)"})
+    assert "doesn't support aggregation expressions" in str(exc.value)

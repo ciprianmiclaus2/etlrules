@@ -74,7 +74,10 @@ def column_values(df, column_name) -> list:
         return column.to_pylist()
     if hasattr(column, "compute"):  # dask
         column = column.compute()
-    return list(column)
+    if hasattr(column, "to_list") and not hasattr(column, "notna"):  # polars
+        return column.to_list()
+    # pandas: python values (e.g. int, not numpy.int64) and None for the missing values (not NA/NaT/NaN)
+    return column.astype(object).where(column.notna(), None).tolist()
 
 
 def pyarrow_assert_table_equal(df, df2, ignore_row_ordering=False, ignore_column_ordering=False):

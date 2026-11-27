@@ -323,7 +323,8 @@ class DateTimeDiffRule(PyArrowMixin, DateTimeDiffRuleBase):
                 return seconds
             rest = pc.subtract(rest, pc.multiply(seconds, US_PER["seconds"]))
             if self.unit == "microseconds":
-                return rest
+                # the microseconds after the milliseconds (0 - 999), like pandas' Timedelta.components
+                return pc.subtract(rest, pc.multiply(_floor_divide(rest, 1000), 1000))
             # nanoseconds
             nanos = pc.cast(pc.cast(res, pa.duration("ns")), pa.int64())
             return pc.subtract(nanos, pc.multiply(_floor_divide(nanos, 1000), 1000))

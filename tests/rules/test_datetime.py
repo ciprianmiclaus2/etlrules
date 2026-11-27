@@ -1050,3 +1050,63 @@ def test_str_to_datetime_microseconds(format, values, backend):
     with get_test_data(input_df, named_inputs={"input": input_df}, named_output="result") as data:
         backend.rules.StrToDateTimeRule("A", format, named_input="input", named_output="result").apply(data)
         assert_frame_equal(data.get_named_output("result"), expected_df)
+
+
+@pytest.mark.parametrize("unit,expected", [
+    # the components of the difference, like pandas' Timedelta.components (1 day, 2:03:04.005006)
+    ["days", 1], ["hours", 2], ["minutes", 3], ["seconds", 4], ["microseconds", 6], ["nanoseconds", 0],
+    ["total_seconds", 93784],
+])
+def test_date_diff_components(unit, expected, backend):
+    start = datetime.datetime(2023, 5, 1, 10, 0, 0)
+    end = start + datetime.timedelta(days=1, hours=2, minutes=3, seconds=4, milliseconds=5, microseconds=6)
+    input_df = backend.DataFrame({"A": [end, None], "B": [start, start]}, astype={"A": "datetime", "B": "datetime"})
+    with get_test_data(input_df, named_inputs={"input": input_df}, named_output="result") as data:
+        backend.rules.DateTimeDiffRule("A", "B", unit=unit, output_column="C", named_input="input", named_output="result").apply(data)
+        assert column_values(data.get_named_output("result"), "C") == [expected, None]
+
+
+@pytest.mark.parametrize("unit,expected", [
+    # a negative difference: -1.5 seconds is -1 day + 23:59:58.500000 (pandas' Timedelta.components)
+    ["days", -1], ["hours", 23], ["minutes", 59], ["seconds", 58], ["microseconds", 0], ["total_seconds", -2],
+])
+def test_date_diff_negative(unit, expected, backend):
+    start = datetime.datetime(2023, 5, 1, 10, 0, 1, 500000)
+    end = datetime.datetime(2023, 5, 1, 10, 0, 0)
+    input_df = backend.DataFrame({"A": [end], "B": [start]}, astype={"A": "datetime", "B": "datetime"})
+    with get_test_data(input_df, named_inputs={"input": input_df}, named_output="result") as data:
+        backend.rules.DateTimeDiffRule("A", "B", unit=unit, output_column="C", named_input="input", named_output="result").apply(data)
+        assert column_values(data.get_named_output("result"), "C") == [expected]
+
+
+def test_date_add_errors(backend):
+    input_df = backend.DataFrame({"A": [datetime.datetime(2023, 1, 1)], "B": [datetime.datetime(2023, 1, 2)], "C": [1]},
+                                 astype={"A": "datetime", "B": "datetime", "C": "Int64"})
+    with get_test_data(input_df, named_inputs={"input": input_df}, named_output="result") as data:
+        # adding two datetimes doesn't make sense (subtracting them does)
+        with pytest.raises(ValueError) as exc:
+            backend.rules.DateTimeAddRule("A", "B", unit=None, named_input="input", named_output="result").apply(data)
+        assert "Cannot add column B of type datetime" in str(exc.value)
+        # the unit is only checked when the rule is applied when unit_value is a column
+        with pytest.raises(ValueError) as exc:
+            backend.rules.DateTimeAddRule("A", "C", unit="fortnights", named_input="input", named_output="result").apply(data)
+        assert "Unsupported unit: 'fortnights'" in str(exc.value)
+        with pytest.raises(MissingColumnError):
+            backend.rules.DateTimeAddRule("A", "Z", unit="days", named_input="input", named_output="result").apply(data)
+
+
+@pytest.mark.parametrize("strict,expected", [
+    [True, ValueError],
+    [False, [datetime.datetime(2023, 1, 1, 10, 0, 0, 500000), None, None]],
+])
+def test_str_to_datetime_microseconds_invalid_values(strict, expected, backend):
+    input_df = backend.DataFrame({"A": ["2023-01-01 10:00:00.5", "not a date", None]}, astype={"A": "string"})
+    with get_test_data(input_df, named_inputs={"input": input_df}, named_output="result") as data:
+        rule = backend.rules.StrToDateTimeRule("A", "%Y-%m-%d %H:%M:%S.%f", named_input="input", named_output="result", strict=strict)
+        if expected is ValueError:
+            with pytest.raises(ValueError):
+                rule.apply(data)
+                column_values(data.get_named_output("result"), "A")  # dask: on compute
+        else:
+            rule.apply(data)
+            assert column_values(data.get_named_output("result"), "A") == expected

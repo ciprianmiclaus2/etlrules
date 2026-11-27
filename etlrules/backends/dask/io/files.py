@@ -52,8 +52,9 @@ class ReadCSVFileRule(ConcatMixin, ReadCSVFileRuleBase):
 
 
 def parquet_file_name_split(file_name: str) -> tuple[str, str]:
+    """ Splits a file name in the name and the extension (with the dot), e.g. data.parquet -> data, .parquet """
     fn, ext = os.path.splitext(file_name)
-    return fn, ext or "parquet"
+    return fn, ext or ".parquet"
 
 
 class ReadParquetFileRule(ConcatMixin, ReadParquetFileRuleBase):
@@ -64,7 +65,7 @@ class ReadParquetFileRule(ConcatMixin, ReadParquetFileRuleBase):
         fn, ext = parquet_file_name_split(file_name)
         try:
             return dd.read_parquet(
-                os.path.join(file_dir, f"{fn}*.{ext}"), engine="pyarrow", columns=self.columns, filters=self.filters
+                os.path.join(file_dir, f"{fn}*{ext}"), engine="pyarrow", columns=self.columns, filters=self.filters
             )
         except ArrowInvalid as exc:
             raise MissingColumnError(str(exc))
@@ -100,7 +101,7 @@ class WriteParquetFileRule(WriteParquetFileRuleBase):
             path=file_dir,
             engine="pyarrow",
             write_metadata_file=False,
-            name_function=lambda idx: f"{fn}_part_{idx}.{ext}",
+            name_function=lambda idx: f"{fn}_part_{idx}{ext}",
             compression=self.compression,
             write_index=False
         )

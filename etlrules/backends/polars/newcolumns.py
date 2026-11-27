@@ -20,6 +20,9 @@ class AddNewColumnRule(AddNewColumnRuleBase):
             result = self._column_expression.eval(df)
         except pl.exceptions.ColumnNotFoundError as exc:
             raise KeyError(str(exc))
+        if not isinstance(result, (pl.Series, pl.Expr)):
+            # a constant: polars would interpret a string as the name of a column
+            result = pl.lit(result)
         if self.column_type:
             try:
                 result = result.cast(MAP_TYPES[self.column_type])

@@ -467,3 +467,27 @@ def test_new_string_rules_empty_df(backend):
         backend.rules.StrLengthRule("A", output_column="L", named_input="r1", named_output="r2").apply(data)
         backend.rules.StrContainsRule("A", "x", output_column="C", named_input="r2", named_output="result").apply(data)
         assert_frame_equal(data.get_named_output("result"), expected)
+
+
+@pytest.mark.parametrize("regular_expression", [
+    r"id[(](?P<num>\d+)[)]-(\w)",  # a named group, an unnamed group and parentheses in character classes
+    r"id\((\d+)\)-(?P<letter>\w)",
+    r"id[()](\d+)[^]a]-(\w)",  # ] as the first character in a class
+])
+def test_extract_named_groups(regular_expression, backend):
+    input_df = backend.DataFrame({"A": ["id(12)-x", "no match", None]}, astype={"A": "string"})
+    expected = backend.DataFrame({"A": ["id(12)-x", "no match", None], "N": ["12", None, None], "L": ["x", None, None]},
+                                 astype={"A": "string", "N": "string", "L": "string"})
+    with get_test_data(input_df, named_inputs={"input": input_df}, named_output="result") as data:
+        rule = backend.rules.StrExtractRule("A", regular_expression, output_columns=["N", "L"], named_input="input", named_output="result")
+        rule.apply(data)
+        assert_frame_equal(data.get_named_output("result"), expected)
+
+
+def test_extract_named_group_keep_original_value(backend):
+    input_df = backend.DataFrame({"A": ["year 2023", "no year", None]}, astype={"A": "string"})
+    expected = backend.DataFrame({"A": ["2023", "no year", None]}, astype={"A": "string"})
+    with get_test_data(input_df, named_inputs={"input": input_df}, named_output="result") as data:
+        rule = backend.rules.StrExtractRule("A", r"(?P<year>\d{4})", keep_original_value=True, named_input="input", named_output="result")
+        rule.apply(data)
+        assert_frame_equal(data.get_named_output("result"), expected)

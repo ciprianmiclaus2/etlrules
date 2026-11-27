@@ -3,7 +3,7 @@ import pytest
 
 from etlrules.data import context
 from etlrules.exceptions import ExpressionSyntaxError, ColumnAlreadyExistsError, UnsupportedTypeError
-from tests.utils.data import assert_frame_equal, get_test_data
+from tests.utils.data import assert_frame_equal, column_values, get_test_data
 
 
 INPUT_DF = [
@@ -231,3 +231,29 @@ def test_add_new_column_type_conversion_error(backend):
             result = data.get_named_output("result")
             if backend.name == "dask":
                 result.compute()
+
+
+@pytest.mark.parametrize("expression,expected", [
+    # a constant (the same value on all the rows)
+    ["5", [5, 5, 5]],
+    ["context.str_val", ["STR1", "STR1", "STR1"]],
+    # negation and operators with the column on the right side
+    ["-df['A']", [-1, -2, -3]],
+    ["100 - df['A'] * 10", [90, 80, 70]],
+    ["2 ** df['A']", [2, 4, 8]],
+    ["(df['A'] > 1) | (df['A'] < 0)", [False, True, True]],
+])
+def test_add_new_column_constants_and_operators(expression, expected, backend):
+    input_df = backend.DataFrame({"A": [1, 2, 3]}, astype={"A": "Int64"})
+    with context.set({"str_val": "STR1"}):
+        with get_test_data(input_df, named_inputs={"input": input_df}, named_output="result") as data:
+            backend.rules.AddNewColumnRule("B", expression, named_input="input", named_output="result").apply(data)
+            assert column_values(data.get_named_output("result"), "B") == expected
+
+
+def test_add_new_column_constant_with_type(backend):
+    input_df = backend.DataFrame({"A": [1, 2]}, astype={"A": "Int64"})
+    expected = backend.DataFrame({"A": [1, 2], "B": [5, 5]}, astype={"A": "Int64", "B": "Int32"})
+    with get_test_data(input_df, named_inputs={"input": input_df}, named_output="result") as data:
+        backend.rules.AddNewColumnRule("B", "5", column_type="int32", named_input="input", named_output="result").apply(data)
+        assert_frame_equal(data.get_named_output("result"), expected)

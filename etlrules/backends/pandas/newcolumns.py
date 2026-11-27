@@ -1,4 +1,5 @@
 import numpy as np
+from pandas import Series
 
 from etlrules.backends.common.newcolumns import (
     AddNewColumnRule as AddNewColumnRuleBase,
@@ -17,6 +18,9 @@ class AddNewColumnRule(AddNewColumnRuleBase):
         df = self._get_input_df(data)
         self._validate_columns(df.columns)
         result = self._column_expression.eval(df)
+        if self.column_type and not isinstance(result, Series):
+            # a constant: assign it to the column first, so that it can be converted to column_type
+            result = df.assign(**{self.output_column: result})[self.output_column]
         if self.column_type:
             try:
                 result = result.astype(MAP_TYPES[self.column_type])

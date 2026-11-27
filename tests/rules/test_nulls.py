@@ -1,7 +1,7 @@
 import pytest
 
 from etlrules.exceptions import ColumnAlreadyExistsError, MissingColumnError
-from tests.utils.data import assert_frame_equal, get_test_data
+from tests.utils.data import assert_frame_equal, column_values, get_test_data
 
 
 INPUT_DF = [
@@ -168,3 +168,12 @@ def test_coalesce_missing_column(backend):
         with pytest.raises(MissingColumnError) as exc:
             rule.apply(data)
         assert "Z" in str(exc.value)
+
+
+def test_fill_null_column_with_only_missing_values(backend):
+    # e.g. an empty column in a csv file: it has no type until it's filled
+    input_df = backend.DataFrame([{"A": 1, "B": None}, {"A": 2, "B": None}])
+    with get_test_data(input_df, named_inputs={"input": input_df}, named_output="result") as data:
+        # a string: some backends/versions type such a column as a string column (e.g. dask with pyarrow strings)
+        backend.rules.FillNullRule(["B"], "unknown", named_input="input", named_output="result").apply(data)
+        assert column_values(data.get_named_output("result"), "B") == ["unknown", "unknown"]

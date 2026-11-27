@@ -152,6 +152,12 @@ class FilterRule(UnaryOpBaseRule):
         self.named_output_discarded = named_output_discarded
         self._condition_expression = self.get_condition_expression()
 
+    def get_all_named_outputs(self):
+        # the discarded rows are a named output too: other rules can use them (e.g. in a graph mode plan)
+        yield self.named_output
+        if self.named_output_discarded:
+            yield self.named_output_discarded
+
 
 class FilterValuesRule(UnaryOpBaseRule):
     """ Keeps (or removes) the rows where the value of a column is one of a list of values.

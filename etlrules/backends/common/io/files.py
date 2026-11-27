@@ -53,6 +53,8 @@ class BaseReadFileRule(BaseRule):
                 result = df
             else:
                 result = self.do_concat(result, df)
+        if result is None:
+            raise FileNotFoundError(f"No files matching the regular expression '{subst_string(self.file_name)}' in the directory '{subst_string(self.file_dir or '')}'.")
         self._set_output_df(data, result)
 
 
