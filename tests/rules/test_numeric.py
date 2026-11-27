@@ -146,3 +146,41 @@ def test_abs_empty_df(backend):
         rule = backend.rules.AbsRule("A", named_input="input", named_output="result")
         rule.apply(data)
         assert_frame_equal(data.get_named_output("result"), input_df)
+
+
+CLIP_DF = [{"A": -5, "B": 1.5}, {"A": 5, "B": -2.5}, {"A": 50}, {"B": 10.0}]
+CLIP_TYPES = {"A": "Int64", "B": "Float64"}
+
+
+@pytest.mark.parametrize("input_column,lower,upper,output_column,expected", [
+    ["A", 0, 10, None, [{"A": 0, "B": 1.5}, {"A": 5, "B": -2.5}, {"A": 10}, {"B": 10.0}]],
+    ["A", 0, None, None, [{"A": 0, "B": 1.5}, {"A": 5, "B": -2.5}, {"A": 50}, {"B": 10.0}]],
+    ["A", None, 10, None, [{"A": -5, "B": 1.5}, {"A": 5, "B": -2.5}, {"A": 10}, {"B": 10.0}]],
+    ["B", -1.0, 2.0, "C", [{"A": -5, "B": 1.5, "C": 1.5}, {"A": 5, "B": -2.5, "C": -1.0}, {"A": 50}, {"B": 10.0, "C": 2.0}]],
+])
+def test_clip_rule(input_column, lower, upper, output_column, expected, backend):
+    input_df = backend.DataFrame(CLIP_DF, astype=CLIP_TYPES)
+    expected = backend.DataFrame(expected, astype={**CLIP_TYPES, "C": "Float64"} if output_column else CLIP_TYPES)
+    with get_test_data(input_df, named_inputs={"input": input_df}, named_output="result") as data:
+        rule = backend.rules.ClipRule(input_column, lower=lower, upper=upper, output_column=output_column, named_input="input", named_output="result")
+        rule.apply(data)
+        assert_frame_equal(data.get_named_output("result"), expected)
+
+
+def test_clip_rule_empty_df(backend):
+    input_df = backend.DataFrame({"A": []}, astype={"A": "Int64"})
+    with get_test_data(input_df, named_inputs={"input": input_df}, named_output="result") as data:
+        rule = backend.rules.ClipRule("A", lower=0, upper=10, named_input="input", named_output="result")
+        rule.apply(data)
+        assert_frame_equal(data.get_named_output("result"), input_df)
+
+
+def test_clip_rule_errors(backend):
+    input_df = backend.DataFrame(CLIP_DF, astype=CLIP_TYPES)
+    with get_test_data(input_df, named_inputs={"input": input_df}, named_output="result") as data:
+        with pytest.raises(MissingColumnError):
+            backend.rules.ClipRule("Z", lower=0, named_input="input", named_output="result").apply(data)
+    with pytest.raises(AssertionError):
+        backend.rules.ClipRule("A")
+    with pytest.raises(AssertionError):
+        backend.rules.ClipRule("A", lower=10, upper=0)

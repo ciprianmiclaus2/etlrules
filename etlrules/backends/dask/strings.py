@@ -13,6 +13,9 @@ from etlrules.backends.common.strings import (
     StrStripRule as StrStripRuleBase,
     StrPadRule as StrPadRuleBase,
     StrExtractRule as StrExtractRuleBase,
+    StrSliceRule as StrSliceRuleBase,
+    StrLengthRule as StrLengthRuleBase,
+    StrContainsRule as StrContainsRuleBase,
 )
 
 from .base import DaskMixin
@@ -109,3 +112,28 @@ class StrExtractRule(StrExtractRuleBase, DaskMixin):
                 new_cols_dict[output_columns[idx * groups + group]] = new_column
         df = df.assign(**new_cols_dict)
         self._set_output_df(data, df)
+
+
+class StrSliceRule(StrSliceRuleBase, DaskMixin):
+
+    def do_apply(self, df, col):
+        return col.str.slice(self.start, self.end)
+
+
+class StrLengthRule(StrLengthRuleBase, DaskMixin):
+
+    def do_apply(self, df, col):
+        return col.str.len().astype("Int64")
+
+
+class StrContainsRule(StrContainsRuleBase, DaskMixin):
+
+    def do_apply(self, df, col):
+        if self.how == self.HOW_STARTSWITH:
+            result = col.str.startswith(self.value)
+        elif self.how == self.HOW_ENDSWITH:
+            result = col.str.endswith(self.value)
+        else:
+            result = col.str.contains(self.value, regex=False)
+        # NA for missing values (some string types return False)
+        return result.astype("boolean").mask(col.isna())

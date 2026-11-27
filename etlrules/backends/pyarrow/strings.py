@@ -12,6 +12,9 @@ from etlrules.backends.common.strings import (
     StrStripRule as StrStripRuleBase,
     StrPadRule as StrPadRuleBase,
     StrExtractRule as StrExtractRuleBase,
+    StrSliceRule as StrSliceRuleBase,
+    StrLengthRule as StrLengthRuleBase,
+    StrContainsRule as StrContainsRuleBase,
 )
 from etlrules.backends.pyarrow.base import PyArrowMixin, set_column
 
@@ -151,3 +154,28 @@ class StrExtractRule(StrExtractRuleBase, PyArrowMixin):
                 values = pc.coalesce(values, df[input_column])
             df = set_column(df, output_column, values)
         self._set_output_df(data, df)
+
+
+class StrSliceRule(StrSliceRuleBase, PyArrowMixin):
+
+    def do_apply(self, df, col):
+        # like python's value[start:end] (negative positions count from the end)
+        if self.end is None:
+            return pc.utf8_slice_codeunits(col, start=self.start)
+        return pc.utf8_slice_codeunits(col, start=self.start, stop=self.end)
+
+
+class StrLengthRule(StrLengthRuleBase, PyArrowMixin):
+
+    def do_apply(self, df, col):
+        return pc.cast(pc.utf8_length(col), pa.int64())
+
+
+class StrContainsRule(StrContainsRuleBase, PyArrowMixin):
+
+    def do_apply(self, df, col):
+        if self.how == self.HOW_STARTSWITH:
+            return pc.starts_with(col, pattern=self.value)
+        elif self.how == self.HOW_ENDSWITH:
+            return pc.ends_with(col, pattern=self.value)
+        return pc.match_substring(col, pattern=self.value)

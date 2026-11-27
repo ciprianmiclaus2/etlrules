@@ -1,7 +1,7 @@
 """ The pyarrow backend: the rules operate on pyarrow tables (pyarrow.Table). """
 from .aggregate import AggregateRule
 from etlrules.backends.common.basic import ProjectRule
-from .basic import DedupeRule, ExplodeValuesRule, RenameRule, ReplaceRule, SortRule
+from .basic import DedupeRule, ExplodeValuesRule, LimitRule, RenameRule, ReplaceRule, SortRule
 from .concat import VConcatRule, HConcatRule
 from .conditions import IfThenElseRule, FilterRule
 from .datetime import (
@@ -14,10 +14,10 @@ from .fill import ForwardFillRule, BackFillRule
 from .nulls import FillNullRule, DropNullRowsRule, CoalesceRule
 from .joins import LeftJoinRule, InnerJoinRule, OuterJoinRule, RightJoinRule
 from .newcolumns import AddNewColumnRule, AddRowNumbersRule
-from .numeric import AbsRule, RoundRule
+from .numeric import AbsRule, ClipRule, RoundRule
 from .strings import (
     StrLowerRule, StrUpperRule, StrCapitalizeRule, StrSplitRule, StrSplitRejoinRule,
-    StrStripRule, StrPadRule, StrExtractRule,
+    StrStripRule, StrPadRule, StrExtractRule, StrSliceRule, StrLengthRule, StrContainsRule,
 )
 from .types import TypeConversionRule
 from etlrules.backends.common.basic import RulesBlock
@@ -29,7 +29,7 @@ from .io.db import ReadSQLQueryRule, WriteSQLTableRule
 
 __all__ = [
     'AggregateRule',
-    'DedupeRule', 'ExplodeValuesRule', 'ProjectRule', 'RenameRule', 'ReplaceRule', 'SortRule',
+    'DedupeRule', 'ExplodeValuesRule', 'ProjectRule', 'RenameRule', 'ReplaceRule', 'SortRule', 'LimitRule',
     'VConcatRule', 'HConcatRule',
     'IfThenElseRule', 'FilterRule',
     'DateTimeLocalNowRule', 'DateTimeUTCNowRule', 'DateTimeToStrFormatRule',
@@ -40,9 +40,9 @@ __all__ = [
     'FillNullRule', 'DropNullRowsRule', 'CoalesceRule',
     'LeftJoinRule', 'InnerJoinRule', 'OuterJoinRule', 'RightJoinRule',
     'AddNewColumnRule', 'AddRowNumbersRule',
-    'AbsRule', 'RoundRule',
+    'AbsRule', 'RoundRule', 'ClipRule',
     'StrLowerRule', 'StrUpperRule', 'StrCapitalizeRule', 'StrSplitRule', 'StrSplitRejoinRule',
-    'StrStripRule', 'StrPadRule', 'StrExtractRule',
+    'StrStripRule', 'StrPadRule', 'StrExtractRule', 'StrSliceRule', 'StrLengthRule', 'StrContainsRule',
     'TypeConversionRule',
     'RulesBlock',
     # IO extractors and loaders

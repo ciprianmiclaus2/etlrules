@@ -6,6 +6,7 @@ from etlrules.backends.common.basic import (
     RenameRule as RenameRuleBase,
     ReplaceRule as ReplaceRuleBase,
     SortRule as SortRuleBase,
+    LimitRule as LimitRuleBase,
 )
 from etlrules.backends.pandas.base import PandasMixin
 from etlrules.backends.pandas.types import MAP_TYPES
@@ -60,3 +61,9 @@ class ExplodeValuesRule(ExplodeValuesRuleBase):
         if self.column_type:
             result = result.astype({self.input_column: MAP_TYPES[self.column_type]})
         self._set_output_df(data, result)
+
+
+class LimitRule(LimitRuleBase):
+
+    def do_limit(self, df):
+        return df.head(self.n).reset_index(drop=True)

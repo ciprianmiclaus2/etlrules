@@ -11,6 +11,9 @@ from etlrules.backends.common.strings import (
     StrStripRule as StrStripRuleBase,
     StrPadRule as StrPadRuleBase,
     StrExtractRule as StrExtractRuleBase,
+    StrSliceRule as StrSliceRuleBase,
+    StrLengthRule as StrLengthRuleBase,
+    StrContainsRule as StrContainsRuleBase,
 )
 
 perf_logger = logging.getLogger("etlrules.perf")
@@ -120,3 +123,37 @@ class StrExtractRule(StrExtractRuleBase, PolarsMixin):
         
         res = res[ordered_cols]
         self._set_output_df(data, res)
+
+
+class StrSliceRule(StrSliceRuleBase, PolarsMixin):
+
+    def do_apply(self, df, col):
+        # python's value[start:end] as offset and length (negative positions count from the end of each value)
+        length = pl.col(col.name).str.len_chars().cast(pl.Int64)
+
+        def position(pos):
+            if pos is None:
+                return length
+            if pos >= 0:
+                return pl.min_horizontal(pl.lit(pos, dtype=pl.Int64), length)
+            return pl.max_horizontal(length + pos, pl.lit(0, dtype=pl.Int64))
+
+        start, end = position(self.start), position(self.end)
+        slice_length = pl.max_horizontal(end - start, pl.lit(0, dtype=pl.Int64))
+        return pl.DataFrame([col]).select(pl.col(col.name).str.slice(start, slice_length))[col.name]
+
+
+class StrLengthRule(StrLengthRuleBase, PolarsMixin):
+
+    def do_apply(self, df, col):
+        return col.str.len_chars().cast(pl.Int64)
+
+
+class StrContainsRule(StrContainsRuleBase, PolarsMixin):
+
+    def do_apply(self, df, col):
+        if self.how == self.HOW_STARTSWITH:
+            return col.str.starts_with(self.value)
+        elif self.how == self.HOW_ENDSWITH:
+            return col.str.ends_with(self.value)
+        return col.str.contains(self.value, literal=True)

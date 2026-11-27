@@ -326,3 +326,38 @@ def test_explode_rule(input_column, column_type, input_df, input_types, expected
                 rule.apply(data)
         else:
             assert False
+
+LIMIT_DF = [{"A": 3, "B": "c"}, {"A": 1, "B": "a"}, {"A": 2}, {"A": 5, "B": "e"}]
+LIMIT_TYPES = {"A": "Int64", "B": "string"}
+
+
+@pytest.mark.parametrize("n,expected", [
+    [2, [{"A": 3, "B": "c"}, {"A": 1, "B": "a"}]],
+    [0, []],
+    [4, LIMIT_DF],
+    [10, LIMIT_DF],
+])
+def test_limit_rule(n, expected, backend):
+    input_df = backend.DataFrame(LIMIT_DF, astype=LIMIT_TYPES)
+    expected = backend.DataFrame(expected, astype=LIMIT_TYPES) if expected else backend.empty_df(input_df)
+    with get_test_data(input_df, named_inputs={"input": input_df}, named_output="result") as data:
+        rule = backend.rules.LimitRule(n, named_input="input", named_output="result")
+        rule.apply(data)
+        assert_frame_equal(data.get_named_output("result"), expected)
+
+
+def test_limit_rule_top_n(backend):
+    # sort + limit: the top 2 values of A
+    input_df = backend.DataFrame(LIMIT_DF, astype=LIMIT_TYPES)
+    expected = backend.DataFrame([{"A": 5, "B": "e"}, {"A": 3, "B": "c"}], astype=LIMIT_TYPES)
+    with get_test_data(input_df, named_inputs={"input": input_df}, named_output="result") as data:
+        backend.rules.SortRule(["A"], ascending=False, named_input="input", named_output="sorted").apply(data)
+        backend.rules.LimitRule(2, named_input="sorted", named_output="result").apply(data)
+        assert_frame_equal(data.get_named_output("result"), expected)
+
+
+def test_limit_rule_invalid_n():
+    from etlrules.backends.common.basic import LimitRule
+    for n in (-1, 1.5, "2", True):
+        with pytest.raises(AssertionError):
+            LimitRule(n)

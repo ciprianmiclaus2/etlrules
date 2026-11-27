@@ -399,3 +399,157 @@ class StrExtractRule(UnaryOpBaseRule, ColumnsInOutMixin):
         if groups > 1 and self.output_columns is None:
             raise ValueError(f"The regular expression has more than 1 groups in which case output_columns must be specified (one per group).")
         self.keep_original_value = keep_original_value
+
+
+class StrSliceRule(BaseAssignColumnRule):
+    """ Extracts a substring from each value of a string column, using python's slice semantics: value[start:end].
+
+    Basic usage:
+
+        # the first 3 characters
+        rule = StrSliceRule("col_A", 0, 3)
+        rule.apply(data)
+
+        # the last 4 characters, written to a new column
+        rule = StrSliceRule("col_A", -4, output_column="col_B")
+        rule.apply(data)
+
+    Args:
+        input_column (str): The string column with the values to slice.
+        start (int): The position of the first character to keep (0 is the first character).
+            Negative values count from the end of the string (-1 is the last character).
+        end (Optional[int]): The position after the last character to keep. Optional.
+            Negative values count from the end of the string. When not specified, the substring goes to the end.
+        output_column (Optional[str]): An optional column to hold the result.
+            If provided, the existing column is unchanged, and a new column with this name is created.
+            If not provided, the result is updated in place.
+
+        named_input (Optional[str]): Which dataframe to use as the input. Optional.
+            When not set, the input is taken from the main output.
+            Set it to a string value, the name of an output dataframe of a previous rule.
+        named_output (Optional[str]): Give the output of this rule a name so it can be used by another rule as a named input. Optional.
+            When not set, the result of this rule will be available as the main output.
+            When set to a name (string), the result will be available as that named output.
+        name (Optional[str]): Give the rule a name. Optional.
+            Named rules are more descriptive as to what they're trying to do/the intent.
+        description (Optional[str]): Describe in detail what the rules does, how it does it. Optional.
+            Together with the name, the description acts as the documentation of the rule.
+        strict (bool): When set to True, the rule does a stricter validation. Default: True
+
+    Raises:
+        MissingColumnError: raised if the input column doesn't exist in the input dataframe.
+        ColumnAlreadyExistsError: raised in strict mode only if the output_column already exists in the dataframe.
+
+    Note:
+        In non-strict mode, overwriting existing columns is ignored.
+    """
+
+    def __init__(self, input_column: str, start: int, end: Optional[int]=None, output_column: Optional[str]=None, named_input: Optional[str]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
+        super().__init__(input_column=input_column, output_column=output_column, named_input=named_input, named_output=named_output,
+                         name=name, description=description, strict=strict)
+        assert isinstance(start, int) and not isinstance(start, bool), "StrSliceRule: start must be an integer."
+        assert end is None or (isinstance(end, int) and not isinstance(end, bool)), "StrSliceRule: end must be an integer or None."
+        self.start = start
+        self.end = end
+
+
+class StrLengthRule(BaseAssignColumnRule):
+    """ Calculates the length (the number of characters) of the values in a string column.
+
+    Basic usage:
+
+        # the length of the values in col_A, in a new column
+        rule = StrLengthRule("col_A", output_column="col_A_length")
+        rule.apply(data)
+
+    Args:
+        input_column (str): The string column.
+        output_column (Optional[str]): An optional column to hold the result.
+            If provided, the existing column is unchanged, and a new column with this name is created.
+            If not provided, the result is updated in place.
+
+        named_input (Optional[str]): Which dataframe to use as the input. Optional.
+            When not set, the input is taken from the main output.
+            Set it to a string value, the name of an output dataframe of a previous rule.
+        named_output (Optional[str]): Give the output of this rule a name so it can be used by another rule as a named input. Optional.
+            When not set, the result of this rule will be available as the main output.
+            When set to a name (string), the result will be available as that named output.
+        name (Optional[str]): Give the rule a name. Optional.
+            Named rules are more descriptive as to what they're trying to do/the intent.
+        description (Optional[str]): Describe in detail what the rules does, how it does it. Optional.
+            Together with the name, the description acts as the documentation of the rule.
+        strict (bool): When set to True, the rule does a stricter validation. Default: True
+
+    Raises:
+        MissingColumnError: raised if the input column doesn't exist in the input dataframe.
+        ColumnAlreadyExistsError: raised in strict mode only if the output_column already exists in the dataframe.
+
+    Note:
+        In non-strict mode, overwriting existing columns is ignored.
+        The length of a missing value (NA) is NA.
+    """
+
+    def __init__(self, input_column: str, output_column: Optional[str]=None, named_input: Optional[str]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
+        super().__init__(input_column=input_column, output_column=output_column, named_input=named_input, named_output=named_output,
+                         name=name, description=description, strict=strict)
+
+
+class StrContainsRule(BaseAssignColumnRule):
+    """ Checks if the values in a string column contain, start with or end with a given string.
+
+    The result is a boolean column (True/False, NA for missing values). Use it, for example, with a FilterRule to
+    keep only the rows that match.
+
+    Basic usage:
+
+        # Is_Test is True for the rows where Email contains "test"
+        rule = StrContainsRule("Email", "test", output_column="Is_Test")
+        rule.apply(data)
+
+        # Is_UK is True for the rows where Phone starts with "+44"
+        rule = StrContainsRule("Phone", "+44", how="startswith", output_column="Is_UK")
+        rule.apply(data)
+
+    Args:
+        input_column (str): The string column with the values to check.
+        value (str): The string to look for. It's a literal string (not a regular expression) and the check is
+            case sensitive.
+        how (str): One of:
+            contains: True if the value contains the string anywhere (default)
+            startswith: True if the value starts with the string
+            endswith: True if the value ends with the string
+        output_column (Optional[str]): An optional column to hold the result.
+            If provided, the existing column is unchanged, and a new column with this name is created.
+            If not provided, the result is updated in place.
+
+        named_input (Optional[str]): Which dataframe to use as the input. Optional.
+            When not set, the input is taken from the main output.
+            Set it to a string value, the name of an output dataframe of a previous rule.
+        named_output (Optional[str]): Give the output of this rule a name so it can be used by another rule as a named input. Optional.
+            When not set, the result of this rule will be available as the main output.
+            When set to a name (string), the result will be available as that named output.
+        name (Optional[str]): Give the rule a name. Optional.
+            Named rules are more descriptive as to what they're trying to do/the intent.
+        description (Optional[str]): Describe in detail what the rules does, how it does it. Optional.
+            Together with the name, the description acts as the documentation of the rule.
+        strict (bool): When set to True, the rule does a stricter validation. Default: True
+
+    Raises:
+        MissingColumnError: raised if the input column doesn't exist in the input dataframe.
+        ColumnAlreadyExistsError: raised in strict mode only if the output_column already exists in the dataframe.
+
+    Note:
+        In non-strict mode, overwriting existing columns is ignored.
+    """
+
+    HOW_CONTAINS = "contains"
+    HOW_STARTSWITH = "startswith"
+    HOW_ENDSWITH = "endswith"
+
+    def __init__(self, input_column: str, value: str, how: Literal["contains", "startswith", "endswith"]="contains", output_column: Optional[str]=None, named_input: Optional[str]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
+        super().__init__(input_column=input_column, output_column=output_column, named_input=named_input, named_output=named_output,
+                         name=name, description=description, strict=strict)
+        assert value and isinstance(value, str), "StrContainsRule: value must be a non-empty string."
+        assert how in (self.HOW_CONTAINS, self.HOW_STARTSWITH, self.HOW_ENDSWITH), f"StrContainsRule: how must be one of: {self.HOW_CONTAINS}, {self.HOW_STARTSWITH}, {self.HOW_ENDSWITH}."
+        self.value = value
+        self.how = how

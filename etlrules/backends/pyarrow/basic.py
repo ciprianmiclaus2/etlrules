@@ -9,6 +9,7 @@ from etlrules.backends.common.basic import (
     RenameRule as RenameRuleBase,
     ReplaceRule as ReplaceRuleBase,
     SortRule as SortRuleBase,
+    LimitRule as LimitRuleBase,
 )
 from etlrules.backends.pyarrow.base import PyArrowMixin, ROW_INDEX_COLUMN, rename_columns, set_column, with_row_index
 from etlrules.backends.pyarrow.types import MAP_TYPES
@@ -99,3 +100,9 @@ class ExplodeValuesRule(ExplodeValuesRuleBase):
         if self.column_type:
             result = set_column(result, self.input_column, pc.cast(result[self.input_column], MAP_TYPES[self.column_type]))
         self._set_output_df(data, result)
+
+
+class LimitRule(LimitRuleBase):
+
+    def do_limit(self, df):
+        return df.slice(0, self.n)

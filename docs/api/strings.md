@@ -38,3 +38,15 @@ Rules operating on string columns.
 ::: etlrules.backends.common.strings.StrExtractRule
     options:
       members: false
+
+::: etlrules.backends.common.strings.StrSliceRule
+    options:
+      members: false
+
+::: etlrules.backends.common.strings.StrLengthRule
+    options:
+      members: false
+
+::: etlrules.backends.common.strings.StrContainsRule
+    options:
+      members: false

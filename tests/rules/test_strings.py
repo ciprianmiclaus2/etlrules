@@ -408,3 +408,62 @@ def test_split_values_are_not_evaluated(rule_name, pyarrow_strings, backend):
         assert [list(v) for v in values] == [["[1", " 2]"], ["__import__('sys').modules.__setitem__('etlrules_pwned'", " 1) or 'x'"]]
     else:
         assert values == ["[1, 2]", PAYLOAD]
+
+
+SLICE_DF = [{"A": "abcdef"}, {"A": "xy"}, {"A": ""}, {}]
+
+
+@pytest.mark.parametrize("start,end,expected", [
+    [0, 3, ["abc", "xy", "", None]],
+    [2, None, ["cdef", "", "", None]],
+    [-2, None, ["ef", "xy", "", None]],
+    [1, -1, ["bcde", "", "", None]],
+    [-4, -2, ["cd", "", "", None]],
+    [3, 1, ["", "", "", None]],
+])
+def test_str_slice_rule(start, end, expected, backend):
+    # python's value[start:end] semantics
+    assert [None if row.get("A") is None else row["A"][start:end] for row in SLICE_DF] == expected
+    input_df = backend.DataFrame(SLICE_DF, astype={"A": "string"})
+    expected_df = backend.DataFrame({"A": ["abcdef", "xy", "", None], "B": expected}, astype={"A": "string", "B": "string"})
+    with get_test_data(input_df, named_inputs={"input": input_df}, named_output="result") as data:
+        rule = backend.rules.StrSliceRule("A", start, end, output_column="B", named_input="input", named_output="result")
+        rule.apply(data)
+        assert_frame_equal(data.get_named_output("result"), expected_df)
+
+
+def test_str_length_rule(backend):
+    input_df = backend.DataFrame([{"A": "abc"}, {"A": ""}, {"A": "é ü"}, {}], astype={"A": "string"})
+    expected = backend.DataFrame({"A": [3, 0, 3, None]}, astype={"A": "Int64"})
+    with get_test_data(input_df, named_inputs={"input": input_df}, named_output="result") as data:
+        rule = backend.rules.StrLengthRule("A", named_input="input", named_output="result")
+        rule.apply(data)
+        assert_frame_equal(data.get_named_output("result"), expected)
+
+
+@pytest.mark.parametrize("value,how,expected", [
+    ["test", "contains", [True, True, False, None]],
+    ["test", "startswith", [True, False, False, None]],
+    [".com", "endswith", [True, False, True, None]],
+    [".", "contains", [True, True, True, None]],
+    ["Test", "contains", [False, False, False, None]],
+])
+def test_str_contains_rule(value, how, expected, backend):
+    # literal matching ("." is not a regex) and case sensitive
+    emails = ["test@x.com", "a.test@y.org", "b@z.com", None]
+    input_df = backend.DataFrame({"A": emails}, astype={"A": "string"})
+    expected_df = backend.DataFrame({"A": emails, "B": expected}, astype={"A": "string", "B": "boolean"})
+    with get_test_data(input_df, named_inputs={"input": input_df}, named_output="result") as data:
+        rule = backend.rules.StrContainsRule("A", value, how=how, output_column="B", named_input="input", named_output="result")
+        rule.apply(data)
+        assert_frame_equal(data.get_named_output("result"), expected_df)
+
+
+def test_new_string_rules_empty_df(backend):
+    input_df = backend.DataFrame({"A": []}, astype={"A": "string"})
+    expected = backend.DataFrame({"A": [], "S": [], "L": [], "C": []}, astype={"A": "string", "S": "string", "L": "Int64", "C": "boolean"})
+    with get_test_data(input_df, named_inputs={"input": input_df}, named_output="result") as data:
+        backend.rules.StrSliceRule("A", 0, 2, output_column="S", named_input="input", named_output="r1").apply(data)
+        backend.rules.StrLengthRule("A", output_column="L", named_input="r1", named_output="r2").apply(data)
+        backend.rules.StrContainsRule("A", "x", output_column="C", named_input="r2", named_output="result").apply(data)
+        assert_frame_equal(data.get_named_output("result"), expected)

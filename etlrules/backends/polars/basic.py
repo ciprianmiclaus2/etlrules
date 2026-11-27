@@ -7,6 +7,7 @@ from etlrules.backends.common.basic import (
     RenameRule as RenameRuleBase,
     ReplaceRule as ReplaceRuleBase,
     SortRule as SortRuleBase,
+    LimitRule as LimitRuleBase,
 )
 from etlrules.backends.polars.base import PolarsMixin
 from etlrules.backends.polars.types import MAP_TYPES
@@ -67,3 +68,9 @@ class ExplodeValuesRule(ExplodeValuesRuleBase):
                 **{self.input_column: pl.col(self.input_column).cast(MAP_TYPES[self.column_type])}
             )
         self._set_output_df(data, result)
+
+
+class LimitRule(LimitRuleBase):
+
+    def do_limit(self, df):
+        return df.head(self.n)

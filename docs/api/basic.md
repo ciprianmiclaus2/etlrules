@@ -1,6 +1,6 @@
 # Basic rules
 
-Rules to dedupe, project, rename, replace values, sort and explode, and to group rules into blocks.
+Rules to dedupe, project, rename, replace values, sort, limit the number of rows and explode, and to group rules into blocks.
 
 !!! note "Importing the rules"
     The rules are implemented by each backend. Import them from the package of the backend you use, e.g.
@@ -24,6 +24,10 @@ Rules to dedupe, project, rename, replace values, sort and explode, and to group
       members: false
 
 ::: etlrules.backends.common.basic.SortRule
+    options:
+      members: false
+
+::: etlrules.backends.common.basic.LimitRule
     options:
       members: false
 

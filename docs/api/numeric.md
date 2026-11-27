@@ -14,3 +14,7 @@ Rules operating on numeric columns.
 ::: etlrules.backends.common.numeric.AbsRule
     options:
       members: false
+
+::: etlrules.backends.common.numeric.ClipRule
+    options:
+      members: false

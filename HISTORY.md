@@ -7,6 +7,12 @@
 * Add `FillNullRule` to replace the missing values in a set of columns with a given value
 * Add `DropNullRowsRule` to remove the rows with missing values (in any or all of a set of columns)
 * Add `CoalesceRule` to create a column with the first non-missing value from a list of columns
+* Add `LimitRule` to keep only the first n rows (e.g. after a `SortRule` for the top n rows)
+* Add `ClipRule` to limit the values of a numeric column to a lower and/or upper bound
+* Add `StrSliceRule` to extract a substring from each value of a string column (like python's `value[start:end]`)
+* Add `StrLengthRule` to calculate the length of the values in a string column
+* Add `StrContainsRule` to check if the values in a string column contain, start with or end with a given
+  string; the boolean result can be used to filter rows without backend specific expressions
 * Fix the documentation of `TypeConversionRule`, which listed datetime and timedelta as supported types
   (use `StrToDateTimeRule` to convert strings to datetime values)
 

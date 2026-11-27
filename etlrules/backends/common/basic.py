@@ -394,3 +394,47 @@ class ExplodeValuesRule(UnaryOpBaseRule, ColumnsInOutMixin):
     def _validate_input_column(self, df):
         if self.input_column not in get_column_names(df):
             raise MissingColumnError(f"Column '{self.input_column}' is not present in the input dataframe.")
+
+
+class LimitRule(UnaryOpBaseRule):
+    """ Keeps only the first n rows of the dataframe.
+
+    Basic usage:
+
+        # keeps the first 10 rows
+        rule = LimitRule(10)
+        rule.apply(data)
+
+        # keeps the 3 rows with the highest values in column A (top 3)
+        plan.add_rule(SortRule(["A"], ascending=False))
+        plan.add_rule(LimitRule(3))
+
+    Args:
+        n (int): The number of rows to keep. If the dataframe has fewer rows, all the rows are kept.
+
+        named_input (Optional[str]): Which dataframe to use as the input. Optional.
+            When not set, the input is taken from the main output.
+            Set it to a string value, the name of an output dataframe of a previous rule.
+        named_output (Optional[str]): Give the output of this rule a name so it can be used by another rule as a named input. Optional.
+            When not set, the result of this rule will be available as the main output.
+            When set to a name (string), the result will be available as that named output.
+        name (Optional[str]): Give the rule a name. Optional.
+            Named rules are more descriptive as to what they're trying to do/the intent.
+        description (Optional[str]): Describe in detail what the rules does, how it does it. Optional.
+            Together with the name, the description acts as the documentation of the rule.
+        strict (bool): When set to True, the rule does a stricter validation. Default: True
+    """
+
+    def __init__(self, n: int, named_input: Optional[str]=None, named_output: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, strict: bool=True):
+        super().__init__(named_input=named_input, named_output=named_output, name=name, description=description, strict=strict)
+        assert isinstance(n, int) and not isinstance(n, bool) and n >= 0, "LimitRule: n must be an integer >= 0."
+        self.n = n
+
+    def do_limit(self, df):
+        raise NotImplementedError("Have you imported the rules from etlrules.backends.<your_backend> and not common?")
+
+    def apply(self, data):
+        super().apply(data)
+        df = self._get_input_df(data)
+        df = self.do_limit(df)
+        self._set_output_df(data, df)

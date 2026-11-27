@@ -6,6 +6,7 @@ from etlrules.backends.common.basic import (
     RenameRule as RenameRuleBase,
     ReplaceRule as ReplaceRuleBase,
     SortRule as SortRuleBase,
+    LimitRule as LimitRuleBase,
 )
 from etlrules.backends.dask.base import DaskMixin
 from etlrules.backends.dask.types import MAP_TYPES
@@ -66,3 +67,11 @@ class ExplodeValuesRule(ExplodeValuesRuleBase):
         if self.column_type:
             result = result.astype({self.input_column: MAP_TYPES[self.column_type]})
         self._set_output_df(data, result)
+
+
+class LimitRule(LimitRuleBase):
+
+    def do_limit(self, df):
+        # npartitions=-1 takes the rows from all the partitions (head only looks at the first one by default)
+        # and compute=False keeps it lazy
+        return df.head(self.n, npartitions=-1, compute=False)
